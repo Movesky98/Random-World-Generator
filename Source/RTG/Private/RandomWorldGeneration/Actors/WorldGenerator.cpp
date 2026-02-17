@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "WorldGenerator.h"
-#include "WorldGenConfig.h"
+#include "RandomWorldGeneration/Actors/WorldGenerator.h"
+#include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
 
 DEFINE_LOG_CATEGORY(LogWorldGenerator);
 

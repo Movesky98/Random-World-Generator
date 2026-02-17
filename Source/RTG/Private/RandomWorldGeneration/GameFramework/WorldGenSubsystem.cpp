@@ -1,10 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "WorldGenSubsystem.h"
+#include "RandomWorldGeneration/GameFramework/WorldGenSubsystem.h"
 
 #include "Engine/AssetManager.h"
-#include "WorldGenConfig.h"
-#include "WorldGenerator.h"
+
+#include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
+#include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
+#include "RandomWorldGeneration/Actors/WorldGenerator.h"
 
 DEFINE_LOG_CATEGORY(LogWorldGenSubsystem);
 

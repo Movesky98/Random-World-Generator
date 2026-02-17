@@ -47,7 +47,7 @@ public:
 	float OuterHeight = 100.0f;
 
 protected:
-	// Primary Asset Id 에 'TerrainGenData' 태그를 추가함.
+	// Primary Asset Id 에 'WorldGenConfig' 태그를 추가함.
 	// Asset Manager를 활용해 태그를 기반으로 Data Asset을 찾을 수 있도록 함.
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 	
