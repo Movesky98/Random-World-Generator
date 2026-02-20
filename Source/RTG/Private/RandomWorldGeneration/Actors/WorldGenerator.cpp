@@ -2,9 +2,13 @@
 
 
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
+
 #include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
+#include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
+#include "RandomWorldGeneration/Core/WorldGenTypes.h"
 
 DEFINE_LOG_CATEGORY(LogWorldGenerator);
+
 
 // Sets default values
 AWorldGenerator::AWorldGenerator()
@@ -17,14 +21,27 @@ AWorldGenerator::AWorldGenerator()
 	PCGComponent->bAutoActivate = false;
 }
 
-void AWorldGenerator::UpdateMesh(int32 Seed, class UWorldGenConfig* Config)
+void AWorldGenerator::GenerateWorld(int32 Seed, TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs)
 {
-	if (!Config)
+	for (auto& Config : Configs)
 	{
-		UE_LOG(LogWorldGenerator, Error, TEXT("UpdateMesh() :: Config is not found."))
-		return;
-	}
+		if (Config.Key == FPrimaryAssetType(WorldConfigTags::GenConfigName))
+		{
+			UWorldGenConfig* GenConfig = Cast<UWorldGenConfig>(Config.Value);
 
+			GenerateTerrain(GenConfig);
+		}
+		else if (Config.Key == FPrimaryAssetType(WorldConfigTags::ThemeConfigName))
+		{
+			UWorldThemeConfig* ThemeConfig = Cast<UWorldThemeConfig>(Config.Value);
+
+			GenerateContent(ThemeConfig);
+		}
+	}
+}
+
+void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
+{
 	TArray<FVector> Vertices;
 	TArray<int32> Triangles;
 	TArray<FVector> Normals;
@@ -34,7 +51,7 @@ void AWorldGenerator::UpdateMesh(int32 Seed, class UWorldGenConfig* Config)
 
 	float CenterX = Config->XSize / 2.0f;
 	float CenterY = Config->YSize / 2.0f;
-	
+
 	FVector2D CenterPos(CenterX, CenterY);
 
 	for (int32 Y = 0; Y <= Config->YSize; Y++)
@@ -103,18 +120,20 @@ void AWorldGenerator::UpdateMesh(int32 Seed, class UWorldGenConfig* Config)
 	ProceduralMeshComponent->ContainsPhysicsTriMeshData(true);
 	ProceduralMeshComponent->bUseComplexAsSimpleCollision = true;
 	ProceduralMeshComponent->UpdateBounds();
+}
 
-
+void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
+{
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
-	{
-		if (PCGComponent && PCGComponent->GetGraph())
 		{
-			PCGComponent->Cleanup();
-			PCGComponent->Generate();
-			
-			UE_LOG(LogWorldGenerator, Warning, TEXT("PCG Generated on next tick."));
-		}
-	});
+			if (PCGComponent && PCGComponent->GetGraph())
+			{
+				PCGComponent->Cleanup();
+				PCGComponent->Generate();
+
+				UE_LOG(LogWorldGenerator, Warning, TEXT("PCG Generated on next tick."));
+			}
+		});
 }
 
 // Called when the game starts or when spawned

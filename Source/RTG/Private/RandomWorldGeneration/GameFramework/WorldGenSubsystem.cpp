@@ -4,70 +4,85 @@
 
 #include "Engine/AssetManager.h"
 
+#include "RandomWorldGeneration/Core/WorldGenTypes.h"
 #include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
-#include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
+#include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
 
 DEFINE_LOG_CATEGORY(LogWorldGenSubsystem);
 
-void UWorldGenSubsystem::GenerateWorld(int32 Seed)
+void UWorldGenSubsystem::InitiateWorldGeneration(int32 Seed)
 {
-	if (WorldGenConfig && WorldGenConfig->WorldGeneratorClass)
+	for (auto& Config : LoadedConfigs)
 	{
-		WorldGenerator = GetWorld()->SpawnActor<AWorldGenerator>(WorldGenConfig->WorldGeneratorClass);
-	}
-	else
-	{
-		WorldGenerator = GetWorld()->SpawnActor<AWorldGenerator>(AWorldGenerator::StaticClass());
-	}
+		if (Config.Key == FPrimaryAssetType(WorldConfigTags::GenConfigName))
+		{
+			UWorldGenConfig* GenConfig = Cast<UWorldGenConfig>(Config.Value);
 
-	// WorldGenConfig를 넘겨줘야 할 듯.
-	WorldGenerator->UpdateMesh(Seed, WorldGenConfig);
+			WorldGenerator = GetWorld()->SpawnActor<AWorldGenerator>(GenConfig->WorldGeneratorClass);
+			break;
+		}
+		else
+			continue;
+	}
+	if (WorldGenerator)
+		WorldGenerator->GenerateWorld(Seed, LoadedConfigs);
+	else
+		UE_LOG(LogWorldGenSubsystem, Error, TEXT("WorldGenerator is not found."));
 }
 
 void UWorldGenSubsystem::InitializeWorldConfig()
 {
+	LoadConfigByType(FPrimaryAssetType(WorldConfigTags::GenConfigName));
+	LoadConfigByType(FPrimaryAssetType(WorldConfigTags::ThemeConfigName));
+}
+
+void UWorldGenSubsystem::LoadConfigByType(FPrimaryAssetType AssetType)
+{
 	UAssetManager& AssetManager = UAssetManager::Get();
 	TArray<FPrimaryAssetId> AssetIds;
-	AssetManager.GetPrimaryAssetIdList(FPrimaryAssetType("WorldGenConfig"), AssetIds);
+	AssetManager.GetPrimaryAssetIdList(AssetType, AssetIds);
 
-	if(AssetIds.IsEmpty())
+	if (AssetIds.IsEmpty())
 	{
-		UE_LOG(LogWorldGenSubsystem, Error, TEXT("World generation config PrimaryAssetId is not found."));
+		UE_LOG(LogWorldGenSubsystem, Error, TEXT("%s PrimaryAssetId is not found."), *AssetType.ToString());
 		return;
 	}
 
-	// World Config가 이미 캐싱되어 있는지 확인
-	if (UObject* Object = AssetManager.GetPrimaryAssetObject(AssetIds[0]))
+	if (UObject* LoadObject = AssetManager.GetPrimaryAssetObject(AssetIds[0]))
 	{
-		WorldGenConfig = Cast<UWorldGenConfig>(Object);
-
-		OnConfigInitialized();
+		// 이미 있다면 즉시 콜백 호출
+		OnConfigInitialized(AssetType);
 	}
 	else
 	{
-		// 캐시에 올라와있지 않은 경우 비동기 작업 시작
-		// 로드가 완료되면 실행될 '델리게이트'를 등록함.
-		AssetManager.LoadPrimaryAssets(AssetIds, TArray<FName>(), FStreamableDelegate::CreateUObject(this, &UWorldGenSubsystem::OnConfigInitialized));
+		// 비동기 로드 시작
+		// 여기서 AssetType을 바인딩하여 OnConfigInitialized의 인자를 넘겨줌
+		AssetManager.LoadPrimaryAssets(
+			AssetIds,
+			TArray<FName>(),
+			FStreamableDelegate::CreateUObject(this, &UWorldGenSubsystem::OnConfigInitialized, AssetType)
+		);
 
-		UE_LOG(LogWorldGenSubsystem, Warning, TEXT("Starting async load of World Generation config..."));
+		UE_LOG(LogWorldGenSubsystem, Log, TEXT("Starting async load for: %s"), *AssetType.ToString());
 	}
 }
 
-void UWorldGenSubsystem::OnConfigInitialized()
+void UWorldGenSubsystem::OnConfigInitialized(FPrimaryAssetType AssetType)
 {
-	if (!WorldGenConfig)
+	UAssetManager& AssetManager = UAssetManager::Get();
+	TArray<FPrimaryAssetId> AssetIds;
+	AssetManager.GetPrimaryAssetIdList(AssetType, AssetIds);
+
+	UObject* LoadObject = AssetManager.GetPrimaryAssetObject(AssetIds[0]);
+	if (!LoadObject) return;
+
+	LoadedConfigs.Add(AssetType, LoadObject);
+	if (LoadedConfigs.Num() >= ExpectedCount)
 	{
-		UAssetManager& AssetManager = UAssetManager::Get();
-		TArray<FPrimaryAssetId> AssetIds;
-		AssetManager.GetPrimaryAssetIdList(FPrimaryAssetType("WorldGenConfig"), AssetIds);
-
-		WorldGenConfig = Cast<UWorldGenConfig>(AssetManager.GetPrimaryAssetObject(AssetIds[0]));
+		UE_LOG(LogWorldGenSubsystem, Log, TEXT("All Configs loaded. Starting world generation..."));
+		InitiateWorldGeneration(0);
 	}
-
-	UE_LOG(LogWorldGenSubsystem, Warning, TEXT("World Generation config loaded successfully.\n Starting world generation..."));
-
-	GenerateWorld(0);
 }
 
 void UWorldGenSubsystem::OnWorldBeginPlay(UWorld& World)

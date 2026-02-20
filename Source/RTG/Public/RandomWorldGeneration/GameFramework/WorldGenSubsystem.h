@@ -19,17 +19,21 @@ class RTG_API UWorldGenSubsystem : public UWorldSubsystem
 
 public:
 	UFUNCTION()
-	void GenerateWorld(int32 Seed);
+	void InitiateWorldGeneration(int32 Seed);
 
 protected:
 	void InitializeWorldConfig();
 
-	UFUNCTION()
-	void OnConfigInitialized();
+	void LoadConfigByType(FPrimaryAssetType AssetType);
+
+	void OnConfigInitialized(FPrimaryAssetType AssetType);
 
 	virtual void OnWorldBeginPlay(UWorld& World) override;
 
-	class UWorldGenConfig* WorldGenConfig;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Configs")
+	TMap<FPrimaryAssetType, TObjectPtr<UObject>> LoadedConfigs;
+
+	int32 ExpectedCount = 2;
 
 private:
 	UPROPERTY()

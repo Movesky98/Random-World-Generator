@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EWorldTheme.generated.h"
+#include "WorldGenTypes.generated.h"
 
 UENUM(BlueprintType)
 enum class EWorldTheme : uint8
@@ -13,3 +13,10 @@ enum class EWorldTheme : uint8
 	RuralVillage	UMETA(DisplayName = "Rural Village"),	// √Ã∂Ù
 	Joseon			UMETA(DisplayName = "Joseon"),			// ¡∂º±
 };
+
+namespace WorldConfigTags
+{
+	const FName GenConfigName = FName("WorldGenConfig");
+	const FName ThemeConfigName = FName("WorldThemeConfig");
+}
+

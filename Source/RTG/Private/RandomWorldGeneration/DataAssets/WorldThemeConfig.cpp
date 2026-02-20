@@ -2,4 +2,9 @@
 
 
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
-#include "RandomWorldGeneration/Enums/EWorldTheme.h"
+
+
+FPrimaryAssetId UWorldThemeConfig::GetPrimaryAssetId() const
+{
+	return FPrimaryAssetId("WorldThemeConfig", GetFName());
+}

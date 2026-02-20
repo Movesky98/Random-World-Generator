@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+
 #include "ProceduralMeshComponent.h"
 #include "PCGComponent.h"
+
 #include "WorldGenerator.generated.h"
 
 RTG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenerator, Log, All);
@@ -23,7 +25,11 @@ public:
 	// Sets default values for this actor's properties
 	AWorldGenerator();
 
-	void UpdateMesh(int32 Seed, class UWorldGenConfig* Config);
+	void GenerateWorld(int32 Seed, TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs);
+
+	void GenerateTerrain(class UWorldGenConfig* Config);
+
+	void GenerateContent(class UWorldThemeConfig* Config);
 
 protected:
 	// Called when the game starts or when spawned
