@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class RTG_API UWorldGenConfig : public UDataAsset
+class RWG_API UWorldGenConfig : public UDataAsset
 {
 	GENERATED_BODY()
 	

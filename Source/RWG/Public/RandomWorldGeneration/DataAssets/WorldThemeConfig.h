@@ -26,7 +26,7 @@ struct FWorldStructureData
  * 
  */
 UCLASS()
-class RTG_API UWorldThemeConfig : public UDataAsset
+class RWG_API UWorldThemeConfig : public UDataAsset
 {
 	GENERATED_BODY()
 	

@@ -6,14 +6,14 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "WorldGenSubsystem.generated.h"
 
-RTG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenSubsystem, Log, All);
+RWG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenSubsystem, Log, All);
 
 /**
  * World Generation Management Subsystem.
  * 
  */
 UCLASS()
-class RTG_API UWorldGenSubsystem : public UWorldSubsystem
+class RWG_API UWorldGenSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
