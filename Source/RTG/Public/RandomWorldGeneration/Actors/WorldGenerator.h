@@ -29,12 +29,20 @@ public:
 
 	void GenerateTerrain(class UWorldGenConfig* Config);
 
+	void InitializePCGConfigs(const FVector& CityCenter, const FVector& CityRadius);
+
 	void GenerateContent(class UWorldThemeConfig* Config);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
+	FVector MainCityCenter;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
+	float MainCityRadius;
+	
 private:
 	UPROPERTY(VisibleAnywhere)
 	UProceduralMeshComponent* ProceduralMeshComponent;

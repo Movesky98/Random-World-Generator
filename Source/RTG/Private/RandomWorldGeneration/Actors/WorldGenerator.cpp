@@ -54,6 +54,12 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 
 	FVector2D CenterPos(CenterX, CenterY);
 
+	float HalfWidth = Config->XSize * Config->GridSpacing / 2;
+	float HalfHeight = Config->YSize * Config->GridSpacing / 2;
+
+	MainCityCenter = GetActorLocation() + FVector(HalfWidth, HalfHeight, 0.0f);
+	MainCityRadius = Config->CityRadius * Config->GridSpacing;
+
 	for (int32 Y = 0; Y <= Config->YSize; Y++)
 	{
 		for (int32 X = 0; X <= Config->XSize; X++)
@@ -122,13 +128,23 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 	ProceduralMeshComponent->UpdateBounds();
 }
 
+void AWorldGenerator::InitializePCGConfigs(const FVector& CityCenter, const FVector& CityRadius)
+{
+	// PCG Graph에 파라미터 전달
+
+
+}
+
 void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 {
+	UE_LOG(LogWorldGenerator, Warning, TEXT("Current City Parameter value : \nMainCityCenter = X : %.3f, Y : %.3f, Z : %.3f\nMainCityRadius : %.3f"), MainCityCenter.X, MainCityCenter.Y, MainCityCenter.Z, MainCityRadius);
+
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
 		{
 			if (PCGComponent && PCGComponent->GetGraph())
 			{
-				PCGComponent->Cleanup();
+
+
 				PCGComponent->Generate();
 
 				UE_LOG(LogWorldGenerator, Warning, TEXT("PCG Generated on next tick."));
