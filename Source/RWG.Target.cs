@@ -3,13 +3,13 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class RTGTarget : TargetRules
+public class RWGTarget : TargetRules
 {
-	public RTGTarget(TargetInfo Target) : base(Target)
+	public RWGTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_4;
-		ExtraModuleNames.Add("RTG");
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_6;
+		ExtraModuleNames.Add("RWG");
 	}
 }

@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "RTG.h"
+#include "RWG.h"
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, RTG, "RTG" );
+IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, RWG, "RWG" );

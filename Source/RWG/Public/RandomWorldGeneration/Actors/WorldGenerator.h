@@ -10,14 +10,14 @@
 
 #include "WorldGenerator.generated.h"
 
-RTG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenerator, Log, All);
+RWG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenerator, Log, All);
 
 /*
 * World Generator Actor.
 * 
 */
 UCLASS()
-class RTG_API AWorldGenerator : public AActor
+class RWG_API AWorldGenerator : public AActor
 {
 	GENERATED_BODY()
 	
