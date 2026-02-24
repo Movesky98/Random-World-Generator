@@ -7,6 +7,8 @@
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Core/WorldGenTypes.h"
 
+#include "PCGGraph.h"
+
 DEFINE_LOG_CATEGORY(LogWorldGenerator);
 
 
@@ -137,13 +139,12 @@ void AWorldGenerator::InitializePCGConfigs(const FVector& CityCenter, const FVec
 
 void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 {
-	UE_LOG(LogWorldGenerator, Warning, TEXT("Current City Parameter value : \nMainCityCenter = X : %.3f, Y : %.3f, Z : %.3f\nMainCityRadius : %.3f"), MainCityCenter.X, MainCityCenter.Y, MainCityCenter.Z, MainCityRadius);
-
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
 		{
 			if (PCGComponent && PCGComponent->GetGraph())
 			{
-
+				PCGComponent->GetGraph()->SetGraphParameter(FName("MainCityCenter"), MainCityCenter);
+				PCGComponent->GetGraph()->SetGraphParameter(FName("MainCityRadius"), MainCityRadius);
 
 				PCGComponent->Generate();
 
