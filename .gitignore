@@ -6,3 +6,7 @@ DerivedDataCache/*
 *.suo
 .vs/*
 DesignSummary/*
+
+
+/hooks/
+/lfs/
