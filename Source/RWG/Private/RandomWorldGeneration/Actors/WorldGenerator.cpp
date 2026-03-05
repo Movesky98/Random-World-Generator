@@ -6,11 +6,12 @@
 #include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Core/WorldGenTypes.h"
+#include "RandomWorldGeneration/Grid/CityCell.h"
+#include "RandomWorldGeneration/PCG/RoadGraphBuilder.h"
 
 #include "PCGGraph.h"
 
 DEFINE_LOG_CATEGORY(LogWorldGenerator);
-
 
 // Sets default values
 AWorldGenerator::AWorldGenerator()
@@ -61,6 +62,7 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 
 	MainCityCenter = GetActorLocation() + FVector(HalfWidth, HalfHeight, 0.0f);
 	MainCityRadius = Config->CityRadius * Config->GridSpacing;
+	CityHeight = Config->CityHeight;
 
 	for (int32 Y = 0; Y <= Config->YSize; Y++)
 	{
@@ -139,12 +141,26 @@ void AWorldGenerator::InitializePCGConfigs(const FVector& CityCenter, const FVec
 
 void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 {
-	GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
+	FRoadGraphBuilder* RoadGraphBuilder;
+	FRoadBuildParams BuildParams;
+
+	BuildParams.CityCenterXY = FVector2D(MainCityCenter.X, MainCityCenter.Y);
+	BuildParams.CityRadius = MainCityRadius;
+	BuildParams.CityHeight = CityHeight;
+	
+	RoadGraph = RoadGraphBuilder->BuildGraph2D(GetWorld(), BuildParams);
+
+	GetWorld()->GetTimerManager().SetTimerForNextTick([this, Config]()
 		{
 			if (PCGComponent && PCGComponent->GetGraph())
 			{
 				PCGComponent->GetGraph()->SetGraphParameter(FName("MainCityCenter"), MainCityCenter);
 				PCGComponent->GetGraph()->SetGraphParameter(FName("MainCityRadius"), MainCityRadius);
+
+				// Set Static Meshs by Theme
+				SetPCGObjectParameter(WorldThemeStructureTags::MainBuildingName, Config->MainBuilding);
+				TSoftObjectPtr<UObject> ThemePtr(Config);
+				PCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
 
 				PCGComponent->Generate();
 
@@ -158,5 +174,28 @@ void AWorldGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+template<typename TObject>
+void AWorldGenerator::SetPCGObjectParameter(FName PropertyName, TObject* Value)
+{
+	static_assert(TIsDerivedFrom<TObject, UObject>::IsDerived, "TObject must derive from UObject");
+	PCGComponent->GetGraph()->SetGraphParameter(PropertyName, Cast<UObject>(Value));
+}
+
+template <typename TObject>
+void AWorldGenerator::SetPCGObjectParameters(FName PropertyName, const TArray<TObject*>& Values)
+{
+	static_assert(TIsDerivedFrom<TObject, UObject>::IsDerived, "TObject must derive from UObject");
+
+	TArray<UObject*> Objs;
+	Objs.Reserve(Values.Num());
+
+	for (TObject* Obj : Values)
+	{
+		Objs.Add(Obj);
+	}
+
+	PCGComponent->GetGraph()->UpdateArrayGraphParameter(PropertyName, Objs);
 }
 

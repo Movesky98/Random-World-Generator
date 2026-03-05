@@ -20,3 +20,11 @@ namespace WorldConfigTags
 	const FName ThemeConfigName = FName("WorldThemeConfig");
 }
 
+namespace WorldThemeStructureTags
+{
+	const FName MainBuildingName = FName("MainBuilding");
+	const FName BuildingsName = FName("Buildings");
+	const FName PropsName = FName("Props");
+	const FName WallsName = FName("Walls");
+	const FName RoadsName = FName("Roads");
+}
