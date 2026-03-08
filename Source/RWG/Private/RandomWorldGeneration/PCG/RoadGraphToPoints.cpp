@@ -15,7 +15,7 @@ namespace RoadAttributes
 {
 	static const FName EdgeId = TEXT("EdgeId");
 	static const FName SegIndex = TEXT("SegmentIndex");
-	static const FName Width = TEXT("Width");
+	static const FName HalfWidth = TEXT("HalfWidth");
 	static const FName RoadType = TEXT("RoadType");
 	static const FName EdgeAlpha = TEXT("EdgeAlpha");	// 포인트가 해당 엣지 위에서 얼마나 진행되었는지 (0 ~ 1)
 	static const FName Forward = TEXT("Forward");
@@ -94,7 +94,7 @@ bool FRoadGraphToPointsElement::ExecuteInternal(FPCGContext* Context) const
 
 	auto* AttrEdgeId = MetaData->CreateAttribute<int32>(RoadAttributes::EdgeId, -1, false, true);
 	auto* AttrSegIndex = MetaData->CreateAttribute<int32>(RoadAttributes::SegIndex, -1, false, true);
-	auto* AttrWidth = MetaData->CreateAttribute<float>(RoadAttributes::Width, 400.0f, true, true);
+	auto* AttrHalfWidth = MetaData->CreateAttribute<float>(RoadAttributes::HalfWidth, 400.0f, true, true);
 	auto* AttrRoadType = MetaData->CreateAttribute<int32>(RoadAttributes::RoadType, 0, false, true);
 	auto* AttrEdgeAlpha = MetaData->CreateAttribute<float>(RoadAttributes::EdgeAlpha, 0.0f, true, true);
 	auto* AttrForward = MetaData->CreateAttribute<FVector>(RoadAttributes::Forward, FVector::ForwardVector, true, true);
@@ -104,31 +104,14 @@ bool FRoadGraphToPointsElement::ExecuteInternal(FPCGContext* Context) const
 	// 직선 Edge 샘플링 → 포인트 생성
 	for (const FRoadEdge& Edge : Graph.GetEdges())
 	{
-		const FRoadNode* SNode = Graph.GetNode(Edge.StartNodeId);
-		const FRoadNode* ENode = Graph.GetNode(Edge.EndNodeId);
-		if (!SNode || !ENode) continue;
+		const int32 NumSegments = Edge.SegmentPoints.Num();
 
-		const FVector SPos = SNode->Position;
-		const FVector EPos = ENode->Position;
-
-		FVector Direction = SPos - EPos;
-		const float Length = Direction.Length();
-
-		// 두 점의 위치가 거의 같을 경우 패스
-		if (Length < KINDA_SMALL_NUMBER) continue;	
-
-		Direction /= Length;
-
-		const int32 NumSegment = FMath::Max(1, FMath::FloorToInt(Length / Spacing));
-		const int32 NumPoints = NumSegment + 1;
-
-		for (int32 i = 0; i < NumPoints; ++i)
+		for (int32 i = 0; i < NumSegments; ++i)
 		{
-			const float Alpha = (NumPoints == 1) ? 0.0f : (float)i / (float)(NumPoints - 1);
-			FVector Pos = FMath::Lerp(SPos, EPos, Alpha);
+			const float Alpha = (NumSegments <= 1) ? 0.0f : (float)i / (float)(NumSegments - 1);
 
 			FPCGPoint Point;
-			Point.Transform = FTransform(FRotationMatrix::MakeFromX(Direction).ToQuat(), Pos, FVector::OneVector);
+			Point.Transform = FTransform(FRotationMatrix::MakeFromX(Edge.Direction).ToQuat(), Edge.SegmentPoints[i], FVector::OneVector);
 			Point.Density = 1.0f;
 
 			const int64 Key = MetaData->AddEntry();
@@ -136,10 +119,10 @@ bool FRoadGraphToPointsElement::ExecuteInternal(FPCGContext* Context) const
 
 			AttrEdgeId->SetValue(Key, Edge.Id);
 			AttrSegIndex->SetValue(Key, i);
-			AttrWidth->SetValue(Key, Edge.Width);
+			AttrHalfWidth->SetValue(Key, Edge.HalfWidth);
 			AttrRoadType->SetValue(Key, Edge.RoadType);
 			AttrEdgeAlpha->SetValue(Key, Alpha);
-			AttrForward->SetValue(Key, Direction);
+			AttrForward->SetValue(Key, Edge.Direction);
 
 			OutPoints.Add(Point);
 		}

@@ -8,6 +8,7 @@
 #include "ProceduralMeshComponent.h"
 #include "PCGComponent.h"
 #include "RandomWorldGeneration/PCG/RoadGraph.h"
+#include "RandomWorldGeneration/Grid/CityGridTypes.h"
 #include "WorldGenerator.generated.h"
 
 RWG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenerator, Log, All);
@@ -45,6 +46,8 @@ protected:
 	template <typename TObject>
 	void SetPCGObjectParameters(FName PropertyName, const TArray<TObject*>& Values);
 
+	void DrawDebugGrid();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
 	FVector MainCityCenter;
 
@@ -61,6 +64,8 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "PCG")
 	UPCGComponent* PCGComponent;
 
-	class FRoadGraph RoadGraph;
+	FRoadGraph RoadGraph;
+
+	FCityGrid CityGrid;
 };
 

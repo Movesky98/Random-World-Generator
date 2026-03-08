@@ -6,6 +6,8 @@ DerivedDataCache/*
 *.suo
 .vs/*
 DesignSummary/*
+Content/StarterContent/*
+
 
 
 /hooks/

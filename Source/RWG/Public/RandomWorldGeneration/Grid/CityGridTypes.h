@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#include "RandomWorldGeneration/PCG/RoadGraph.h"
+
 enum class ECellType : uint8
 {
 	Empty,
@@ -47,17 +49,23 @@ struct FCityCell
 	int32 BlockId = -1;
 };
 
-struct FCityGrid
+class RWG_API FCityGrid
 {
-	TArray<FCityCell> CityCells;
+public:
+	const FVector GetOrigin() const;
+	void SetOirin(const FVector InOrigin);
 
-	// 월드 내 가로 / 세로 셀 개수
-	int32 Width, Height;
+	const int32 GetWidth() const;
+	void SetWidth(const int32 InWidth);
 
-	// 셀의 크기
-	float CellSize = 200.0f;
+	const int32 GetHeight() const;
+	void SetHeight(const int32 InHeight);
 
-	FVector Origin = FVector::ZeroVector;
+	const float GetCellSize() const { return CellSize; }
+	void SetCellSize(const float InCellSize);
+
+	const TArray<FCityCell> GetCityCells() const;
+	TArray<FCityCell>& GetCityCellsMutable();
 
 	FORCEINLINE int32 Index(int32 X, int32 Y) const
 	{
@@ -69,17 +77,22 @@ struct FCityGrid
 		return X >= 0 && X < Width && Y >= 0 && Y < Height;
 	}
 
-	void Initialize(int32 InWidth, int32 InHeight, float InCellSize)
-	{
-		Width = InWidth;
-		Height = InHeight;
-		CellSize = InCellSize;
+	void GenerateGrid(FVector CityCenter, float CityRadius, float InCellSize, const FRoadGraph& RoadGraph);
+	
+	void SetWorldPosition(int32 X, int32 Y, FVector InPosition);
 
-		CityCells.SetNum(Width * Height);
-	}
+	FVector GetWorldPosition(int32 X, int32 Y);
 
-	FVector GetWorldPosition(int32 X, int32 Y)
-	{
-		return Origin + FVector(X * CellSize, Y * CellSize, 0.0f);
-	}
+
+
+private:
+	TArray<FCityCell> CityCells;
+
+	// 월드 내 가로 / 세로 셀 개수
+	int32 Width, Height;
+
+	// 셀의 크기
+	float CellSize = 200.0f;
+
+	FVector Origin = FVector::ZeroVector;
 };

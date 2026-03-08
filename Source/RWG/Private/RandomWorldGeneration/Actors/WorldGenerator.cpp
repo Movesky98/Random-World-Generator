@@ -6,8 +6,8 @@
 #include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Core/WorldGenTypes.h"
-#include "RandomWorldGeneration/Grid/CityCell.h"
 #include "RandomWorldGeneration/PCG/RoadGraphBuilder.h"
+#include "RandomWorldGeneration/Grid/CityGridBuilder.h"
 
 #include "PCGGraph.h"
 
@@ -141,14 +141,22 @@ void AWorldGenerator::InitializePCGConfigs(const FVector& CityCenter, const FVec
 
 void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 {
-	FRoadGraphBuilder* RoadGraphBuilder;
-	FRoadBuildParams BuildParams;
+	FRoadBuildParams RoadBuildParams;
+	RoadBuildParams.CityCenterXY = FVector2D(MainCityCenter.X, MainCityCenter.Y);
+	RoadBuildParams.CityRadius = MainCityRadius;
+	RoadBuildParams.CityHeight = CityHeight;
 
-	BuildParams.CityCenterXY = FVector2D(MainCityCenter.X, MainCityCenter.Y);
-	BuildParams.CityRadius = MainCityRadius;
-	BuildParams.CityHeight = CityHeight;
-	
-	RoadGraph = RoadGraphBuilder->BuildGraph2D(GetWorld(), BuildParams);
+	RoadGraph = FRoadGraphBuilder::BuildGraph2D(GetWorld(), RoadBuildParams);
+
+	FGridBuildParams GridBuildParams;
+	GridBuildParams.CellSize = 400.0f;
+	GridBuildParams.CityCenter = MainCityCenter;
+	GridBuildParams.CityRadius = MainCityRadius;
+	GridBuildParams.RoadGraph = RoadGraph;
+
+	CityGrid = FCityGridBuilder::BuildGrid2D(GridBuildParams);
+
+	// CityGrid.GenerateGrid(MainCityCenter, MainCityRadius, 400.0f, RoadGraph);
 
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this, Config]()
 		{
@@ -165,6 +173,8 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 				PCGComponent->Generate();
 
 				UE_LOG(LogWorldGenerator, Warning, TEXT("PCG Generated on next tick."));
+
+				DrawDebugGrid();
 			}
 		});
 }
@@ -174,6 +184,47 @@ void AWorldGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void AWorldGenerator::DrawDebugGrid()
+{
+	const TArray<FCityCell>& CityCells = CityGrid.GetCityCells();
+	UWorld* World = GetWorld();
+	if (!CityCells.Num() || !World) return;
+
+	const float CellSize = CityGrid.GetCellSize();
+
+	for (int i = 0; i < CityCells.Num(); i++)
+	{
+		float MinX = CityCells[i].WorldPosition.X - CellSize / 2;
+		float MaxX = CityCells[i].WorldPosition.X + CellSize / 2;
+		float MinY = CityCells[i].WorldPosition.Y - CellSize / 2;
+		float MaxY = CityCells[i].WorldPosition.Y + CellSize / 2;
+		float Z = 8050.0f;
+
+		FColor Color = FColor::White;
+
+		switch (CityCells[i].Type)
+		{
+		case ECellType::Blocked:
+			Color = FColor::Red;
+			break;
+		case ECellType::Empty:
+			Color = FColor::Green;
+			break;
+		case ECellType::Road:
+			Color = FColor::Orange;
+		default:
+			break;
+		}
+
+		DrawDebugLine(World, FVector(MinX, MaxY, Z), FVector(MaxX, MaxY, Z), Color, true);	// Top
+		DrawDebugLine(World, FVector(MinX, MinY, Z), FVector(MaxX, MinY, Z), Color, true);	// Bottom
+		DrawDebugLine(World, FVector(MinX, MinY, Z), FVector(MinX, MaxY, Z), Color, true);	// Left
+		DrawDebugLine(World, FVector(MaxX, MinY, Z), FVector(MaxX, MaxY, Z), Color, true);	// Right
+
+		// DrawDebugString(World, CityCells[i].WorldPosition, FString::FromInt(i), 0, FColor::White, -1.0f, false, 30.0f);
+	}
 }
 
 template<typename TObject>

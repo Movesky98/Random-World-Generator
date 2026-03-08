@@ -24,6 +24,31 @@ int32 FRoadGraph::AddEdge(int32 StartNodeId, int32 EndNodeId, float Width, int32
 	Nodes[StartNodeId].EdgeIds.Add(NewId);
 	Nodes[EndNodeId].EdgeIds.Add(NewId);
 
+	// Add SegmentPoints, Direction
+	const FVector SPos = Nodes[StartNodeId].Position;
+	const FVector EPos = Nodes[EndNodeId].Position;
+
+	FRoadEdge* Edge = GetEdgeMutable(NewId);
+	Edge->Direction = SPos - EPos;
+	const float Length = Edge->Direction.Length();
+	
+	// 두 점의 위치가 거의 같을 경우 패스
+	if (Length < KINDA_SMALL_NUMBER)
+		return NewId;
+	
+	Edge->Direction /= Length;
+
+	const float Spacing = 400.0f;
+	const int32 NumSegment = FMath::Max(1, FMath::FloorToInt(Length / Spacing));
+	
+	for (int32 i = 0; i < NumSegment + 1; i++)
+	{
+		const float Alpha = (!NumSegment) ? 0.0f : (float)i / (float)(NumSegment);
+		FVector Pos = FMath::Lerp(SPos, EPos, Alpha);
+
+		Edge->SegmentPoints.Add(Pos);
+	}
+
 	return NewId;
 }
 

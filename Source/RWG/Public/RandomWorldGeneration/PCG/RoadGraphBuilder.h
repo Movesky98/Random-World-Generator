@@ -30,7 +30,6 @@ public:
 		FRandomStream Rand(InParams.Seed);
 		FRoadGraph Graph;
 
-
 		float TraceStartZOffset = InParams.CityHeight * 1.5f;
 		float TraceDistance = InParams.CityHeight;
 
