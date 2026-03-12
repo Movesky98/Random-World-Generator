@@ -115,3 +115,13 @@ FVector FCityGrid::GetWorldPosition(int32 X, int32 Y)
 {
 	return Origin + FVector(X * CellSize, Y * CellSize, 0.0f);
 }
+
+const TArray<FCityLot> FCityGrid::GetLots() const
+{
+	return Lots.Num() ? Lots : TArray<FCityLot>();
+}
+
+void FCityGrid::SetLots(const TArray<FCityLot>& InLots)
+{
+	Lots = InLots;
+}

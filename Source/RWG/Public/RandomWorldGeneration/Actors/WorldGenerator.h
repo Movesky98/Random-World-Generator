@@ -67,5 +67,7 @@ private:
 	FRoadGraph RoadGraph;
 
 	FCityGrid CityGrid;
+
+	TArray<FCityBlock> CityBlocks;
 };
 

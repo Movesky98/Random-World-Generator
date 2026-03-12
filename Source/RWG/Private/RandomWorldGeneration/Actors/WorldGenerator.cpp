@@ -155,8 +155,8 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 	GridBuildParams.RoadGraph = RoadGraph;
 
 	CityGrid = FCityGridBuilder::BuildGrid2D(GridBuildParams);
-
-	// CityGrid.GenerateGrid(MainCityCenter, MainCityRadius, 400.0f, RoadGraph);
+	CityBlocks = FCityGridBuilder::BuildBlocks(CityGrid);
+	FCityGridBuilder::ExtractLotsFromBlock(CityGrid, CityBlocks);
 
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this, Config]()
 		{
@@ -194,6 +194,20 @@ void AWorldGenerator::DrawDebugGrid()
 
 	const float CellSize = CityGrid.GetCellSize();
 
+	TArray<FColor> Colors;
+	Colors.SetNum(CityBlocks.Num());
+
+	for (int32 i = 0; i < CityBlocks.Num(); ++i)
+	{
+		const float Hue = 360.0f * i / CityBlocks.Num();
+
+		Colors[i] = FLinearColor::MakeFromHSV8(
+			(uint8)(Hue / 360.0f * 255.0f),
+			200,
+			255
+		).ToFColor(true);
+	}
+
 	for (int i = 0; i < CityCells.Num(); i++)
 	{
 		float MinX = CityCells[i].WorldPosition.X - CellSize / 2;
@@ -207,13 +221,29 @@ void AWorldGenerator::DrawDebugGrid()
 		switch (CityCells[i].Type)
 		{
 		case ECellType::Blocked:
-			Color = FColor::Red;
+			Color = FColor::Black;
 			break;
 		case ECellType::Empty:
-			Color = FColor::Green;
+		{
+			int32 X = i % CityGrid.GetWidth();
+			int32 Y = i / CityGrid.GetWidth();
+
+			Color = CityCells[i].BlockId != -1 ? Colors[CityCells[i].BlockId] : FColor::Black;
+
+
+			for (const FCityLot& Lot : CityGrid.GetLots())
+			{
+				if (Lot.CellIndices.Contains(CityGrid.Index(X, Y)))
+				{
+					Color = FColor::White;
+					break;
+				}
+			}
+		}
+
 			break;
 		case ECellType::Road:
-			Color = FColor::Orange;
+			Color = FColor::Yellow;
 		default:
 			break;
 		}

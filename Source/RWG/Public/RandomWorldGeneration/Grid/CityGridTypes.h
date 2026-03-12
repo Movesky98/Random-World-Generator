@@ -49,6 +49,54 @@ struct FCityCell
 	int32 BlockId = -1;
 };
 
+/// <summary>
+/// 블록 구조체.
+/// 그리드 위에 그려진 셀 중, 건물을 배치할 수 있는 셀들로 블록화한 것을 저장하는 구조체
+/// </summary>
+struct FCityBlock
+{
+	int32 BlockId = -1;
+	TArray<int32> CellIndices;
+	int32 CellCount = 0;
+};
+
+/// <summary>
+/// 필지 구조체. 
+/// 여러 셀을 묶어 건물을 배치할 공간을 저장하는 구조체
+/// </summary>
+struct FCityLot
+{
+	int32 LotId = -1;
+	int32 BlockId = -1;
+
+	TArray<int32> CellIndices;
+
+	int32 MinX = 0;
+	int32 MaxX = 0;
+	int32 MinY = 0;
+	int32 MaxY = 0;
+
+	FVector Center = FVector::ZeroVector;
+
+	bool bTouchesRoad = false;	// 도로와 맞닿아 있는지
+	FVector FacingDirection = FVector::ForwardVector;
+
+	FORCEINLINE int32 GetWidthInCells() const
+	{
+		return MaxX - MinX + 1;
+	}
+
+	FORCEINLINE int32 GetHeightInCells() const
+	{
+		return MaxY - MinY + 1;
+	}
+
+	FORCEINLINE int32 GetAreaInCells() const
+	{
+		return CellIndices.Num();
+	}
+};
+
 class RWG_API FCityGrid
 {
 public:
@@ -83,7 +131,8 @@ public:
 
 	FVector GetWorldPosition(int32 X, int32 Y);
 
-
+	const TArray<FCityLot> GetLots() const;
+	void SetLots(const TArray<FCityLot>& InLots);
 
 private:
 	TArray<FCityCell> CityCells;
@@ -95,4 +144,6 @@ private:
 	float CellSize = 200.0f;
 
 	FVector Origin = FVector::ZeroVector;
+
+	TArray<FCityLot> Lots;
 };
