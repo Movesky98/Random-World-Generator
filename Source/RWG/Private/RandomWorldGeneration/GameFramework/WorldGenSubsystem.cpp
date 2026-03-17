@@ -11,7 +11,7 @@
 
 DEFINE_LOG_CATEGORY(LogWorldGenSubsystem);
 
-void UWorldGenSubsystem::InitiateWorldGeneration(int32 Seed)
+void UWorldGenSubsystem::InitiateWorldGeneration()
 {
 	for (auto& Config : LoadedConfigs)
 	{
@@ -26,7 +26,7 @@ void UWorldGenSubsystem::InitiateWorldGeneration(int32 Seed)
 			continue;
 	}
 	if (WorldGenerator)
-		WorldGenerator->GenerateWorld(Seed, LoadedConfigs);
+		WorldGenerator->GenerateWorld(LoadedConfigs);
 	else
 		UE_LOG(LogWorldGenSubsystem, Error, TEXT("WorldGenerator is not found."));
 }
@@ -81,7 +81,7 @@ void UWorldGenSubsystem::OnConfigInitialized(FPrimaryAssetType AssetType)
 	if (LoadedConfigs.Num() >= ExpectedCount)
 	{
 		UE_LOG(LogWorldGenSubsystem, Log, TEXT("All Configs loaded. Starting world generation..."));
-		InitiateWorldGeneration(0);
+		InitiateWorldGeneration();
 	}
 }
 

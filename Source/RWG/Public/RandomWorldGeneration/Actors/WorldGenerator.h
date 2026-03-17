@@ -26,37 +26,38 @@ public:
 	// Sets default values for this actor's properties
 	AWorldGenerator();
 
-	void GenerateWorld(int32 Seed, TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs);
+	void GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs);
 
 	void GenerateTerrain(class UWorldGenConfig* Config);
-
-	void InitializePCGConfigs(const FVector& CityCenter, const FVector& CityRadius);
 
 	void GenerateContent(class UWorldThemeConfig* Config);
 
 	const FRoadGraph& GetRoadGraph() const { return RoadGraph; }
 
+	const FCityGrid& GetCityGrid() const { return CityGrid; }
+
+	int32 GetSeed() const { return MasterSeed; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	template <typename TObject>
-	void SetPCGObjectParameter(FName PropertyName, TObject* Value);
-
-	template <typename TObject>
-	void SetPCGObjectParameters(FName PropertyName, const TArray<TObject*>& Values);
-
-	void DrawDebugGrid();
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
+	FVector CityCenter;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
-	FVector MainCityCenter;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
-	float MainCityRadius;
+	float CityRadius;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
 	float CityHeight;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parameters")
+	int32 MasterSeed = 0;
 	
+	void DrawDebugGrid();
+
+	void DebugSeedResult();
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "PMC")
 	UProceduralMeshComponent* ProceduralMeshComponent;

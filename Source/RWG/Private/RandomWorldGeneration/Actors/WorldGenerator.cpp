@@ -24,7 +24,7 @@ AWorldGenerator::AWorldGenerator()
 	PCGComponent->bAutoActivate = false;
 }
 
-void AWorldGenerator::GenerateWorld(int32 Seed, TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs)
+void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs)
 {
 	for (auto& Config : Configs)
 	{
@@ -60,8 +60,8 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 	float HalfWidth = Config->XSize * Config->GridSpacing / 2;
 	float HalfHeight = Config->YSize * Config->GridSpacing / 2;
 
-	MainCityCenter = GetActorLocation() + FVector(HalfWidth, HalfHeight, 0.0f);
-	MainCityRadius = Config->CityRadius * Config->GridSpacing;
+	CityCenter = GetActorLocation() + FVector(HalfWidth, HalfHeight, 0.0f);
+	CityRadius = Config->CityRadius * Config->GridSpacing;
 	CityHeight = Config->CityHeight;
 
 	for (int32 Y = 0; Y <= Config->YSize; Y++)
@@ -132,41 +132,41 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 	ProceduralMeshComponent->UpdateBounds();
 }
 
-void AWorldGenerator::InitializePCGConfigs(const FVector& CityCenter, const FVector& CityRadius)
-{
-	// PCG Graph에 파라미터 전달
-
-
-}
-
 void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 {
 	FRoadBuildParams RoadBuildParams;
-	RoadBuildParams.CityCenterXY = FVector2D(MainCityCenter.X, MainCityCenter.Y);
-	RoadBuildParams.CityRadius = MainCityRadius;
+	RoadBuildParams.Seed = MasterSeed;
+	RoadBuildParams.CityCenterXY = FVector2D(CityCenter.X, CityCenter.Y);
+	RoadBuildParams.CityRadius = CityRadius;
 	RoadBuildParams.CityHeight = CityHeight;
+	RoadBuildParams.MinRoadNum = Config->MinRoadNum;
+	RoadBuildParams.MaxRoadNum = Config->MaxRoadNum;
+	RoadBuildParams.RoadWidth = Config->RoadWidth;
 
 	RoadGraph = FRoadGraphBuilder::BuildGraph2D(GetWorld(), RoadBuildParams);
 
 	FGridBuildParams GridBuildParams;
-	GridBuildParams.CellSize = 400.0f;
-	GridBuildParams.CityCenter = MainCityCenter;
-	GridBuildParams.CityRadius = MainCityRadius;
+	GridBuildParams.CellSize = Config->CellSize;
+	GridBuildParams.CityCenter = CityCenter;
+	GridBuildParams.CityRadius = CityRadius;
 	GridBuildParams.RoadGraph = RoadGraph;
 
 	CityGrid = FCityGridBuilder::BuildGrid2D(GridBuildParams);
 	CityBlocks = FCityGridBuilder::BuildBlocks(CityGrid);
 	FCityGridBuilder::ExtractLotsFromBlock(CityGrid, CityBlocks);
 
+	DebugSeedResult();
+
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this, Config]()
 		{
 			if (PCGComponent && PCGComponent->GetGraph())
 			{
-				PCGComponent->GetGraph()->SetGraphParameter(FName("MainCityCenter"), MainCityCenter);
-				PCGComponent->GetGraph()->SetGraphParameter(FName("MainCityRadius"), MainCityRadius);
+				PCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
+				PCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
+
+				PCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
 
 				// Set Static Meshs by Theme
-				SetPCGObjectParameter(WorldThemeStructureTags::MainBuildingName, Config->MainBuilding);
 				TSoftObjectPtr<UObject> ThemePtr(Config);
 				PCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
 
@@ -174,7 +174,7 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 
 				UE_LOG(LogWorldGenerator, Warning, TEXT("PCG Generated on next tick."));
 
-				DrawDebugGrid();
+				// DrawDebugGrid();
 			}
 		});
 }
@@ -252,31 +252,47 @@ void AWorldGenerator::DrawDebugGrid()
 		DrawDebugLine(World, FVector(MinX, MinY, Z), FVector(MaxX, MinY, Z), Color, true);	// Bottom
 		DrawDebugLine(World, FVector(MinX, MinY, Z), FVector(MinX, MaxY, Z), Color, true);	// Left
 		DrawDebugLine(World, FVector(MaxX, MinY, Z), FVector(MaxX, MaxY, Z), Color, true);	// Right
-
-		// DrawDebugString(World, CityCells[i].WorldPosition, FString::FromInt(i), 0, FColor::White, -1.0f, false, 30.0f);
 	}
 }
 
-template<typename TObject>
-void AWorldGenerator::SetPCGObjectParameter(FName PropertyName, TObject* Value)
+void AWorldGenerator::DebugSeedResult()
 {
-	static_assert(TIsDerivedFrom<TObject, UObject>::IsDerived, "TObject must derive from UObject");
-	PCGComponent->GetGraph()->SetGraphParameter(PropertyName, Cast<UObject>(Value));
-}
+	UE_LOG(LogWorldGenerator, Warning, TEXT("Master Seed : %d"), MasterSeed);
+	UE_LOG(LogWorldGenerator, Warning, TEXT("***************************** Road Graph *****************************"));
+	UE_LOG(LogWorldGenerator, Warning, TEXT("Road Num : %d"), RoadGraph.GetEdges().Num());
 
-template <typename TObject>
-void AWorldGenerator::SetPCGObjectParameters(FName PropertyName, const TArray<TObject*>& Values)
-{
-	static_assert(TIsDerivedFrom<TObject, UObject>::IsDerived, "TObject must derive from UObject");
-
-	TArray<UObject*> Objs;
-	Objs.Reserve(Values.Num());
-
-	for (TObject* Obj : Values)
+	int32 SegmentCount = 0;
+	for (const FRoadEdge& Edge : RoadGraph.GetEdges())
 	{
-		Objs.Add(Obj);
+		SegmentCount += Edge.SegmentPoints.Num();
 	}
 
-	PCGComponent->GetGraph()->UpdateArrayGraphParameter(PropertyName, Objs);
-}
+	UE_LOG(LogWorldGenerator, Warning, TEXT("Road's all segment Num : %d"), SegmentCount);
 
+	for (int i = 0; i < RoadGraph.GetEdges().Num() && i < 10; i++)
+	{
+		int32 SNodeId = RoadGraph.GetEdges()[i].StartNodeId;
+		int32 ENodeId = RoadGraph.GetEdges()[i].EndNodeId;
+		const FRoadNode* SNode = RoadGraph.GetNode(SNodeId);
+		const FRoadNode* ENode = RoadGraph.GetNode(ENodeId);
+
+		UE_LOG(LogWorldGenerator, Warning, TEXT("%dth Road's StartNode Position : X = %.3f / Y = %.3f / Z = %.3f"), i + 1, SNode->Position.X, SNode->Position.Y, SNode->Position.Z);
+		UE_LOG(LogWorldGenerator, Warning, TEXT("%dth Road's EndNode Position : X = %.3f / Y = %.3f / Z = %.3f"), i + 1, ENode->Position.X, ENode->Position.Y, ENode->Position.Z);
+	}
+
+	UE_LOG(LogWorldGenerator, Warning, TEXT("***************************** Grid *****************************"));
+	
+	int32 RoadCellCount = 0;
+	int32 BuildableCellCount = 0;
+
+	for (auto& Cell : CityGrid.GetCityCells())
+	{
+		if (Cell.Type == ECellType::Road)
+			RoadCellCount++;
+	}
+
+	UE_LOG(LogWorldGenerator, Warning, TEXT("RoadCells : %d"), RoadCellCount);
+	UE_LOG(LogWorldGenerator, Warning, TEXT("Lots : %d"), CityGrid.GetLots().Num());
+	UE_LOG(LogWorldGenerator, Warning, TEXT("Blocks : %d"), CityBlocks.Num());
+
+}

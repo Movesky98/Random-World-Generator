@@ -10,11 +10,14 @@ struct FRoadBuildParams
 	FVector2D CityCenterXY = FVector2D::ZeroVector;
 	float CityRadius = 2000.0f;
 	float CityHeight = 8000.0f;
-
+	
 	int32 Seed = 1234;
 
-	// 노드 개수
-	int32 NumNodes = 50;
+	// 노드(도로) 개수
+	int32 MinRoadNum = 50;
+	int32 MaxRoadNum = 100;
+
+	float RoadWidth = 400.0f;
 };
 
 /**
@@ -27,17 +30,19 @@ public:
 	{
 		if (!InWorld) return FRoadGraph();
 
-		FRandomStream Rand(InParams.Seed);
 		FRoadGraph Graph;
 
 		float TraceStartZOffset = InParams.CityHeight * 1.5f;
 		float TraceDistance = InParams.CityHeight;
 
+		FRandomStream RoadStream(InParams.Seed + 1);
+		const int32 RoadNum = RoadStream.RandRange(InParams.MinRoadNum, InParams.MaxRoadNum);
+
 		// 1) 노드 생성
-		for (int32 i = 0; i < InParams.NumNodes; ++i)
+		for (int32 i = 0; i < RoadNum; ++i)
 		{
-			const float Angle = Rand.FRandRange(0.0f, 2.0f * PI);
-			const float Radius = FMath::Sqrt(Rand.FRand()) * InParams.CityRadius;
+			const float Angle = RoadStream.FRandRange(0.0f, 2.0f * PI);
+			const float Radius = FMath::Sqrt(RoadStream.FRand()) * InParams.CityRadius;
 
 			const float X = InParams.CityCenterXY.X + FMath::Cos(Angle) * Radius;
 			const float Y = InParams.CityCenterXY.Y + FMath::Sin(Angle) * Radius;
@@ -93,8 +98,8 @@ public:
 				}
 			}
 
-			if (BestNeighbor1 != INDEX_NONE) Graph.AddEdge(i, BestNeighbor1);
-			if (BestNeighbor2 != INDEX_NONE) Graph.AddEdge(i, BestNeighbor2);
+			if (BestNeighbor1 != INDEX_NONE) Graph.AddEdge(i, BestNeighbor1, InParams.RoadWidth);
+			if (BestNeighbor2 != INDEX_NONE) Graph.AddEdge(i, BestNeighbor2, InParams.RoadWidth);
 		}
 
 		return Graph;

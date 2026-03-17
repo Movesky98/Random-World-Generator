@@ -94,7 +94,7 @@ void FCityGrid::GenerateGrid(FVector CityCenter, float CityRadius, float InCellS
 			{
 				const FVector2D Segment2DPos = FVector2D(SegmentPos.X, SegmentPos.Y);
 
-				if (FVector2D::Distance(Segment2DPos, Cell2DPos ) <= RoadEdge->HalfWidth)
+				if (FVector2D::Distance(Segment2DPos, Cell2DPos ) <= RoadEdge->Width)
 				{
 					CityCells[i].Type = ECellType::Road;
 					break;

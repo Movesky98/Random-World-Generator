@@ -19,7 +19,7 @@ class RWG_API UWorldGenSubsystem : public UWorldSubsystem
 
 public:
 	UFUNCTION()
-	void InitiateWorldGeneration(int32 Seed);
+	void InitiateWorldGeneration();
 
 protected:
 	void InitializeWorldConfig();

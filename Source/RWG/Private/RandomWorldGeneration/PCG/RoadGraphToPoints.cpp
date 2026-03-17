@@ -119,7 +119,7 @@ bool FRoadGraphToPointsElement::ExecuteInternal(FPCGContext* Context) const
 
 			AttrEdgeId->SetValue(Key, Edge.Id);
 			AttrSegIndex->SetValue(Key, i);
-			AttrHalfWidth->SetValue(Key, Edge.HalfWidth);
+			AttrHalfWidth->SetValue(Key, Edge.Width);
 			AttrRoadType->SetValue(Key, Edge.RoadType);
 			AttrEdgeAlpha->SetValue(Key, Alpha);
 			AttrForward->SetValue(Key, Edge.Direction);

@@ -59,7 +59,7 @@ void FCityGridBuilder::MarkRoadCells(FCityGrid& CityGrid, const FGridBuildParams
 			for (const FVector& SegmentPos : Edge.SegmentPoints)
 			{
 				FVector2D Segment2DPos = FVector2D(SegmentPos.X, SegmentPos.Y);
-				if (FVector2D::Distance(Segment2DPos, Cell2DPos) < Edge.HalfWidth)
+				if (FVector2D::Distance(Segment2DPos, Cell2DPos) < Edge.Width)
 				{
 					Cells[i].Type = ECellType::Road;
 					bIsRoad = true;
@@ -299,6 +299,16 @@ FCityLot FCityGridBuilder::MarkLotFromRectangle(const FCityGrid& Grid, TArray<bo
 		}
 	}
 
+	FVector CenterPos = FVector::ZeroVector;
+
+	for (int32 Index : Lot.CellIndices)
+	{
+		CenterPos += Grid.GetCityCells()[Index].WorldPosition;
+	}
+
+	CenterPos /= Lot.CellIndices.Num();
+	CenterPos.Z = 8010.0f;
+	Lot.Center = CenterPos;
 	Lot.MinX = StartX;
 	Lot.MaxX = StartX + Width - 1;
 	Lot.MinY = StartY;

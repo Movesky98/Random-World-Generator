@@ -7,6 +7,23 @@
 #include "RandomWorldGeneration/Core/WorldGenTypes.h"
 #include "WorldThemeConfig.generated.h"
 
+USTRUCT(BlueprintType)
+struct FBuildingAssetEntry
+{
+	GENERATED_BODY()
+
+public:
+	/* 건물 에셋 경로 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building")
+	TSoftObjectPtr<UStaticMesh> Mesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Building")
+	int32 FootprintSizeX;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Building")
+	int32 FootprintSizeY;
+};
+
 /**
  * 
  */
@@ -16,24 +33,23 @@ class RWG_API UWorldThemeConfig : public UDataAsset
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Grid")
+	float CellSize = 400.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
+	int32 MinRoadNum = 50;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
+	int32 MaxRoadNum = 100;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
+	float RoadWidth = 400.0f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Theme Settings")
 	EWorldTheme WorldTheme;
 
-	/* 월드 구성에 쓰일 건물들 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Structures")
-	TArray<UStaticMesh*> Buildings;
-
-	/* 폐차, 쓰레기 더미 등 월드 구성에 쓰일 소품들 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Structures")
-	TArray<UStaticMesh*> Props;
-
-	/* 탈출을 위한 주요 건물 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Structures")
-	UStaticMesh* MainBuilding;
-
-	/* 월드 구성에 쓰일 벽들 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Structures")
-	TArray<UStaticMesh*> Walls;
+	TArray<FBuildingAssetEntry> BuildingEntries;
 
 	/* 월드에 배치될 도로나 바닥 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Structures")
@@ -41,4 +57,11 @@ public:
 
 protected:
 	FPrimaryAssetId GetPrimaryAssetId() const override;
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangeEvent) override;
+#endif
+
+	void RefreshBuildingFootprints();
+	void RefreshSingleBuildingFootprint(FBuildingAssetEntry& Entry) const;
 };

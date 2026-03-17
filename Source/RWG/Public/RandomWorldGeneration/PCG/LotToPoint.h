@@ -3,15 +3,14 @@
 #pragma once
 
 #include "PCGSettings.h"
-#include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 
-#include "SelectRoadMeshFromTheme.generated.h"
+#include "LotToPoint.generated.h"
 
 /**
 * Add your tooltip here
 */
 UCLASS(MinimalAPI, BlueprintType)
-class USelectRoadMeshFromThemeSettings : public UPCGSettings
+class ULotToPointSettings : public UPCGSettings
 {
 	GENERATED_BODY()
 
@@ -39,21 +38,10 @@ protected:
 *	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Settings, meta = (PCG_Overridable))
 *	bool CheckBox = true;
 */
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	FName ThemeConfigAttribute = FName(TEXT("ThemeConfig"));
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Output")
-	FName OutMeshAttribute = FName(TEXT("RoadMesh"));
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Random")
-	int32 ExtraSeed = 0;
 };
 
-class FSelectRoadMeshFromThemeElement : public IPCGElement
+class FLotToPointElement : public IPCGElement
 {
 protected:
 	virtual bool ExecuteInternal(FPCGContext* Context) const override;
-
-	int32 Seed = 0;
 };

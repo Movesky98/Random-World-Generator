@@ -32,7 +32,7 @@ struct FRoadEdge
 	int32 EndNodeId = INDEX_NONE;
 
 	// 메타 데이터
-	float HalfWidth = 400.0f;
+	float Width = 400.0f;
 	int32 RoadType = 0;
 	FVector Direction = FVector::ZeroVector;
 
@@ -40,8 +40,8 @@ struct FRoadEdge
 	TArray<FVector> SegmentPoints;
 
 	FRoadEdge() = default;
-	FRoadEdge(int32 InId, int32 InStartNodeId, int32 InEndNodeId, float InHalfWidth = 400.0f, int32 InRoadType = 0)
-		: Id(InId), StartNodeId(InStartNodeId), EndNodeId(InEndNodeId), HalfWidth(InHalfWidth), RoadType(InRoadType) { }
+	FRoadEdge(int32 InId, int32 InStartNodeId, int32 InEndNodeId, float InWidth = 400.0f, int32 InRoadType = 0)
+		: Id(InId), StartNodeId(InStartNodeId), EndNodeId(InEndNodeId), Width(InWidth), RoadType(InRoadType) { }
 };
 
 /**
