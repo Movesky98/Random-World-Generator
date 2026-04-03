@@ -89,5 +89,9 @@ void UWorldGenSubsystem::OnWorldBeginPlay(UWorld& World)
 {
 	Super::OnWorldBeginPlay(World);
 
-	InitializeWorldConfig();
+	FString LevelName = World.GetMapName();
+	LevelName.RemoveFromStart(World.StreamingLevelsPrefix);
+
+	if (LevelName.Contains("LandscapeGeneration"))
+		InitializeWorldConfig();
 }

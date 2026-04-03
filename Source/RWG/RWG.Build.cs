@@ -8,7 +8,19 @@ public class RWG : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "ProceduralMeshComponent", "PCG" });
+		PublicDependencyModuleNames.AddRange(new string[]
+		{
+			"Core",
+			"CoreUObject",
+			"Engine",
+			"InputCore",
+			"EnhancedInput",
+			"ProceduralMeshComponent",
+			"PCG",
+			"OnlineSubsystem",
+			"OnlineSubsystemNull",
+			"OnlineSubsystemUtils"
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

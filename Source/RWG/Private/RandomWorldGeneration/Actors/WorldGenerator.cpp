@@ -26,21 +26,39 @@ AWorldGenerator::AWorldGenerator()
 
 void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs)
 {
+	if (Configs.Num() == 0)
+	{
+		return;
+	}
+
+	UWorldGenConfig* GenConfig = nullptr;
+	UWorldThemeConfig* ThemeConfig = nullptr;
+
 	for (auto& Config : Configs)
 	{
 		if (Config.Key == FPrimaryAssetType(WorldConfigTags::GenConfigName))
 		{
-			UWorldGenConfig* GenConfig = Cast<UWorldGenConfig>(Config.Value);
-
-			GenerateTerrain(GenConfig);
+			GenConfig = Cast<UWorldGenConfig>(Config.Value);
 		}
 		else if (Config.Key == FPrimaryAssetType(WorldConfigTags::ThemeConfigName))
 		{
-			UWorldThemeConfig* ThemeConfig = Cast<UWorldThemeConfig>(Config.Value);
-
-			GenerateContent(ThemeConfig);
+			ThemeConfig = Cast<UWorldThemeConfig>(Config.Value);
 		}
 	}
+
+	if (!ensure(GenConfig))
+	{
+		return;
+	}
+
+	GenerateTerrain(GenConfig);
+
+	if(!ensure(ThemeConfig))
+	{
+		return;
+	}
+
+	GenerateContent(ThemeConfig);
 }
 
 void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
