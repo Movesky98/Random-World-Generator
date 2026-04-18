@@ -63,7 +63,10 @@ private:
 	UProceduralMeshComponent* ProceduralMeshComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "PCG")
-	UPCGComponent* PCGComponent;
+	UPCGComponent* RoadPCGComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "PCG")
+	UPCGComponent* BuildingPCGComponent;
 
 	FRoadGraph RoadGraph;
 

@@ -11,6 +11,16 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogSessionMenu, Log, All);
 
+UENUM()
+enum class ESessionUIError : uint8
+{
+	InvalidState,
+	SessionInterfaceNULL,
+	CreateFailed,
+	FindFailed,
+	JoinFailed,
+};
+
 UENUM(BlueprintType)
 enum class ESessionState : uint8
 {
@@ -55,14 +65,19 @@ protected:
 	
 	void OnJoinSessionCompleted(EOnJoinSessionCompleteResult::Type Result);
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Session|UI")
+	TSubclassOf<class USessionSlot> SessionSlotClass;
+
+	/* Widget delegate functions */
 	UFUNCTION()
 	void OnSliderValueChanged(float Value);
 
 	UFUNCTION()
 	void OnCheckStateChanged(bool bIsChecked);
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Session|UI")
-	TSubclassOf<class USessionSlot> SessionSlotClass;
+	void ResetUIToIdle();
+
+	void HandleError(ESessionUIError Error);
 
 private:
 	UPROPERTY(meta=(BindWidget))
@@ -85,6 +100,9 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	class UScrollBox* SessionScrollBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UCircularThrobber* LoadingThrobber;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Session|State", meta = (AllowPrivateAccess = "true"))
 	bool bIsLAN;

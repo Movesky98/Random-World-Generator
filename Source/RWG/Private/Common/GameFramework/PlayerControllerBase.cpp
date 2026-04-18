@@ -40,7 +40,9 @@ void APlayerControllerBase::UpdateUIForCurrentLevel()
 	UE_LOG(LogPlayerControllerBase, Warning, TEXT("Current Level Name : %s"), *LevelName);
 
 	EUIType UIType = ConvertLevelNameToEnum(LevelName);
-	ShowUI(UIType);
+
+	if(UIType != EUIType::None)
+		ShowUI(UIType);
 }
 
 EUIType APlayerControllerBase::ConvertLevelNameToEnum(FString LevelName)

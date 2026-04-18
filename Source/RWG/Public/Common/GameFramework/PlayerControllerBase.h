@@ -12,6 +12,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogPlayerControllerBase, Log, All);
 UENUM(BlueprintType)
 enum class EUIType : uint8
 {
+	None UMETA(DisplayName = "None"),
 	SessionMenu UMETA(DisplayName = "Session Menu"),
 	LobbyMenu UMETA(DisplayName = "Lobby Menu"),
 	PlayerHUD UMETA(DisplayName = "Player HUD")

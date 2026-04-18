@@ -20,8 +20,11 @@ AWorldGenerator::AWorldGenerator()
 	ProceduralMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	RootComponent = ProceduralMeshComponent;
 
-	PCGComponent = CreateDefaultSubobject<UPCGComponent>(TEXT("PCG Component"));
-	PCGComponent->bAutoActivate = false;
+	RoadPCGComponent = CreateDefaultSubobject<UPCGComponent>(TEXT("RoadPCGComponent"));
+	RoadPCGComponent->bAutoActivate = false;
+
+	BuildingPCGComponent = CreateDefaultSubobject<UPCGComponent>(TEXT("BuildingPCGComponent"));
+	BuildingPCGComponent->bAutoActivate = false;
 }
 
 void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs)
@@ -177,22 +180,39 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this, Config]()
 		{
-			if (PCGComponent && PCGComponent->GetGraph())
+			if (RoadPCGComponent && RoadPCGComponent->GetGraph())
 			{
-				PCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
-				PCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
-
-				PCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
+				RoadPCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
+				RoadPCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
+				RoadPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
 
 				// Set Static Meshs by Theme
 				TSoftObjectPtr<UObject> ThemePtr(Config);
-				PCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
+				RoadPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
 
-				PCGComponent->Generate();
-
-				UE_LOG(LogWorldGenerator, Warning, TEXT("PCG Generated on next tick."));
+				RoadPCGComponent->Generate();
 
 				// DrawDebugGrid();
+			}
+
+			if (GetWorld()->GetNetMode() != NM_Client)
+			{
+				UE_LOG(LogWorldGenerator, Warning, TEXT("SERVER: Building PCG Generate"));
+				if (BuildingPCGComponent && BuildingPCGComponent->GetGraph())
+				{
+					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
+					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
+					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
+
+					TSoftObjectPtr<UObject> ThemePtr(Config);
+					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
+
+					BuildingPCGComponent->Generate();
+				}
+			}
+			else
+			{
+				UE_LOG(LogWorldGenerator, Warning, TEXT("CLIENT: Building PCG skipped"));
 			}
 		});
 }
