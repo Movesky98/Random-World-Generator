@@ -92,3 +92,13 @@ UInputMappingContext* UBaseInputComponent::GetMappingContext() const
 {
 	return IsValid(LoadedConfig) ? LoadedConfig->MappingContext : nullptr;
 }
+
+bool UBaseInputComponent::IsConfigLoaded() const
+{
+	return IsValid(LoadedConfig);
+}
+
+void UBaseInputComponent::BindOnConfigLoaded(TFunction<void()> Callback)
+{
+	OnConfigLoaded.AddLambda([Callback](UBaseInputComponent*) {Callback(); });
+}

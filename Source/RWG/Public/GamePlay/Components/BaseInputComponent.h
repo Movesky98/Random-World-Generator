@@ -45,6 +45,9 @@ protected:
 
 	virtual UInputMappingContext* GetMappingContext() const override;
 
+	bool IsConfigLoaded() const override;
+
+	void BindOnConfigLoaded(TFunction<void()> Callback) override;
 
 	virtual TSubclassOf<UBaseInputConfig> GetConfigClass() PURE_VIRTUAL(GetConfigClass, return nullptr;);
 

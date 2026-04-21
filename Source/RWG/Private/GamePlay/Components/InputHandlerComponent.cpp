@@ -39,8 +39,20 @@ void UInputHandlerComponent::RegisterBindableComponents(TArray<TScriptInterface<
 
 	for (auto& Comp : Components)
 	{
-		RequestActivateIMC(Comp.GetInterface());
-		Comp->BindInputActions(EnhancedInput);
+		if (Comp->IsConfigLoaded())
+		{
+			RequestActivateIMC(Comp.GetInterface());
+			Comp->BindInputActions(EnhancedInput);
+			
+		}
+		else
+		{
+			Comp->BindOnConfigLoaded([this, Comp, EnhancedInput]()
+				{
+					Comp->BindInputActions(EnhancedInput);
+					RequestActivateIMC(Comp.GetInterface());
+				});
+		}
 	}
 }
 
@@ -82,7 +94,7 @@ void UInputHandlerComponent::RequestActivateIMC(IInputBindable* Requester, bool 
 		Subsystem->AddMappingContext(Requester->GetMappingContext(), Requester->GetIMCPriority());
 	}
 	else
-		COMMON_LOG(LogGameplay, Error, TEXT("InputMappingContext is not found."));
+		COMMON_LOG(LogGameplay, Error, TEXT("%s InputMappingContext is not found."), *Requester->GetInputConfig()->GetName());
 }
 
 void UInputHandlerComponent::RequestDeactiveIMC(IInputBindable* Requester)

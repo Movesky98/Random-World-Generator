@@ -31,4 +31,8 @@ public:
 	virtual int32 GetIMCPriority() const = 0;
 
 	virtual UInputMappingContext* GetMappingContext() const = 0;
+
+	virtual bool IsConfigLoaded() const = 0;
+
+	virtual void BindOnConfigLoaded(TFunction<void()> Callback) = 0;
 };
