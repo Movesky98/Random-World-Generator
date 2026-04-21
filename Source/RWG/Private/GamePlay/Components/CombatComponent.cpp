@@ -2,6 +2,7 @@
 
 
 #include "GamePlay/Components/CombatComponent.h"
+#include "GamePlay/DataAssets/CombatInputConfig.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
@@ -14,6 +15,16 @@ UCombatComponent::UCombatComponent()
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+}
+
+TSubclassOf<UBaseInputConfig> UCombatComponent::GetConfigClass()
+{
+	return UCombatInputConfig::StaticClass();
+}
+
+void UCombatComponent::BindInputActions(UEnhancedInputComponent* InputComponent)
+{
 
 }
 

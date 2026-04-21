@@ -8,7 +8,9 @@
 #include "InputHandlerComponent.generated.h"
 
 class UBaseInputConfig;
+class UBaseInputComponent;
 class ULocomotionComponent;
+class IInputBindable;
 
 namespace InputConfgTags
 {
@@ -25,27 +27,20 @@ public:
 	// Sets default values for this component's properties
 	UInputHandlerComponent();
 
-	void BindInputs(class UEnhancedInputComponent* EnhancedInputComponent);
+	void RegisterBindableComponents(TArray<TScriptInterface<IInputBindable>>& Components, UEnhancedInputComponent* EnhancedInput);
+
+	void RequestActivateIMC(IInputBindable* Requester, bool bExclusive = false);
+
+	void RequestDeactiveIMC(IInputBindable* Requester);
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UBaseInputConfig* BaseInputConfig;
+	virtual void InitializeComponent() override;
 
 	UPROPERTY()
 	APlayerController* OwnerController;
 
-	ULocomotionComponent* GetLocomotionComponent();
-
-	void HandleMove(const FInputActionValue& Value);
-
-	void HandleLook(const FInputActionValue& Value);
-
-	void HandleJump();
-	
-	void HandleAttack();
-	
-	void HandleInteract();
+	TArray<TScriptInterface<IInputBindable>> RegisteredComponents;
 };

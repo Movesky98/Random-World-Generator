@@ -4,14 +4,18 @@
 #include "GamePlay/Components/InputHandlerComponent.h"
 #include "GamePlay/DataAssets/BaseInputConfig.h"
 #include "GamePlay/Components/LocomotionComponent.h"
+#include "GamePlay/Interfaces/InputBindable.h"
+#include "GamePlay/Components/BaseInputComponent.h"
+#include "CommonLogCategories.h"
 
+#include "InputMappingContext.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 
 // Sets default values for this component's properties
 UInputHandlerComponent::UInputHandlerComponent()
 {
-
+	bWantsInitializeComponent = true;
 }
 
 // Called when the game starts
@@ -19,90 +23,75 @@ void UInputHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
 }
 
-void UInputHandlerComponent::BindInputs(UEnhancedInputComponent* EnhancedInputComponent)
+void UInputHandlerComponent::InitializeComponent()
 {
+	Super::InitializeComponent();
+
 	OwnerController = Cast<APlayerController>(GetOwner());
 	checkf(OwnerController, TEXT("InputHandlerComponent must be attached to PlayerController"));
+}
 
-	if (!IsValid(BaseInputConfig))
+void UInputHandlerComponent::RegisterBindableComponents(TArray<TScriptInterface<IInputBindable>>& Components, UEnhancedInputComponent* EnhancedInput)
+{
+	RegisteredComponents = Components;
+
+	for (auto& Comp : Components)
 	{
-		// Display error log.
+		RequestActivateIMC(Comp.GetInterface());
+		Comp->BindInputActions(EnhancedInput);
+	}
+}
+
+void UInputHandlerComponent::RequestActivateIMC(IInputBindable* Requester, bool bExclusive)
+{
+	if (!OwnerController) 
+	{
+		COMMON_LOG(LogGameplay, Error, TEXT("OwnerController is not found."));
 		return;
 	}
 
+	ULocalPlayer* LocalPlayer = OwnerController->GetLocalPlayer();
+	if (!LocalPlayer) 
+	{
+		COMMON_LOG(LogGameplay, Error, TEXT("LocalPlayer is not found."));
+		return;
+	}
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	if (!Subsystem)	
+	{
+		COMMON_LOG(LogGameplay, Error, TEXT("EnhancedInputLocalPlayerSubsystem is not found."));
+		return;
+	}
+
+	if (bExclusive)
+	{
+		for (auto& Comp : RegisteredComponents)
+		{
+			if (Comp.GetInterface() != Requester && Comp->GetIMCPriority() < Requester->GetIMCPriority())
+			{
+				Subsystem->RemoveMappingContext(Comp->GetMappingContext());
+			}
+		}
+	}
+
+	if (Requester->GetMappingContext())
+	{
+		Subsystem->AddMappingContext(Requester->GetMappingContext(), Requester->GetIMCPriority());
+	}
+	else
+		COMMON_LOG(LogGameplay, Error, TEXT("InputMappingContext is not found."));
+}
+
+void UInputHandlerComponent::RequestDeactiveIMC(IInputBindable* Requester)
+{
 	if (ULocalPlayer* LocalPlayer = OwnerController->GetLocalPlayer())
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
 		{
-			// ÀÏ´Ü BaseInput
-			Subsystem->AddMappingContext(BaseInputConfig->MappingContext, 0);
+			Subsystem->RemoveMappingContext(Requester->GetMappingContext());
 		}
 	}
-
-	if (EnhancedInputComponent)
-	{
-		EnhancedInputComponent->BindAction(BaseInputConfig->MoveAction, ETriggerEvent::Triggered, this, &ThisClass::HandleMove);
-
-		EnhancedInputComponent->BindAction(BaseInputConfig->LookAction, ETriggerEvent::Triggered, this, &ThisClass::HandleLook);
-
-		EnhancedInputComponent->BindAction(BaseInputConfig->JumpAction, ETriggerEvent::Triggered, this, &ThisClass::HandleJump);
-	}
-}
-
-ULocomotionComponent* UInputHandlerComponent::GetLocomotionComponent()
-{
-	APawn* Pawn = OwnerController ? OwnerController->GetPawn() : nullptr;
-	if (!Pawn)
-	{
-		return nullptr;
-	}
-
-	if (ULocomotionComponent* LocomotionComp = Pawn->FindComponentByClass<ULocomotionComponent>())
-	{
-		return LocomotionComp;
-	}
-
-	return nullptr;
-}
-
-void UInputHandlerComponent::HandleMove(const FInputActionValue& Value)
-{
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (ULocomotionComponent* LocomotionComp = GetLocomotionComponent())
-	{
-		LocomotionComp->Move(MovementVector);
-	}
-}
-
-void UInputHandlerComponent::HandleLook(const FInputActionValue& Value)
-{
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (ULocomotionComponent* LocomotionComp = GetLocomotionComponent())
-	{
-		LocomotionComp->Look(MovementVector);
-	}
-}
-
-void UInputHandlerComponent::HandleJump()
-{
-	if (ULocomotionComponent* LocomotionComp = GetLocomotionComponent())
-	{
-		LocomotionComp->Jump();
-	}
-}
-
-void UInputHandlerComponent::HandleAttack()
-{
-
-}
-
-void UInputHandlerComponent::HandleInteract()
-{
-
 }

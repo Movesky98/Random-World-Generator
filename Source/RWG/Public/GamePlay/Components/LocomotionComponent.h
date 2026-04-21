@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
+#include "GamePlay/Components/BaseInputComponent.h"
 #include "LocomotionComponent.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RWG_API ULocomotionComponent : public UActorComponent
+class RWG_API ULocomotionComponent : public UBaseInputComponent
 {
 	GENERATED_BODY()
 
@@ -20,10 +20,14 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:
-	void Move(const FVector2D& InputValue);
+	TSubclassOf<UBaseInputConfig> GetConfigClass() override;
 
-	void Look(const FVector2D& InputValue);
+	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
+
+public:
+	void Move(const FInputActionValue& Value);
+
+	void Look(const FInputActionValue& Value);
 
 	void Jump();
 };

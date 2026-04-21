@@ -4,23 +4,24 @@
 
 #include "CoreMinimal.h"
 #include "GamePlay/Components/BaseInputComponent.h"
-#include "CombatComponent.generated.h"
+#include "InteractionComponent.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RWG_API UCombatComponent : public UBaseInputComponent
+class RWG_API UInteractionComponent : public UBaseInputComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UCombatComponent();
+	UInteractionComponent();
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
+
 	TSubclassOf<UBaseInputConfig> GetConfigClass() override;
 
-	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
 };

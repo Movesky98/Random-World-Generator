@@ -21,15 +21,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	UInputMappingContext* MappingContext;
 
-	UPROPERTY(EditAnywhere)
-	UInputAction* MoveAction;
-
-	UPROPERTY(EditAnywhere)
-	UInputAction* JumpAction;
-
-	UPROPERTY(EditAnywhere)
-	UInputAction* LookAction;
-
 protected:
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 };

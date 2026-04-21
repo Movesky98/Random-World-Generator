@@ -19,7 +19,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	virtual void SetupInputComponent() override;
+	virtual void OnPossess(APawn* aPawn) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UInputHandlerComponent* InputHandlerComponent;

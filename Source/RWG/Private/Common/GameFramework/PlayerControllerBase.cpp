@@ -57,7 +57,7 @@ EUIType APlayerControllerBase::ConvertLevelNameToEnum(FString LevelName)
 		return EUIType::PlayerHUD;
 
 	UE_LOG(LogPlayerControllerBase, Error, TEXT("ConvertLevelNameToEnum() :: Failed to convert level name to enum."));
-	return EUIType();
+	return EUIType::None;
 }
 
 void APlayerControllerBase::ShowUI(EUIType UIType)

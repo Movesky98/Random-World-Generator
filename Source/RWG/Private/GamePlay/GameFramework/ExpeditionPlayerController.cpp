@@ -3,6 +3,7 @@
 
 #include "GamePlay/GameFramework/ExpeditionPlayerController.h"
 #include "GamePlay/Components/InputHandlerComponent.h"
+#include "GamePlay/Interfaces/InputBindable.h"
 
 #include "EnhancedInputComponent.h"
 
@@ -17,12 +18,27 @@ void AExpeditionPlayerController::BeginPlay()
 
 }
 
-void AExpeditionPlayerController::SetupInputComponent()
+void AExpeditionPlayerController::OnPossess(APawn* aPawn)
 {
-	Super::SetupInputComponent();
+	Super::OnPossess(aPawn);
 
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
+	TArray<UActorComponent*> Components = aPawn->GetComponentsByInterface(UInputBindable::StaticClass());
+	
+	TArray<TScriptInterface<IInputBindable>> BindableComponents;
+	for (UActorComponent* Component : Components)
 	{
-		InputHandlerComponent->BindInputs(EnhancedInput);
+		TScriptInterface<IInputBindable> Bindable;
+		Bindable.SetObject(Component);
+		Bindable.SetInterface(Cast<IInputBindable>(Component));
+		BindableComponents.Add(Bindable);
 	}
+
+	// Priority Á¤·Ä
+	BindableComponents.Sort([](const TScriptInterface<IInputBindable>& A, const TScriptInterface<IInputBindable>& B)
+		{
+			return A->GetIMCPriority() < B->GetIMCPriority();
+		});
+
+	if(UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
+		InputHandlerComponent->RegisterBindableComponents(BindableComponents, EnhancedInput);
 }
