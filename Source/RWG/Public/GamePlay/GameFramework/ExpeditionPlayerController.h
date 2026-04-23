@@ -6,6 +6,8 @@
 #include "Common/GameFramework/PlayerControllerBase.h"
 #include "ExpeditionPlayerController.generated.h"
 
+class UInventoryWidget;
+
 /**
  * 
  */
@@ -20,7 +22,19 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void OnPossess(APawn* aPawn) override;
+	
+	virtual void OnUnPossess() override;
+
+	// Inventory Component Section - Test //
+	void HandleInventoryToggled();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UInputHandlerComponent* InputHandlerComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+
+	UInventoryWidget* InventoryWidget;
+
+	bool bIsInventoryOpen = false;
 };

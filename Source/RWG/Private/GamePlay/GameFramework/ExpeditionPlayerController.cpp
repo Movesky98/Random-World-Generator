@@ -4,6 +4,8 @@
 #include "GamePlay/GameFramework/ExpeditionPlayerController.h"
 #include "GamePlay/Components/InputHandlerComponent.h"
 #include "GamePlay/Interfaces/InputBindable.h"
+#include "GamePlay/Components/InventoryComponent.h"
+#include "GamePlay/UI/InventoryWidget.h"
 
 #include "EnhancedInputComponent.h"
 
@@ -41,4 +43,37 @@ void AExpeditionPlayerController::OnPossess(APawn* aPawn)
 
 	if(UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 		InputHandlerComponent->RegisterBindableComponents(BindableComponents, EnhancedInput);
+
+	if (UInventoryComponent* InventoryComp = aPawn->FindComponentByClass<UInventoryComponent>())
+	{
+		InventoryWidget = CreateWidget<UInventoryWidget>(this, InventoryWidgetClass);
+		InventoryWidget->AddToViewport();
+		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
+		InventoryWidget->InitInventory(InventoryComp);
+		InventoryComp->OnInventoryToggled.AddUObject(this, &ThisClass::HandleInventoryToggled);
+	}
+}
+
+void AExpeditionPlayerController::OnUnPossess()
+{
+	APawn* UnPossessPawn = GetPawn();
+	if (UnPossessPawn)
+	{
+		if (UInventoryComponent* InventoryComp = UnPossessPawn->FindComponentByClass<UInventoryComponent>())
+		{
+			InventoryComp->OnInventoryToggled.RemoveAll(this);
+		}
+	}
+
+	Super::OnUnPossess();
+}
+
+void AExpeditionPlayerController::HandleInventoryToggled()
+{
+	if (bIsInventoryOpen)
+		InventoryWidget->SetVisibility(ESlateVisibility::Visible);
+	else
+		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
+
+	bIsInventoryOpen = !bIsInventoryOpen;
 }
