@@ -25,6 +25,6 @@ TSubclassOf<UBaseInputConfig> UCombatComponent::GetConfigClass()
 
 void UCombatComponent::BindInputActions(UEnhancedInputComponent* InputComponent)
 {
-
+	
 }
 

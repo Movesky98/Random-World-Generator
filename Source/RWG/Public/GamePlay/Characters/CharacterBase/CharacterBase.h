@@ -8,6 +8,10 @@
 
 class ULocomotionComponent;
 class UCombatComponent;
+class UInventoryComponent;
+class UInteractionComponent;
+class USpringArmComponent;
+class UCameraComponent;
 
 UCLASS()
 class RWG_API ACharacterBase : public ACharacter
@@ -23,8 +27,20 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<USpringArmComponent> SpringArmComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<UCameraComponent> CameraComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	ULocomotionComponent* LocomotionComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	UCombatComponent* CombatComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	UInventoryComponent* InventoryComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	UInteractionComponent* InteractionComponent;
 };

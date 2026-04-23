@@ -6,7 +6,6 @@
 #include "GamePlay/Components/BaseInputComponent.h"
 #include "InteractionComponent.generated.h"
 
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RWG_API UInteractionComponent : public UBaseInputComponent
 {
@@ -24,4 +23,8 @@ protected:
 
 	TSubclassOf<UBaseInputConfig> GetConfigClass() override;
 
+	void PerformInteractionTrace();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Interaction")
+	float TraceDistance = 300.0f;
 };
