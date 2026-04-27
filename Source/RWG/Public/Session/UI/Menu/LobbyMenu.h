@@ -21,6 +21,7 @@ class RWG_API ULobbyMenu : public UUserWidgetBase
 	GENERATED_BODY()
 	
 public:
+	ULobbyMenu();
 
 protected:
 	virtual void NativeConstruct() override;

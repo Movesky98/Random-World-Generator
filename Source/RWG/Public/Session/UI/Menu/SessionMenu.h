@@ -37,6 +37,8 @@ UCLASS()
 class RWG_API USessionMenu : public UUserWidgetBase
 {
 	GENERATED_BODY()
+public:
+	USessionMenu();
 
 protected:
 	virtual void NativeConstruct() override;

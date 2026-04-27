@@ -5,6 +5,12 @@
 #include "GamePlay/UI/ItemSlot.h"
 #include "GamePlay/Components/InventoryComponent.h"
 #include "Components/WrapBox.h"
+#include "CommonLogCategories.h"
+
+UInventoryWidget::UInventoryWidget()
+{
+	WidgetType = EWidgetType::Inventory;
+}
 
 void UInventoryWidget::InitInventory(UInventoryComponent* InInventoryComponent)
 {
@@ -12,8 +18,9 @@ void UInventoryWidget::InitInventory(UInventoryComponent* InInventoryComponent)
 		return;
 
 	InventoryComponent = InInventoryComponent;
-	InventoryComponent->OnInventoryChanged.AddDynamic(this, &UInventoryWidget::OnInventoryChanged);
-
+	InventoryComponent->OnInventoryChanged.AddUObject(this, &ThisClass::RefreshInventory);
+	InventoryComponent->OnInventoryToggled.AddUObject(this, &ThisClass::ToggleInventory);
+	
 	RefreshInventory();
 }
 
@@ -33,17 +40,36 @@ void UInventoryWidget::RefreshInventory()
 	}
 }
 
+void UInventoryWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	APawn* Pawn = GetOwningPlayerPawn();
+	if (!Pawn)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("GetOwningPlayerPawn is nullptr."));
+		return;
+	}
+
+	if (UInventoryComponent* InventoryComp = Pawn->FindComponentByClass<UInventoryComponent>())
+	{
+		InitInventory(InventoryComp);
+	}
+}
+
 void UInventoryWidget::NativeDestruct()
 {
 	if (InventoryComponent)
 	{
-		InventoryComponent->OnInventoryChanged.RemoveDynamic(this, &UInventoryWidget::OnInventoryChanged);
+		InventoryComponent->OnInventoryChanged.RemoveAll(this);
 	}
 
 	Super::NativeDestruct();
 }
 
-void UInventoryWidget::OnInventoryChanged()
+void UInventoryWidget::ToggleInventory()
 {
-	RefreshInventory();
+	IsVisible() ? SetVisibility(ESlateVisibility::Collapsed) : SetVisibility(ESlateVisibility::Visible);
+
+	COMMON_LOG(LogGameplay, Warning, TEXT("InventoryWidget Visibility : %s"), IsVisible() ? TEXT("TRUE") : TEXT("FALSE"));
 }

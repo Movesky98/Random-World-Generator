@@ -15,12 +15,12 @@ void APlayerControllerBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (!IsLocalController())
-	{
-		return;
-	}
+	//if (!IsLocalController())
+	//{
+	//	return;
+	//}
 
-	UpdateUIForCurrentLevel();
+	//UpdateUIForCurrentLevel();
 }
 
 void APlayerControllerBase::EndPlay(const EEndPlayReason::Type EndPlayReason)

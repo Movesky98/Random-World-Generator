@@ -5,7 +5,7 @@
 
 void UUserWidgetBase::SetUp()
 {
-	this->AddToViewport();
+	SetVisibility(ESlateVisibility::Visible);
 
 	FInputModeUIOnly InputModeData;
 
@@ -32,5 +32,10 @@ void UUserWidgetBase::TearDown()
 		}
 	}
 
-	this->RemoveFromParent();
+	SetVisibility(ESlateVisibility::Collapsed);
+}
+
+EWidgetType UUserWidgetBase::GetWidgetType() const
+{
+	return WidgetType;
 }

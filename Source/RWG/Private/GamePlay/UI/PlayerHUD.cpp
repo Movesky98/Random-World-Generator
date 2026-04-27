@@ -3,6 +3,11 @@
 
 #include "GamePlay/UI/PlayerHUD.h"
 
+UPlayerHUD::UPlayerHUD()
+{
+	WidgetType = EWidgetType::PlayerHUD;
+}
+
 void UPlayerHUD::SetUp()
 {
 	this->AddToViewport();

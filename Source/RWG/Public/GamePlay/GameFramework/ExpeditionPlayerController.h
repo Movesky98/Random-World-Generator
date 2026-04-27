@@ -25,6 +25,9 @@ protected:
 	
 	virtual void OnUnPossess() override;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	class UUIManagerComponent* UIManagerComponent;
+
 	// Inventory Component Section - Test //
 	void HandleInventoryToggled();
 

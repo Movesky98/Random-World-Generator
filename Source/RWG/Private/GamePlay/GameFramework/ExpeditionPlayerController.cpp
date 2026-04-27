@@ -2,6 +2,7 @@
 
 
 #include "GamePlay/GameFramework/ExpeditionPlayerController.h"
+#include "GamePlay/Components/UIManagerComponent.h"
 #include "GamePlay/Components/InputHandlerComponent.h"
 #include "GamePlay/Interfaces/InputBindable.h"
 #include "GamePlay/Components/InventoryComponent.h"
@@ -12,6 +13,8 @@
 AExpeditionPlayerController::AExpeditionPlayerController()
 {
 	InputHandlerComponent = CreateDefaultSubobject<UInputHandlerComponent>(TEXT("InputHandlerComponent"));
+
+	UIManagerComponent = CreateDefaultSubobject<UUIManagerComponent>(TEXT("UIManagerComponent"));
 }
 
 void AExpeditionPlayerController::BeginPlay()
@@ -44,14 +47,7 @@ void AExpeditionPlayerController::OnPossess(APawn* aPawn)
 	if(UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 		InputHandlerComponent->RegisterBindableComponents(BindableComponents, EnhancedInput);
 
-	if (UInventoryComponent* InventoryComp = aPawn->FindComponentByClass<UInventoryComponent>())
-	{
-		InventoryWidget = CreateWidget<UInventoryWidget>(this, InventoryWidgetClass);
-		InventoryWidget->AddToViewport();
-		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
-		InventoryWidget->InitInventory(InventoryComp);
-		InventoryComp->OnInventoryToggled.AddUObject(this, &ThisClass::HandleInventoryToggled);
-	}
+	UIManagerComponent->InitializePawnWidgets(aPawn);
 }
 
 void AExpeditionPlayerController::OnUnPossess()

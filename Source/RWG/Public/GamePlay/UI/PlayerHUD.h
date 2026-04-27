@@ -13,6 +13,9 @@ UCLASS()
 class RWG_API UPlayerHUD : public UUserWidgetBase
 {
 	GENERATED_BODY()
+public:
+	UPlayerHUD();
+
 protected:
 	virtual void SetUp() override;
 };

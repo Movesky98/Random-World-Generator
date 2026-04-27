@@ -19,11 +19,18 @@ class RWG_API UInventoryWidget : public UUserWidgetBase
 	GENERATED_BODY()
 
 public:
+	UInventoryWidget();
+
 	void InitInventory(UInventoryComponent* InInventoryComponent);
-	void RefreshInventory();
 
 protected:
-	virtual void NativeDestruct() override;
+	void NativeConstruct() override;
+
+	void NativeDestruct() override;
+
+	void ToggleInventory();
+	
+	void RefreshInventory();
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWrapBox> ItemGrid;
@@ -34,7 +41,4 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<UInventoryComponent> InventoryComponent;
-
-	UFUNCTION()
-	void OnInventoryChanged();
 };

@@ -15,6 +15,11 @@
 
 DEFINE_LOG_CATEGORY(LogSessionMenu);
 
+USessionMenu::USessionMenu()
+{
+	WidgetType = EWidgetType::SessionMenu;
+}
+
 void USessionMenu::NativeConstruct()
 {
 	Super::NativeConstruct();

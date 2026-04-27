@@ -7,7 +7,7 @@
 #include "GamePlay/Items/ItemInstance.h"
 #include "InventoryComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
+DECLARE_MULTICAST_DELEGATE(FOnInventoryChanged);
 DECLARE_MULTICAST_DELEGATE(FOnInventoryToggled);
 
 /**
@@ -27,8 +27,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool UseItem(int32 SlotIndex);
-	
-	UPROPERTY(BlueprintAssignable, Category = "Inventory")
+
 	FOnInventoryChanged	OnInventoryChanged;
 
 	FOnInventoryToggled OnInventoryToggled;
