@@ -12,6 +12,8 @@ AItem::AItem()
 	RootComponent = MeshComponent;
 
 	MeshComponent->SetCollisionProfileName(TEXT("Item"));
+
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -21,7 +23,7 @@ void AItem::BeginPlay()
 	
 }
 
-void AItem::Interact(APawn* Interactor)
+void AItem::Interact(AActor* Interactor)
 {
 	if (!ItemData) return;
 

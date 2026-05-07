@@ -6,6 +6,9 @@
 #include "Common/UI/UserWidgetBase.h"
 #include "PlayerHUD.generated.h"
 
+class AWeaponBase;
+class UTextBlock;
+
 /**
  * 
  */
@@ -18,4 +21,14 @@ public:
 
 protected:
 	virtual void SetUp() override;
+
+	/* Display Functions */
+public:
+	void SetAmmo(int32 CurrentAmmo, int32 MaxAmmo);
+
+	void SetWeapon(AWeaponBase* Weapon);
+
+private:
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> AmmoTextBlock;
 };

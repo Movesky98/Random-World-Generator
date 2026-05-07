@@ -14,4 +14,10 @@ class RWG_API UCombatInputConfig : public UBaseInputConfig
 {
 	GENERATED_BODY()
 	
+public:
+	UPROPERTY(EditAnywhere)
+	TArray<UInputAction*> EquipWeaponActions;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> ReloadAction;
 };

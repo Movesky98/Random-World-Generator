@@ -5,6 +5,7 @@
 #include "GamePlay/DataAssets/InteractionInputConfig.h"
 #include "GamePlay/Interfaces/Interactable.h"
 #include "CommonLogCategories.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 #define TRACE_INTERACTION ECC_GameTraceChannel1
 
@@ -71,15 +72,51 @@ void UInteractionComponent::PerformInteractionTrace()
 		TRACE_INTERACTION
 	);
 
+#if ENABLE_DRAW_DEBUG
+	TArray<AActor*> IgnoreActors;
+	IgnoreActors.Add(Owner);
+
+	UKismetSystemLibrary::LineTraceSingle(
+		GetWorld(),
+		CameraLocation,
+		TraceEnd,
+		UEngineTypes::ConvertToTraceType(TRACE_INTERACTION),
+		true,
+		IgnoreActors,
+		EDrawDebugTrace::ForDuration,
+		HitResult,
+		true,
+		FLinearColor::Red,
+		FLinearColor::Green,
+		2.0f
+	);
+#endif
+
 	if (bIsHit && HitResult.GetActor())
 	{
-		IInteractable* Interactable = Cast<IInteractable>(HitResult.GetActor());
-		if (Interactable)
+		AActor* TargetActor = HitResult.GetActor();
+
+		if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 		{
-			COMMON_LOG(LogGameplay, Log, TEXT("Interactable hit : %s"), *HitResult.GetActor()->GetName());
-			Interactable->Interact(Cast<APawn>(Owner));
+			COMMON_LOG(LogGameplay, Log, TEXT("Interactable hit : %s"), *TargetActor->GetName());
+			Server_RequestInteract(TargetActor);
+			// Interactable->Interact(Cast<APawn>(Owner));
 		}
 	}
 	else
 		COMMON_LOG(LogGameplay, Log, TEXT("No hits"));
+}
+
+void UInteractionComponent::Server_RequestInteract_Implementation(AActor* TargetActor)
+{
+	if (!IsValid(TargetActor))
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Interactable Actor is not valid."));
+		return;
+	}
+	
+	if (IInteractable* InteractableActor = Cast<IInteractable>(TargetActor))
+	{
+		InteractableActor->Interact(GetOwner());
+	}
 }

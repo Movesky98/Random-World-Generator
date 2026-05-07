@@ -8,6 +8,8 @@
 #include "GamePlay/Components/InventoryComponent.h"
 #include "GamePlay/UI/InventoryWidget.h"
 
+#include "CommonLogCategories.h"
+
 #include "EnhancedInputComponent.h"
 
 AExpeditionPlayerController::AExpeditionPlayerController()
@@ -27,8 +29,28 @@ void AExpeditionPlayerController::OnPossess(APawn* aPawn)
 {
 	Super::OnPossess(aPawn);
 
+}
+
+void AExpeditionPlayerController::OnUnPossess()
+{
+	APawn* UnPossessPawn = GetPawn();
+	if (UnPossessPawn)
+	{
+		if (UInventoryComponent* InventoryComp = UnPossessPawn->FindComponentByClass<UInventoryComponent>())
+		{
+			InventoryComp->OnInventoryToggled.RemoveAll(this);
+		}
+	}
+
+	Super::OnUnPossess();
+}
+
+void AExpeditionPlayerController::AcknowledgePossession(APawn* aPawn)
+{
+	Super::AcknowledgePossession(aPawn);
+
 	TArray<UActorComponent*> Components = aPawn->GetComponentsByInterface(UInputBindable::StaticClass());
-	
+
 	TArray<TScriptInterface<IInputBindable>> BindableComponents;
 	for (UActorComponent* Component : Components)
 	{
@@ -44,24 +66,10 @@ void AExpeditionPlayerController::OnPossess(APawn* aPawn)
 			return A->GetIMCPriority() < B->GetIMCPriority();
 		});
 
-	if(UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
+	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 		InputHandlerComponent->RegisterBindableComponents(BindableComponents, EnhancedInput);
 
 	UIManagerComponent->InitializePawnWidgets(aPawn);
-}
-
-void AExpeditionPlayerController::OnUnPossess()
-{
-	APawn* UnPossessPawn = GetPawn();
-	if (UnPossessPawn)
-	{
-		if (UInventoryComponent* InventoryComp = UnPossessPawn->FindComponentByClass<UInventoryComponent>())
-		{
-			InventoryComp->OnInventoryToggled.RemoveAll(this);
-		}
-	}
-
-	Super::OnUnPossess();
 }
 
 void AExpeditionPlayerController::HandleInventoryToggled()

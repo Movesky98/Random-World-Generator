@@ -21,6 +21,8 @@ void UInventoryWidget::InitInventory(UInventoryComponent* InInventoryComponent)
 	InventoryComponent->OnInventoryChanged.AddUObject(this, &ThisClass::RefreshInventory);
 	InventoryComponent->OnInventoryToggled.AddUObject(this, &ThisClass::ToggleInventory);
 	
+	this->SetVisibility(ESlateVisibility::Collapsed);
+	
 	RefreshInventory();
 }
 
@@ -62,6 +64,7 @@ void UInventoryWidget::NativeDestruct()
 	if (InventoryComponent)
 	{
 		InventoryComponent->OnInventoryChanged.RemoveAll(this);
+		InventoryComponent->OnInventoryToggled.RemoveAll(this);
 	}
 
 	Super::NativeDestruct();
@@ -70,6 +73,4 @@ void UInventoryWidget::NativeDestruct()
 void UInventoryWidget::ToggleInventory()
 {
 	IsVisible() ? SetVisibility(ESlateVisibility::Collapsed) : SetVisibility(ESlateVisibility::Visible);
-
-	COMMON_LOG(LogGameplay, Warning, TEXT("InventoryWidget Visibility : %s"), IsVisible() ? TEXT("TRUE") : TEXT("FALSE"));
 }

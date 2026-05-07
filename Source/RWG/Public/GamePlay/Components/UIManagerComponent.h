@@ -80,4 +80,12 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	EGamePhase CurrentPhase;
+
+	/* PlayerHUD */
+protected:
+	void BindPlayerHUD(APawn* Pawn);
+
+	void UnbindPlayerHUD(APawn* Pawn);
+
+	void InitializePlayerHUD();
 };

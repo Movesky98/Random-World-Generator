@@ -25,6 +25,8 @@ protected:
 	
 	virtual void OnUnPossess() override;
 
+	virtual void AcknowledgePossession(APawn* aPawn) override;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UUIManagerComponent* UIManagerComponent;
 

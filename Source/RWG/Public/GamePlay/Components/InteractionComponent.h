@@ -25,6 +25,9 @@ protected:
 
 	void PerformInteractionTrace();
 
+	UFUNCTION(Server, Reliable)
+	void Server_RequestInteract(AActor* TargetActor);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Interaction")
 	float TraceDistance = 300.0f;
 };

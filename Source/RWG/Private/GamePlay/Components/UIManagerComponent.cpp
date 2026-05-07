@@ -4,7 +4,9 @@
 #include "GamePlay/Components/UIManagerComponent.h"
 #include "Common/UI/UserWidgetBase.h"
 #include "GamePlay/Components/InventoryComponent.h"
+#include "GamePlay/Components/CombatComponent.h"
 #include "GamePlay/UI/InventoryWidget.h"
+#include "GamePlay/UI/PlayerHUD.h"
 #include "CommonLogCategories.h"
 
 #include "Kismet/GameplayStatics.h"
@@ -33,9 +35,23 @@ void UUIManagerComponent::BeginPlay()
 
 void UUIManagerComponent::InitializePawnWidgets(APawn* aPawn)
 {
-	if (OwnerController->IsLocalController())
+	if (!OwnerController->IsLocalController())
 	{
-		DisplayWidgetsForPhase();
+		COMMON_LOG(LogGameplay, Warning, TEXT("NetMode: %s / OwnerController: %s / IsLocal: %d / Pawn : %s"),
+			*ToString(GetWorld()->GetNetMode()),
+			*GetNameSafe(OwnerController),
+			OwnerController ? OwnerController->IsLocalController() : false,
+			*GetNameSafe(aPawn));
+		return;
+	}
+
+	DisplayWidgetsForPhase();
+
+	if (AvailableWidgets.Contains(EWidgetType::PlayerHUD))
+	{
+		BindPlayerHUD(aPawn);
+
+		InitializePlayerHUD();
 	}
 }
 
@@ -45,6 +61,7 @@ void UUIManagerComponent::DisplayWidgetsForPhase()
 	COMMON_LOG(LogGameplay, Log, TEXT("CurrentLevelName : %s"), *CurrentLevelStr);
 
 	CurrentPhase = ConvertLevelNameToPhase(FName(CurrentLevelStr));
+	COMMON_LOG(LogGameplay, Warning, TEXT("CurrentPhase: %s"), *UEnum::GetValueAsString(CurrentPhase));
 
 	CreateWidgetsForPhase(CurrentPhase);
 }
@@ -63,20 +80,24 @@ void UUIManagerComponent::InitializeLevelNameMap()
 void UUIManagerComponent::CreateWidgetsForPhase(EGamePhase Phase)
 {
 	COMMON_LOG(LogGameplay, Log, TEXT("Current Phase : %s"), *UEnum::GetValueAsString(Phase))
-	FWidgetClassList* WidgetClassesList = WidgetClassMap.Find(Phase);
-	if (!WidgetClassesList) return;
+	FWidgetClassList* CurrentPhaseWidgetClasses = WidgetClassMap.Find(Phase);
+	if (!CurrentPhaseWidgetClasses) return;
 
-	for (TSubclassOf<UUserWidgetBase> WidgetClass : WidgetClassesList->WidgetClasses)
+	for (TSubclassOf<UUserWidgetBase> WidgetClass : CurrentPhaseWidgetClasses->WidgetClasses)
 	{
 		if (UUserWidgetBase* WidgetBase = CreateWidget<UUserWidgetBase>(OwnerController, WidgetClass))
 		{
 			AvailableWidgets.Add(WidgetBase->GetWidgetType(), WidgetBase);
-			WidgetBase->AddToViewport();
 			COMMON_LOG(LogGameplay, Log, TEXT("Saved widget name : %s"), *WidgetBase->GetClass()->GetName());
 		}
 	}
 
-	ShowDefaultWidget(WidgetClassesList->DefaultWidget);
+	for (auto& [WidgetType, Widget] : AvailableWidgets)
+	{
+		Widget->AddToViewport();
+	}
+
+	ShowDefaultWidget(CurrentPhaseWidgetClasses->DefaultWidget);
 }
 
 EGamePhase UUIManagerComponent::ConvertLevelNameToPhase(FName LevelName)
@@ -112,5 +133,74 @@ void UUIManagerComponent::ShowDefaultWidget(EWidgetType DefaultType)
 	CurrentWidget = *WidgetBasePtr;
 	CurrentWidget->SetUp();
 	COMMON_LOG(LogGameplay, Log, TEXT("Set up widget name : %s"), *WidgetBasePtr->GetClass()->GetName());
+}
+
+void UUIManagerComponent::BindPlayerHUD(APawn* Pawn)
+{
+	UnbindPlayerHUD(Pawn);
+
+	if (!Pawn)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("BindToPawn failed. Pawn is nullptr."));
+		return;
+	}
+
+	TObjectPtr<UPlayerHUD> PlayerHUD = Cast<UPlayerHUD>(AvailableWidgets.FindRef(EWidgetType::PlayerHUD));
+	if (!PlayerHUD)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("PlayerHUD is nullptr."));
+		return;
+	}
+
+	if (UCombatComponent* CombatComp = Pawn->FindComponentByClass<UCombatComponent>())
+	{
+		CombatComp->OnAmmoChanged.AddUObject(PlayerHUD, &UPlayerHUD::SetAmmo);
+		CombatComp->OnCurrentWeaponChanged.AddUObject(PlayerHUD, &UPlayerHUD::SetWeapon);
+	}
+
+	if (UInventoryComponent* InventoryComp = Pawn->FindComponentByClass<UInventoryComponent>())
+	{
+		// QuickSlot 변경 델리게이트에 PlayerHUD 함수 등록.
+	}
+
+	// 나중에 StatComponent. 상태 관리 컴포넌트 같은 것도 필요함.
+}
+
+void UUIManagerComponent::UnbindPlayerHUD(APawn* Pawn)
+{
+	if (!Pawn)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("BindToPawn failed. Pawn is nullptr."));
+		return;
+	}
+
+	TObjectPtr<UPlayerHUD> PlayerHUD = Cast<UPlayerHUD>(AvailableWidgets.FindRef(EWidgetType::PlayerHUD));
+	if (!PlayerHUD)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("PlayerHUD is nullptr."));
+		return;
+	}
+
+	if (UCombatComponent* CombatComp = Pawn->FindComponentByClass<UCombatComponent>())
+	{
+		CombatComp->OnAmmoChanged.RemoveAll(PlayerHUD);
+		CombatComp->OnCurrentWeaponChanged.RemoveAll(PlayerHUD);
+	}
+
+	if (UInventoryComponent* InventoryComp = Pawn->FindComponentByClass<UInventoryComponent>())
+	{
+		// QuickSlot 변경 델리게이트에 등록된 PlayerHUD 함수 제거
+	}
+}
+
+void UUIManagerComponent::InitializePlayerHUD()
+{
+	APawn* Pawn = OwnerController->GetPawn();
+	if (!Pawn) return;
+
+	if (UCombatComponent* CombatComp = Pawn->FindComponentByClass<UCombatComponent>())
+	{
+		CombatComp->NotifyCurrentWeaponState();
+	}
 }
 

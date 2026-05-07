@@ -17,11 +17,14 @@ public:
 	// Sets default values for this actor's properties
 	AItem();
 
+	template<typename T>
+	T* GetItemData() const { return Cast<T>(ItemData); }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	virtual void Interact(APawn* Interactor) override;
+	virtual void Interact(AActor* Interactor) override;
 
 	UPROPERTY(EditInstanceOnly, Category = "Item")
 	TObjectPtr<UItemData> ItemData;
