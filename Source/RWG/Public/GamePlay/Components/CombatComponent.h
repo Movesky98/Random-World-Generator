@@ -19,6 +19,15 @@ enum class EWeaponTransitionState : uint8
 	Unequipping
 };
 
+UENUM(BlueprintType)
+enum class EWeaponMontageType : uint8
+{
+	None,
+	Equip,
+	Unequip,
+	Reload,
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RWG_API UCombatComponent : public UBaseInputComponent
 {
@@ -63,9 +72,10 @@ protected:
 
 	void Reload();
 
-	void onReloadEnded();
+	void OnReloadEnded();
 
 private:
+	UFUNCTION(Server, Reliable)
 	void RequestEquipWeapon(AWeaponBase* NewWeapon);
 	
 	UPROPERTY(VisibleInstanceOnly, Replicated, Category = "Weapon")
@@ -74,7 +84,7 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category = "Weapon")
 	TObjectPtr<AWeaponBase> PendingWeapon;
 
-	UPROPERTY(VisibleInstanceOnly, Category = "Weapon")
+	UPROPERTY(VisibleInstanceOnly, Replicated, Category = "Weapon")
 	EWeaponTransitionState WeaponTransitionState;
 	
 	UPROPERTY()
@@ -91,7 +101,12 @@ protected:
 	TSubclassOf<UAnimInstance> DefaultAnimLayerClass;	// ABP_Unarmed_Layers
 
 private:
-	void PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDelegate);
+	void PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDelegate = FOnMontageEnded());
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayMontage(UAnimMontage* Montage, EWeaponMontageType MontageType);
+
+	FOnMontageEnded CreateMontageEndDelegate(EWeaponMontageType MontageType);
 
 	void OnUnequipMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 

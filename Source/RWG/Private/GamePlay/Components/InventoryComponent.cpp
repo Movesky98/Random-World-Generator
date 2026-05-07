@@ -27,6 +27,7 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(UInventoryComponent, Slots, COND_OwnerOnly);
+	DOREPLIFETIME(UInventoryComponent, Weapons);
 }
 
 
@@ -199,12 +200,8 @@ void UInventoryComponent::TryAddWeapon(AWeaponBase* Weapon)
 {
 	if (!Weapon) return;
 
-	if (PrimaryWeapon)
-	{
-		COMMON_LOG(LogGameplay, Log, TEXT("Primary Weapon slot is already occupied"));
-	}
-
-	PrimaryWeapon = Weapon;
+	// 老窜 林公扁何磐
+	Weapons.Add(Weapon);
 	Weapon->AttachToHolster(Cast<ACharacter>(GetOwner()));
 
 	COMMON_LOG(LogGameplay, Log, TEXT("Primary Weapon acquired: %s"), *Weapon->GetName());
@@ -212,16 +209,7 @@ void UInventoryComponent::TryAddWeapon(AWeaponBase* Weapon)
 
 AWeaponBase* UInventoryComponent::GetWeaponAtSlot(int32 SlotIndex) const
 {
-	switch (SlotIndex)
-	{
-	case 0: return PrimaryWeapon;
-	case 1: return SecondaryWeapon;
-	case 2: return MeleeWeapon;
-	case 3: return ThrowableWeapon;
-	default:
-		COMMON_LOG(LogGameplay, Warning, TEXT("Invalid Slot Index: %d"), SlotIndex);
-		return nullptr;
-	}
+	return Weapons.IsValidIndex(SlotIndex) ? Weapons[SlotIndex] : nullptr;
 }
 
 int32 UInventoryComponent::GetAmmoCount(UItemData* AmmoType) const

@@ -16,6 +16,7 @@
 UCombatComponent::UCombatComponent()
 {
 	bWantsInitializeComponent = true;
+	SetIsReplicatedByDefault(true);
 }
 
 
@@ -43,6 +44,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UCombatComponent, CurrentWeapon);
+	DOREPLIFETIME(UCombatComponent, WeaponTransitionState);
 }
 
 TSubclassOf<UBaseInputConfig> UCombatComponent::GetConfigClass()
@@ -77,7 +79,7 @@ void UCombatComponent::BindInputActions(UEnhancedInputComponent* InputComponent)
 	// InputComponent->BindAction(Config->ReloadAction, ETriggerEvent::Started, this, &ThisClass::Reload);
 }
 
-void UCombatComponent::RequestEquipWeapon(AWeaponBase* NewWeapon)
+void UCombatComponent::RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
 {
 	// 같은 무기 요청
 	if (CurrentWeapon == NewWeapon)
@@ -156,10 +158,7 @@ void UCombatComponent::EquipWeapon(AWeaponBase* NewWeapon)
 		Montage = Data->EquipMontage;
 	}
 
-	FOnMontageEnded EndDelegate;
-	EndDelegate.BindUObject(this, &ThisClass::OnEquipMontageEnded);
-
-	Montage ? PlayMontage(Montage, EndDelegate) : OnEquipEnded();
+	Montage ? Multicast_PlayMontage(Montage, EWeaponMontageType::Equip) : OnEquipEnded();
 }
 void UCombatComponent::UnequipWeapon()
 {
@@ -177,10 +176,7 @@ void UCombatComponent::UnequipWeapon()
 
 	WeaponTransitionState = EWeaponTransitionState::Unequipping;
 
-	FOnMontageEnded EndDelegate;
-	EndDelegate.BindUObject(this, &ThisClass::OnUnequipMontageEnded);
-
-	Montage ? PlayMontage(Montage, EndDelegate) : OnUnequipEnded();
+	Montage ? Multicast_PlayMontage(Montage, EWeaponMontageType::Unequip) : OnUnequipEnded();
 }
 
 void UCombatComponent::OnEquipEnded()
@@ -222,7 +218,7 @@ void UCombatComponent::Reload()
 
 }
 
-void UCombatComponent::onReloadEnded()
+void UCombatComponent::OnReloadEnded()
 {
 
 }
@@ -304,3 +300,46 @@ void UCombatComponent::PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDel
 	}
 }
 
+void UCombatComponent::Multicast_PlayMontage_Implementation(UAnimMontage* Montage, EWeaponMontageType MontageType)
+{
+	if (!Montage) return;
+
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!OwnerCharacter) return;
+
+	UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (!AnimInstance) return;
+
+	if (OwnerCharacter->HasAuthority())
+	{
+		FOnMontageEnded EndDelegate = CreateMontageEndDelegate(MontageType);
+		PlayMontage(Montage, EndDelegate);
+	}
+	else
+	{
+		PlayMontage(Montage);
+	}
+}
+
+FOnMontageEnded UCombatComponent::CreateMontageEndDelegate(EWeaponMontageType MontageType)
+{
+	FOnMontageEnded EndDelegate;
+
+	switch (MontageType)
+	{
+	case EWeaponMontageType::None:
+		break;
+	case EWeaponMontageType::Equip:
+		EndDelegate.BindUObject(this, &ThisClass::OnEquipMontageEnded);
+		break;
+	case EWeaponMontageType::Unequip:
+		EndDelegate.BindUObject(this, &ThisClass::OnUnequipMontageEnded);
+		break;
+	case EWeaponMontageType::Reload:
+		break;
+	default:
+		break;
+	}
+
+	return EndDelegate;
+}

@@ -75,8 +75,6 @@ public:
 	TObjectPtr<UItemData> Debug_DefaultAmmo;
 
 protected:
-	TObjectPtr<AWeaponBase> PrimaryWeapon;
-	TObjectPtr<AWeaponBase> SecondaryWeapon;
-	TObjectPtr<AWeaponBase> MeleeWeapon;
-	TObjectPtr<AWeaponBase> ThrowableWeapon;
+	UPROPERTY(Replicated)
+	TArray<TObjectPtr<AWeaponBase>> Weapons;
 };
