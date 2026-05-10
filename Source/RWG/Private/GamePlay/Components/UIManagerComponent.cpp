@@ -50,8 +50,6 @@ void UUIManagerComponent::InitializePawnWidgets(APawn* aPawn)
 	if (AvailableWidgets.Contains(EWidgetType::PlayerHUD))
 	{
 		BindPlayerHUD(aPawn);
-
-		InitializePlayerHUD();
 	}
 }
 
@@ -154,7 +152,7 @@ void UUIManagerComponent::BindPlayerHUD(APawn* Pawn)
 
 	if (UCombatComponent* CombatComp = Pawn->FindComponentByClass<UCombatComponent>())
 	{
-		CombatComp->OnAmmoChanged.AddUObject(PlayerHUD, &UPlayerHUD::SetAmmo);
+		CombatComp->OnAmmoChangedDelegate.AddUObject(PlayerHUD, &UPlayerHUD::SetAmmo);
 		CombatComp->OnCurrentWeaponChanged.AddUObject(PlayerHUD, &UPlayerHUD::SetWeapon);
 	}
 
@@ -183,7 +181,7 @@ void UUIManagerComponent::UnbindPlayerHUD(APawn* Pawn)
 
 	if (UCombatComponent* CombatComp = Pawn->FindComponentByClass<UCombatComponent>())
 	{
-		CombatComp->OnAmmoChanged.RemoveAll(PlayerHUD);
+		CombatComp->OnAmmoChangedDelegate.RemoveAll(PlayerHUD);
 		CombatComp->OnCurrentWeaponChanged.RemoveAll(PlayerHUD);
 	}
 
@@ -192,15 +190,3 @@ void UUIManagerComponent::UnbindPlayerHUD(APawn* Pawn)
 		// QuickSlot 변경 델리게이트에 등록된 PlayerHUD 함수 제거
 	}
 }
-
-void UUIManagerComponent::InitializePlayerHUD()
-{
-	APawn* Pawn = OwnerController->GetPawn();
-	if (!Pawn) return;
-
-	if (UCombatComponent* CombatComp = Pawn->FindComponentByClass<UCombatComponent>())
-	{
-		CombatComp->NotifyCurrentWeaponState();
-	}
-}
-

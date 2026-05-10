@@ -9,18 +9,10 @@
 class AWeaponBase;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnCurrentWeaponChanged, AWeaponBase* /* Weapon */);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAmmoChanged, int32 /* CurrentAmmo */, int32 /* MaxAmmo */);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAmmoChangedDelegate, int32 /* CurrentAmmo */, int32 /* MaxAmmo */);
 
 UENUM(BlueprintType)
-enum class EWeaponTransitionState : uint8
-{
-	None,
-	Equipping,
-	Unequipping
-};
-
-UENUM(BlueprintType)
-enum class EWeaponMontageType : uint8
+enum class EWeaponActionState : uint8
 {
 	None,
 	Equip,
@@ -57,9 +49,9 @@ protected:
 public:
 	FOnCurrentWeaponChanged OnCurrentWeaponChanged;
 
-	FOnAmmoChanged OnAmmoChanged;
+	FOnAmmoChangedDelegate OnAmmoChangedDelegate;
 
-	void NotifyCurrentWeaponState();
+	void SetCurrentWeapon(AWeaponBase* NewWeapon);
 
 protected:
 	void EquipWeapon(AWeaponBase* NewWeapon);
@@ -70,22 +62,32 @@ protected:
 
 	void OnUnequipEnded();
 
+	void TryReload();
+
 	void Reload();
 
 	void OnReloadEnded();
 
+	void OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo);
+
 private:
 	UFUNCTION(Server, Reliable)
 	void RequestEquipWeapon(AWeaponBase* NewWeapon);
+
+	UFUNCTION(Server, Reliable)
+	void RequestReload();
+
+	UFUNCTION()
+	void OnRep_CurrentWeapon(AWeaponBase* OldWeapon);
 	
-	UPROPERTY(VisibleInstanceOnly, Replicated, Category = "Weapon")
+	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing = OnRep_CurrentWeapon, Category = "Weapon")
 	TObjectPtr<AWeaponBase> CurrentWeapon;
 
 	UPROPERTY(VisibleInstanceOnly, Category = "Weapon")
 	TObjectPtr<AWeaponBase> PendingWeapon;
 
 	UPROPERTY(VisibleInstanceOnly, Replicated, Category = "Weapon")
-	EWeaponTransitionState WeaponTransitionState;
+	EWeaponActionState WeaponActionState;
 	
 	UPROPERTY()
 	TObjectPtr<class UInventoryComponent> InventoryComponent;
@@ -104,11 +106,7 @@ private:
 	void PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDelegate = FOnMontageEnded());
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlayMontage(UAnimMontage* Montage, EWeaponMontageType MontageType);
+	void Multicast_PlayMontage(UAnimMontage* Montage, EWeaponActionState ActionState);
 
-	FOnMontageEnded CreateMontageEndDelegate(EWeaponMontageType MontageType);
-
-	void OnUnequipMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
-	void OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

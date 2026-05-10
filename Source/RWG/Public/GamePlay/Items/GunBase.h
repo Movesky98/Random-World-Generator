@@ -6,6 +6,8 @@
 #include "GamePlay/Items/WeaponBase.h"
 #include "GunBase.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAmmoChangedDelegate, int32 /* CurrentAmmo */, int32 /* MaxAmmo */);
+
 /**
  * 
  */
@@ -27,10 +29,19 @@ protected:
 
 	/* Ammo */
 public:
+
+	FOnAmmoChangedDelegate OnAmmoChangedDelegate;
+
 	int32 GetCurrentAmmo() const { return CurrentAmmo; }
-	void SetCurrentAmmo(int32 NewAmmo) { CurrentAmmo = NewAmmo; }
+
+	void SetCurrentAmmo(int32 NewAmmo);
+
+	int32 GetMagazineSize() const;
 
 private:
-	UPROPERTY(VisibleInstanceOnly, Replicated)
+	UFUNCTION()
+	void OnRep_CurrentAmmo();
+
+	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing = OnRep_CurrentAmmo)
 	int32 CurrentAmmo = 0;
 };

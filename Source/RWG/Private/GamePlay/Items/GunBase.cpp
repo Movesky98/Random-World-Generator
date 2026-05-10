@@ -8,17 +8,13 @@
 
 AGunBase::AGunBase()
 {
+
 }
 
 void AGunBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UGunData* GunData = Cast<UGunData>(ItemData);
-	if (GunData)
-	{
-		CurrentAmmo = 0;
-	}
 }
 
 void AGunBase::Equip(ACharacter* NewOwner)
@@ -42,4 +38,23 @@ void AGunBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AGunBase, CurrentAmmo);
+}
+
+void AGunBase::SetCurrentAmmo(int32 NewAmmo)
+{
+	CurrentAmmo = NewAmmo;
+
+	OnAmmoChangedDelegate.Broadcast(CurrentAmmo, GetMagazineSize());
+}
+
+int32 AGunBase::GetMagazineSize() const
+{
+	UGunData* Data = GetItemData<UGunData>();
+
+	return Data ? Data->MagazineSize : INDEX_NONE;
+}
+
+void AGunBase::OnRep_CurrentAmmo()
+{
+	OnAmmoChangedDelegate.Broadcast(CurrentAmmo, GetMagazineSize());
 }

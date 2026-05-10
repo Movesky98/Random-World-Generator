@@ -44,7 +44,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UCombatComponent, CurrentWeapon);
-	DOREPLIFETIME(UCombatComponent, WeaponTransitionState);
+	DOREPLIFETIME(UCombatComponent, WeaponActionState);
 }
 
 TSubclassOf<UBaseInputConfig> UCombatComponent::GetConfigClass()
@@ -76,7 +76,7 @@ void UCombatComponent::BindInputActions(UEnhancedInputComponent* InputComponent)
 		}
 	}
 
-	// InputComponent->BindAction(Config->ReloadAction, ETriggerEvent::Started, this, &ThisClass::Reload);
+	InputComponent->BindAction(Config->ReloadAction, ETriggerEvent::Started, this, &ThisClass::TryReload);
 }
 
 void UCombatComponent::RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
@@ -86,7 +86,7 @@ void UCombatComponent::RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
 	{
 		PendingWeapon = nullptr;
 
-		if (WeaponTransitionState == EWeaponTransitionState::None)
+		if (WeaponActionState == EWeaponActionState::None)
 		{
 			UnequipWeapon();
 		}
@@ -97,7 +97,7 @@ void UCombatComponent::RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
 	// 다른 무기 요청
 	PendingWeapon = NewWeapon;
 
-	if (WeaponTransitionState != EWeaponTransitionState::None)
+	if (WeaponActionState != EWeaponActionState::None)
 	{
 		return;
 	}
@@ -121,23 +121,26 @@ void UCombatComponent::SelectWeaponSlot(int32 SlotIndex)
 
 	RequestEquipWeapon(Weapon);
 }
-void UCombatComponent::NotifyCurrentWeaponState()
+void UCombatComponent::SetCurrentWeapon(AWeaponBase* NewWeapon)
 {
-	OnCurrentWeaponChanged.Broadcast(CurrentWeapon);
-
-	if (!CurrentWeapon)
+	// 이전 무기 있을 경우
+	if (AGunBase* Gun = Cast<AGunBase>(CurrentWeapon))
 	{
-		OnAmmoChanged.Broadcast(0, 0);
-		return;
+		Gun->OnAmmoChangedDelegate.RemoveAll(this);
 	}
 
-	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
-	if (!Gun) return;
-	
-	UGunData* GunData = Gun->GetItemData<UGunData>();
-	if (!GunData) return;
+	CurrentWeapon = nullptr;
 
-	OnAmmoChanged.Broadcast(Gun->GetCurrentAmmo(), GunData->MagazineSize);
+	if (AGunBase* Gun = Cast<AGunBase>(NewWeapon))
+	{
+		Gun->OnAmmoChangedDelegate.AddUObject(this, &ThisClass::OnAmmoChanged);
+
+		OnAmmoChangedDelegate.Broadcast(Gun->GetCurrentAmmo(), Gun->GetMagazineSize());
+
+		CurrentWeapon = Gun;
+	}
+
+	OnCurrentWeaponChanged.Broadcast(CurrentWeapon);
 }
 void UCombatComponent::EquipWeapon(AWeaponBase* NewWeapon)
 {
@@ -146,11 +149,10 @@ void UCombatComponent::EquipWeapon(AWeaponBase* NewWeapon)
 		COMMON_LOG(LogGameplay, Warning, TEXT("CurrentWeapon: %s. EquipWeapon() is called while CurrentWeapon is already valid."), *CurrentWeapon->GetName());
 	}
 
-	CurrentWeapon = NewWeapon;
-	CurrentWeapon->Equip(Cast<ACharacter>(GetOwner()));
-	WeaponTransitionState = EWeaponTransitionState::Equipping;
+	SetCurrentWeapon(NewWeapon);
 
-	NotifyCurrentWeaponState();
+	CurrentWeapon->Equip(Cast<ACharacter>(GetOwner()));
+	WeaponActionState = EWeaponActionState::Equip;
 
 	UAnimMontage* Montage = nullptr;
 	if (UWeaponData* Data = CurrentWeapon->GetItemData<UWeaponData>())
@@ -158,7 +160,7 @@ void UCombatComponent::EquipWeapon(AWeaponBase* NewWeapon)
 		Montage = Data->EquipMontage;
 	}
 
-	Montage ? Multicast_PlayMontage(Montage, EWeaponMontageType::Equip) : OnEquipEnded();
+	Montage ? Multicast_PlayMontage(Montage, EWeaponActionState::Equip) : OnEquipEnded();
 }
 void UCombatComponent::UnequipWeapon()
 {
@@ -174,9 +176,9 @@ void UCombatComponent::UnequipWeapon()
 		Montage = Data->UnequipMontage;
 	}
 
-	WeaponTransitionState = EWeaponTransitionState::Unequipping;
+	WeaponActionState = EWeaponActionState::Unequip;
 
-	Montage ? Multicast_PlayMontage(Montage, EWeaponMontageType::Unequip) : OnUnequipEnded();
+	Montage ? Multicast_PlayMontage(Montage, EWeaponActionState::Unequip) : OnUnequipEnded();
 }
 
 void UCombatComponent::OnEquipEnded()
@@ -189,7 +191,7 @@ void UCombatComponent::OnEquipEnded()
 
 	if (!PendingWeapon)
 	{
-		WeaponTransitionState = EWeaponTransitionState::None;
+		WeaponActionState = EWeaponActionState::None;
 		return;
 	}
 
@@ -198,12 +200,11 @@ void UCombatComponent::OnEquipEnded()
 void UCombatComponent::OnUnequipEnded()
 {
 	CurrentWeapon->AttachToHolster(Cast<ACharacter>(GetOwner()));
-	CurrentWeapon = nullptr;
-	NotifyCurrentWeaponState();
+	SetCurrentWeapon(nullptr);
 
 	if (!PendingWeapon)
 	{
-		WeaponTransitionState = EWeaponTransitionState::None;
+		WeaponActionState = EWeaponActionState::None;
 		return;
 	}
 
@@ -213,36 +214,71 @@ void UCombatComponent::OnUnequipEnded()
 	EquipWeapon(EquipToWeapon);
 }
 
+void UCombatComponent::TryReload()
+{
+	if (WeaponActionState != EWeaponActionState::None || !CurrentWeapon) return;
+
+	RequestReload();
+}
+
+void UCombatComponent::RequestReload_Implementation()
+{
+	Reload();
+}
+
 void UCombatComponent::Reload()
 {
+	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
+	if (!Gun) return;
 
+	UGunData* GunData = Gun->GetItemData<UGunData>();
+	if (GunData && GunData->AmmoType)
+	{
+		if (GunData->MagazineSize - Gun->GetCurrentAmmo() <= 0) return;
+		
+		WeaponActionState = EWeaponActionState::Reload;
+		Multicast_PlayMontage(GunData->ReloadMontage, EWeaponActionState::Reload);
+	}
 }
 
 void UCombatComponent::OnReloadEnded()
 {
+	WeaponActionState = EWeaponActionState::None;
 
+	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
+	if (!Gun) return;
+
+	if (UGunData* GunData = Gun->GetItemData<UGunData>())
+	{
+		int32 NeededAmmo = GunData->MagazineSize - Gun->GetCurrentAmmo();
+		int32 Available = InventoryComponent->GetAmmoCount(GunData->AmmoType);
+		int32 ToLoad = FMath::Min(NeededAmmo, Available);
+
+		InventoryComponent->ConsumeAmmo(GunData->AmmoType, ToLoad);
+		Gun->SetCurrentAmmo(Gun->GetCurrentAmmo() + ToLoad);
+	}
 }
 
-void UCombatComponent::OnUnequipMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void UCombatComponent::OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo)
 {
-	if (bInterrupted)
-	{
-		WeaponTransitionState = EWeaponTransitionState::None;
-		return;
-	}
+	if (CurrentAmmo <= 0 || MaxAmmo <= 0) return;
 
-	OnUnequipEnded();
+	OnAmmoChangedDelegate.Broadcast(CurrentAmmo, MaxAmmo);
 }
 
-void UCombatComponent::OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void UCombatComponent::OnRep_CurrentWeapon(AWeaponBase* OldWeapon)
 {
-	if (bInterrupted)
+	if (AGunBase* OldGun = Cast<AGunBase>(OldWeapon))
 	{
-		WeaponTransitionState = EWeaponTransitionState::None;
-		return;
+		OldGun->OnAmmoChangedDelegate.RemoveAll(this);
 	}
 
-	OnEquipEnded();
+	OnCurrentWeaponChanged.Broadcast(CurrentWeapon);
+
+	if (AGunBase* Gun = Cast<AGunBase>(CurrentWeapon))
+	{
+		Gun->OnAmmoChangedDelegate.AddUObject(this, &ThisClass::OnAmmoChanged);
+	}
 }
 
 void UCombatComponent::ApplyCurrentWeaponAnimLayer()
@@ -251,15 +287,15 @@ void UCombatComponent::ApplyCurrentWeaponAnimLayer()
 	{
 		UWeaponData* Data = CurrentWeapon->GetItemData<UWeaponData>();
 
-		switch (WeaponTransitionState)
+		switch (WeaponActionState)
 		{
-		case EWeaponTransitionState::Equipping:
+		case EWeaponActionState::Equip:
 			if (Data && Data->AnimLayerClass)
 			{
 				SetAnimLayer(Data->AnimLayerClass);
 			}
 			break;
-		case EWeaponTransitionState::Unequipping:
+		case EWeaponActionState::Unequip:
 		default:
 			SetAnimLayer(DefaultAnimLayerClass);
 			break;
@@ -300,7 +336,7 @@ void UCombatComponent::PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDel
 	}
 }
 
-void UCombatComponent::Multicast_PlayMontage_Implementation(UAnimMontage* Montage, EWeaponMontageType MontageType)
+void UCombatComponent::Multicast_PlayMontage_Implementation(UAnimMontage* Montage, EWeaponActionState ActionState)
 {
 	if (!Montage) return;
 
@@ -312,7 +348,9 @@ void UCombatComponent::Multicast_PlayMontage_Implementation(UAnimMontage* Montag
 
 	if (OwnerCharacter->HasAuthority())
 	{
-		FOnMontageEnded EndDelegate = CreateMontageEndDelegate(MontageType);
+		FOnMontageEnded EndDelegate;
+		EndDelegate.BindUObject(this, &ThisClass::OnMontageEnded);
+
 		PlayMontage(Montage, EndDelegate);
 	}
 	else
@@ -321,25 +359,28 @@ void UCombatComponent::Multicast_PlayMontage_Implementation(UAnimMontage* Montag
 	}
 }
 
-FOnMontageEnded UCombatComponent::CreateMontageEndDelegate(EWeaponMontageType MontageType)
+void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	FOnMontageEnded EndDelegate;
-
-	switch (MontageType)
+	if (bInterrupted)
 	{
-	case EWeaponMontageType::None:
+		WeaponActionState = EWeaponActionState::None;
+		return;
+	}
+
+	switch (WeaponActionState)
+	{
+	case EWeaponActionState::None:
 		break;
-	case EWeaponMontageType::Equip:
-		EndDelegate.BindUObject(this, &ThisClass::OnEquipMontageEnded);
+	case EWeaponActionState::Equip:
+		OnEquipEnded();
 		break;
-	case EWeaponMontageType::Unequip:
-		EndDelegate.BindUObject(this, &ThisClass::OnUnequipMontageEnded);
+	case EWeaponActionState::Unequip:
+		OnUnequipEnded();
 		break;
-	case EWeaponMontageType::Reload:
+	case EWeaponActionState::Reload:
+		OnReloadEnded();
 		break;
 	default:
 		break;
 	}
-
-	return EndDelegate;
 }
