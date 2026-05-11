@@ -27,6 +27,20 @@ protected:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void StartAttack() override;
+
+	virtual void StopAttack() override;
+
+	void Fire();
+
+	bool CanFire() const;
+
+	FTimerHandle FireTimerHandle;
+
+	bool bIsFiring = false;
+
+	void SpawnBulletProjectile();
+
 	/* Ammo */
 public:
 

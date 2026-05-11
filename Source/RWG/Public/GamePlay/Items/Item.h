@@ -26,6 +26,8 @@ protected:
 
 	virtual void Interact(AActor* Interactor) override;
 
+	UStaticMeshComponent* GetStaticMeshComponent() const { return MeshComponent; }
+
 	UPROPERTY(EditInstanceOnly, Category = "Item")
 	TObjectPtr<UItemData> ItemData;
 

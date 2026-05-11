@@ -33,6 +33,16 @@ void AWeaponBase::Interact(AActor* Interactor)
 	InventoryComp->TryAddWeapon(this);
 }
 
+void AWeaponBase::StartAttack()
+{
+
+}
+
+void AWeaponBase::StopAttack()
+{
+
+}
+
 void AWeaponBase::Equip(ACharacter* NewOwner)
 {
 	if (!HasAuthority()) return;

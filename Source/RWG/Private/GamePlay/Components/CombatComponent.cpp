@@ -77,6 +77,9 @@ void UCombatComponent::BindInputActions(UEnhancedInputComponent* InputComponent)
 	}
 
 	InputComponent->BindAction(Config->ReloadAction, ETriggerEvent::Started, this, &ThisClass::TryReload);
+
+	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Started, this, &ThisClass::RequestStartAttack);
+	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Completed, this, &ThisClass::RequestStopAttack);
 }
 
 void UCombatComponent::RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
@@ -121,6 +124,24 @@ void UCombatComponent::SelectWeaponSlot(int32 SlotIndex)
 
 	RequestEquipWeapon(Weapon);
 }
+
+void UCombatComponent::RequestStartAttack()
+{
+	if (WeaponActionState != EWeaponActionState::None || !CurrentWeapon) return;
+
+	Server_RequestStartAttack();
+}
+
+void UCombatComponent::RequestStopAttack()
+{
+	if (WeaponActionState != EWeaponActionState::Attack)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Check WeaponActionState. it must be Attack."));
+	}
+
+	Server_RequestStopAttack();
+}
+
 void UCombatComponent::SetCurrentWeapon(AWeaponBase* NewWeapon)
 {
 	// 이전 무기 있을 경우
@@ -264,6 +285,22 @@ void UCombatComponent::OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo)
 	if (CurrentAmmo <= 0 || MaxAmmo <= 0) return;
 
 	OnAmmoChangedDelegate.Broadcast(CurrentAmmo, MaxAmmo);
+}
+
+void UCombatComponent::Server_RequestStartAttack_Implementation()
+{
+	if (!CurrentWeapon) return;
+
+	WeaponActionState = EWeaponActionState::Attack;
+	CurrentWeapon->StartAttack();
+}
+
+void UCombatComponent::Server_RequestStopAttack_Implementation()
+{
+	if (!CurrentWeapon) return;
+
+	CurrentWeapon->StopAttack();
+	WeaponActionState = EWeaponActionState::None;
 }
 
 void UCombatComponent::OnRep_CurrentWeapon(AWeaponBase* OldWeapon)

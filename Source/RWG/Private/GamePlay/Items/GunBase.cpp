@@ -3,12 +3,13 @@
 
 #include "GamePlay/Items/GunBase.h"
 #include "GamePlay/Items/GunData.h"
+#include "GamePlay/Actors/BulletProjectile.h"
 #include "CommonLogCategories.h"
 #include "Net/UnrealNetwork.h"
 
 AGunBase::AGunBase()
 {
-
+	
 }
 
 void AGunBase::BeginPlay()
@@ -38,6 +39,91 @@ void AGunBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AGunBase, CurrentAmmo);
+}
+
+void AGunBase::StartAttack()
+{
+	if (!HasAuthority()) return;
+
+	if (!CanFire()) return;
+
+	UGunData* Data = GetItemData<UGunData>();
+	if (!Data) return;
+	
+	bIsFiring = true;
+
+	Fire();
+	
+	GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ThisClass::Fire, Data->FireRate, true);
+}
+
+void AGunBase::StopAttack()
+{
+	if (!HasAuthority()) return;
+
+	bIsFiring = false;
+
+	GetWorldTimerManager().ClearTimer(FireTimerHandle);
+}
+
+void AGunBase::Fire()
+{
+	if (!HasAuthority()) return;
+
+	if (!CanFire())
+	{
+		StopAttack();
+		return;
+	}
+
+	SpawnBulletProjectile();
+	COMMON_LOG(LogGameplay, Log, TEXT("Fire: %s"), *GetName());
+}
+
+bool AGunBase::CanFire() const
+{
+	// 예상 조건
+	// 1. CurrentAmmo > 0... 정도?
+
+	if (bIsFiring) return false;
+
+	return true;
+}
+
+void AGunBase::SpawnBulletProjectile()
+{
+	UGunData* Data = GetItemData<UGunData>();
+	if (!Data || !Data->BulletProjectileClass)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Please check GunData. Weapon : %s"), *GetName());
+		StopAttack();
+		return;
+	}
+
+	UStaticMeshComponent* MeshComp = GetStaticMeshComponent();
+
+	const FVector MuzzleLocation = MeshComp->GetSocketLocation(Data->MuzzleSocketName);
+	const FRotator MuzzleRotation = MeshComp->GetSocketRotation(Data->MuzzleSocketName);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = Cast<APawn>(GetOwner());
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	ABulletProjectile* Bullet = GetWorld()->SpawnActor<ABulletProjectile>(
+		Data->BulletProjectileClass,
+		MuzzleLocation,
+		MuzzleRotation,
+		SpawnParams
+		);
+
+	if (!Bullet)
+	{
+		COMMON_LOG(LogGameplay, Error, TEXT("Spawn bullet failed."));
+		return;
+	}
+
+	Bullet->InitProjectile(GetOwner(), Data->BulletDamage, Data->BulletSpeed, Data->BulletLifeTime);
 }
 
 void AGunBase::SetCurrentAmmo(int32 NewAmmo)

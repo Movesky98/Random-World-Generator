@@ -22,6 +22,7 @@ public:
 
 	virtual void Unequip();
 
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -32,4 +33,9 @@ protected:
 private:
 	UPROPERTY(Replicated)
 	TObjectPtr<ACharacter> OwnerCharacter;
+
+public:
+	virtual void StartAttack();
+
+	virtual void StopAttack();
 };

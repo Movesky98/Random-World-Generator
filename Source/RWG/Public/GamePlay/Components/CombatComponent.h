@@ -18,6 +18,7 @@ enum class EWeaponActionState : uint8
 	Equip,
 	Unequip,
 	Reload,
+	Attack,
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -44,6 +45,10 @@ protected:
 	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
 
 	void SelectWeaponSlot(int32 SlotIndex);
+
+	void RequestStartAttack();
+
+	void RequestStopAttack();
 
 	/* Weapon Flow */
 public:
@@ -76,6 +81,12 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void RequestReload();
+
+	UFUNCTION(Server, Reliable)
+	void Server_RequestStartAttack();
+
+	UFUNCTION(Server, Reliable)
+	void Server_RequestStopAttack();
 
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeaponBase* OldWeapon);

@@ -20,4 +20,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> ReloadAction;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> AttackAction;
 };
