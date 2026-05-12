@@ -213,10 +213,9 @@ LevelNameToPhaseMap
 
 #### Blueprint 설정 예시
 1. Level To Phase Map 
-![[UIManagerComponent_LevelToPhaseMap.png]]
-
+<img src="Images/UIManagerComponent_LevelToPhaseMap.png" width="500">
 2. Phase To Widget Class Map 
-![[UIManagerComponent_WidgetClassMap.png]]
+<img src="Images/UIManagerComponent_WidgetClassMap.png" width="500">
 
 ### 설계 판단
 초기에는 `PlayerController`에서 레벨 별 UI를 직접 생성하고 관리했습니다.
