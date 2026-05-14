@@ -266,9 +266,13 @@ void AWorldGenerator::DrawDebugGrid()
 			int32 X = i % CityGrid.GetWidth();
 			int32 Y = i / CityGrid.GetWidth();
 
+			// Block 할당 시
 			Color = CityCells[i].BlockId != -1 ? Colors[CityCells[i].BlockId] : FColor::Black;
 
+			// Block 할당 안할 경우
+			//Color = FColor::White;
 
+			// Lot 표시
 			for (const FCityLot& Lot : CityGrid.GetLots())
 			{
 				if (Lot.CellIndices.Contains(CityGrid.Index(X, Y)))

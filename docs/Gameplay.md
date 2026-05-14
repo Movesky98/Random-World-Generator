@@ -214,6 +214,7 @@ LevelNameToPhaseMap
 #### Blueprint 설정 예시
 1. Level To Phase Map 
 <img src="Images/UIManagerComponent_LevelToPhaseMap.png" width="500">
+
 2. Phase To Widget Class Map 
 <img src="Images/UIManagerComponent_WidgetClassMap.png" width="500">
 
