@@ -115,7 +115,7 @@ Road Graph는 논리적 도로 구조를 담당하고, 시각화는 Spline 및 P
 <img src="Images/RWG_도로 생성 근접.png" width="500">
 
 2. 도로 생성 - TDV
-<img src="Images/RWG_도로 생성 TDV.png" widgth="500">
+<img src="Images/RWG_도로 생성 TDV.png" width="500">
 
 3. 도로 시각화 - PCG Road Graph
 <img src="Images/RWG_도로 시각화 PCG.png">

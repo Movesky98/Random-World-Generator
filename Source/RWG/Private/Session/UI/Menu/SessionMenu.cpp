@@ -155,6 +155,7 @@ void USessionMenu::OnFindSessionsCompleted(const TArray<FOnlineSessionSearchResu
 	if (!bWasSuccessful)
 	{
 		HandleError(ESessionUIError::FindFailed);
+		SessionState = ESessionState::Idle;
 		// Validate Find Sesions Result.
 		// Especially check the error type.
 		// Such as Failed to find sessions, no session slot class, no available sessions, etc...
@@ -182,7 +183,7 @@ void USessionMenu::DisplaySessionList(const TArray<FOnlineSessionSearchResult>& 
 		if (USessionSlot* SessionSlot = CreateWidget<USessionSlot>(GetWorld(), SessionSlotClass))
 		{
 			FString SessionName;
-			Result.Session.SessionSettings.Get(FName("NAME"), SessionName);
+			Result.Session.SessionSettings.Get(FName("SESSION_NAME"), SessionName);
 
 			int32 MaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
 			int32 CurrentPlayers = MaxPlayers - Result.Session.NumOpenPublicConnections;	// 최대 인원 수 - 현재 열려있는 슬롯 수 == 현재 인원 수
@@ -214,7 +215,7 @@ void USessionMenu::OnJoinButtonClicked(int32 SessionIndex)
 	{
 		SessionState = ESessionState::Joining;
 		FString SessionName;
-		FindSessionsResults[SessionIndex].Session.SessionSettings.Get(FName("NAME"), SessionName);
+		FindSessionsResults[SessionIndex].Session.SessionSettings.Get(FName("SESSION_NAME"), SessionName);
 
 		SessionSubsystem->JoinSession(FindSessionsResults[SessionIndex], FName(SessionName));
 	}
