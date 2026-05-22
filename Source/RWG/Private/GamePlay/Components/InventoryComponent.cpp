@@ -4,6 +4,7 @@
 #include "GamePlay/Components/InventoryComponent.h"
 #include "GamePlay/DataAssets/InventoryInputConfig.h"
 #include "GamePlay/Items/WeaponBase.h"
+#include "GamePlay/Items/ArmorData.h"
 #include "CommonLogCategories.h"
 
 #include "GameFramework/Character.h"
@@ -262,5 +263,34 @@ void UInventoryComponent::Debug_AddAmmo(UItemData* AmmoType, int32 Amount)
 	Slots.Add(AmmoInstance);
 
 	COMMON_LOG(LogGameplay, Log, TEXT("Debug ammo added : %d"), Amount);
+}
+
+float UInventoryComponent::ProcessArmorHit(FName BoneName)
+{
+	// ¸Ó¸®
+	if (BoneName == "spine_05")
+	{
+		if (HelmetSlot.ItemData && HelmetDurability > 0.0f)
+		{
+			if (UArmorData* ArmorData = Cast<UArmorData>(HelmetSlot.ItemData))
+			{
+				HelmetDurability = FMath::Max(HelmetDurability - 1.0f, 0.0f);
+				return 1.0f - ArmorData->DamageReductionRate;
+			}
+		}
+	}
+	else if (BoneName == "spine_02" || BoneName == "spine_04")
+	{
+		if (VestSlot.ItemData && VestDurability > 0.0f)
+		{
+			if (UArmorData* ArmorData = Cast<UArmorData>(VestSlot.ItemData))
+			{
+				VestDurability = FMath::Max(VestDurability - 1.0f, 0.0f);
+				return 1.0f - ArmorData->DamageReductionRate;
+			}
+		}
+	}
+
+	return 1.0f;
 }
 

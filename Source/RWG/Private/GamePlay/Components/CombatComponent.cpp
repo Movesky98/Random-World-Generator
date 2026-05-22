@@ -148,6 +148,7 @@ void UCombatComponent::SetCurrentWeapon(AWeaponBase* NewWeapon)
 	if (AGunBase* Gun = Cast<AGunBase>(CurrentWeapon))
 	{
 		Gun->OnAmmoChangedDelegate.RemoveAll(this);
+		Gun->SetOwner(nullptr);
 	}
 
 	CurrentWeapon = nullptr;
@@ -159,6 +160,7 @@ void UCombatComponent::SetCurrentWeapon(AWeaponBase* NewWeapon)
 		OnAmmoChangedDelegate.Broadcast(Gun->GetCurrentAmmo(), Gun->GetMagazineSize());
 
 		CurrentWeapon = Gun;
+		CurrentWeapon->SetOwner(GetOwner());
 	}
 
 	OnCurrentWeaponChanged.Broadcast(CurrentWeapon);

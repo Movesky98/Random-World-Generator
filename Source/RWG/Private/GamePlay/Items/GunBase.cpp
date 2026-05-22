@@ -76,8 +76,8 @@ void AGunBase::Fire()
 		return;
 	}
 
-	SpawnBulletProjectile();
 	COMMON_LOG(LogGameplay, Log, TEXT("Fire: %s"), *GetName());
+	SpawnBulletProjectile();
 }
 
 bool AGunBase::CanFire() const
@@ -122,8 +122,12 @@ void AGunBase::SpawnBulletProjectile()
 		COMMON_LOG(LogGameplay, Error, TEXT("Spawn bullet failed."));
 		return;
 	}
+	else
+	{
+		COMMON_LOG(LogGameplay, Log, TEXT("SpawnParam : Owner is %s, Instigator is %s"), *GetNameSafe(SpawnParams.Owner), *GetNameSafe(SpawnParams.Instigator));
+	}
 
-	Bullet->InitProjectile(GetOwner(), Data->BulletDamage, Data->BulletSpeed, Data->BulletLifeTime);
+	Bullet->InitProjectile(Data->BulletDamage, Data->BulletSpeed, Data->BulletLifeTime);
 }
 
 void AGunBase::SetCurrentAmmo(int32 NewAmmo)

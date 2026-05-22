@@ -18,7 +18,7 @@ public:
 	// Sets default values for this actor's properties
 	ABulletProjectile();
 
-	void InitProjectile(AActor* InOwnerActor, float InDamage, float InInitialSpeed, float LifeTime);
+	void InitProjectile(float InDamage, float InInitialSpeed, float LifeTime);
 
 protected:
 	// Called when the game starts or when spawned

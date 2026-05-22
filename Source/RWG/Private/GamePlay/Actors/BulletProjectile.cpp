@@ -18,7 +18,7 @@ ABulletProjectile::ABulletProjectile()
 	RootComponent = CollisionComponent;
 
 	CollisionComponent->SetSphereRadius(5.0f);
-	// Set CollisionComponent's collision profile.
+	CollisionComponent->SetCollisionProfileName(FName("Projectile"));
 	
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileMovementComponent->InitialSpeed = 30000.0f;
@@ -27,10 +27,8 @@ ABulletProjectile::ABulletProjectile()
 	ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
 }
 
-void ABulletProjectile::InitProjectile(AActor* InOwnerActor, float InDamage, float InInitialSpeed, float LifeTime)
+void ABulletProjectile::InitProjectile(float InDamage, float InInitialSpeed, float LifeTime)
 {
-	SetOwner(InOwnerActor);
-
 	Damage = InDamage;
 	ProjectileMovementComponent->InitialSpeed = InInitialSpeed;
 	ProjectileMovementComponent->MaxSpeed = InInitialSpeed;
@@ -59,15 +57,17 @@ void ABulletProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* Ot
 
 	if (OtherActor == GetOwner() || OtherActor == GetInstigator()) return;
 
-	UGameplayStatics::ApplyDamage(
+	UGameplayStatics::ApplyPointDamage(
 		OtherActor,
 		Damage,
+		GetActorForwardVector(),
+		Hit,
 		GetInstigatorController(),
-		this,
+		GetOwner(),
 		UDamageType::StaticClass()
 	);
 
-	COMMON_LOG(LogGameplay, Log, TEXT("Projectile hits %s"), *OtherActor->GetName());
+	COMMON_LOG(LogGameplay, Log, TEXT("Projectile hits something. EventInstigator : %s, DamageCauser : %s"), *GetNameSafe(GetInstigatorController()), *GetNameSafe(GetOwner()));
 
 	DestroyProjectile();
 }

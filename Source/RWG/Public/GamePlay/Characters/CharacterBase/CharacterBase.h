@@ -4,17 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GamePlay/Interfaces/Damageable.h"
 #include "CharacterBase.generated.h"
 
 class ULocomotionComponent;
 class UCombatComponent;
 class UInventoryComponent;
 class UInteractionComponent;
+class UHealthComponent;
+
 class USpringArmComponent;
 class UCameraComponent;
 
 UCLASS()
-class RWG_API ACharacterBase : public ACharacter
+class RWG_API ACharacterBase : public ACharacter, public IDamageable
 {
 	GENERATED_BODY()
 
@@ -25,6 +28,10 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	virtual void ProcessDamage(const FDamageInfo& DamageInfo) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<USpringArmComponent> SpringArmComponent;
@@ -43,4 +50,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	UInteractionComponent* InteractionComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<UHealthComponent> HealthComponent;
 };

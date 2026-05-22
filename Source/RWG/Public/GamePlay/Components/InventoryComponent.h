@@ -77,4 +77,22 @@ public:
 protected:
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<AWeaponBase>> Weapons;
+
+	/* Armor */
+public:
+	float ProcessArmorHit(FName BoneName);
+
+private:
+	UPROPERTY(Replicated)
+	FItemInstance HelmetSlot;
+
+	UPROPERTY(Replicated)
+	FItemInstance VestSlot;
+
+	// 현재 내구도
+	UPROPERTY(Replicated)
+	float HelmetDurability = 0.0f;
+
+	UPROPERTY(Replicated)
+	float VestDurability = 0.0f;
 };
