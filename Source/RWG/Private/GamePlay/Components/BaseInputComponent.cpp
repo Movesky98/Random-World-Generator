@@ -3,6 +3,7 @@
 
 #include "GamePlay/Components/BaseInputComponent.h"
 #include "GamePlay/DataAssets/BaseInputConfig.h"
+#include "Common/UI/UserWidgetBase.h"
 #include "CommonLogCategories.h"
 #include "Engine/AssetManager.h"
 
@@ -101,4 +102,19 @@ bool UBaseInputComponent::IsConfigLoaded() const
 void UBaseInputComponent::BindOnConfigLoaded(TFunction<void()> Callback)
 {
 	OnConfigLoaded.AddLambda([Callback](UBaseInputComponent*) {Callback(); });
+}
+
+TSubclassOf<UUserWidgetBase> UBaseInputComponent::GetDefaultWidgetClass() const
+{
+	return nullptr;
+}
+
+void UBaseInputComponent::BindComponent(UUserWidgetBase* Widget)
+{
+
+}
+
+void UBaseInputComponent::UnbindComponent(UUserWidgetBase* Widget)
+{
+
 }

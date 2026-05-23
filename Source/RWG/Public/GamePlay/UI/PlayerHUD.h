@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Common/UI/UserWidgetBase.h"
+#include "GamePlay/UI/GameplayWidget.h"
 #include "PlayerHUD.generated.h"
 
 class AWeaponBase;
@@ -13,7 +13,7 @@ class UTextBlock;
  * 
  */
 UCLASS()
-class RWG_API UPlayerHUD : public UUserWidgetBase
+class RWG_API UPlayerHUD : public UGameplayWidget
 {
 	GENERATED_BODY()
 public:

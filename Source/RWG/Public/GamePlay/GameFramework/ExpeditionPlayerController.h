@@ -30,16 +30,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UUIManagerComponent* UIManagerComponent;
 
-	// Inventory Component Section - Test //
-	void HandleInventoryToggled();
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UInputHandlerComponent* InputHandlerComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
-	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
-
-	UInventoryWidget* InventoryWidget;
-
-	bool bIsInventoryOpen = false;
 };

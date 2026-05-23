@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GamePlay/Interfaces/WidgetBindable.h"
 #include "GamePlay/Interfaces/Damageable.h"
 #include "HealthComponent.generated.h"
 
@@ -12,7 +13,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnDeath, const FDamageInfo& /* DamageInfo *
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RWG_API UHealthComponent : public UActorComponent
+class RWG_API UHealthComponent : public UActorComponent, public IWidgetBindable
 {
 	GENERATED_BODY()
 
@@ -69,4 +70,12 @@ private:
 
 	UFUNCTION()
 	void OnRep_CurrentHealth();
+
+	// IWidgetBindable
+protected:
+	virtual TSubclassOf<UUserWidgetBase> GetDefaultWidgetClass() const override;
+
+	virtual void BindComponent(UUserWidgetBase* Widget) override;
+
+	virtual void UnbindComponent(UUserWidgetBase* Widget) override;
 };

@@ -7,6 +7,7 @@
 #include "GamePlay/Items/WeaponBase.h"
 #include "GamePlay/Items/GunBase.h"
 #include "GamePlay/Items/GunData.h"
+#include "GamePlay/UI/PlayerHUD.h"
 #include "CommonLogCategories.h"
 
 #include "GameFramework/Character.h"
@@ -421,5 +422,30 @@ void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 		break;
 	default:
 		break;
+	}
+}
+
+/********************************** IWidgetBindable **********************************/
+
+TSubclassOf<UUserWidgetBase> UCombatComponent::GetDefaultWidgetClass() const
+{
+	return UPlayerHUD::StaticClass();
+}
+
+void UCombatComponent::BindComponent(UUserWidgetBase* Widget)
+{
+	if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
+	{
+		OnAmmoChangedDelegate.AddUObject(HUD, &UPlayerHUD::SetAmmo);
+		OnCurrentWeaponChanged.AddUObject(HUD, &UPlayerHUD::SetWeapon);
+	}
+}
+
+void UCombatComponent::UnbindComponent(UUserWidgetBase* Widget)
+{
+	if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
+	{
+		OnAmmoChangedDelegate.RemoveAll(HUD);
+		OnCurrentWeaponChanged.RemoveAll(HUD);
 	}
 }

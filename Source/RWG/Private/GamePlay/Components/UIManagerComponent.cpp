@@ -2,11 +2,12 @@
 
 
 #include "GamePlay/Components/UIManagerComponent.h"
-#include "Common/UI/UserWidgetBase.h"
 #include "GamePlay/Components/InventoryComponent.h"
 #include "GamePlay/Components/CombatComponent.h"
+#include "Common/UI/UserWidgetBase.h"
 #include "GamePlay/UI/InventoryWidget.h"
 #include "GamePlay/UI/PlayerHUD.h"
+#include "GamePlay/Interfaces/WidgetBindable.h"
 #include "CommonLogCategories.h"
 
 #include "Kismet/GameplayStatics.h"
@@ -46,10 +47,41 @@ void UUIManagerComponent::InitializePawnWidgets(APawn* aPawn)
 	}
 
 	DisplayWidgetsForPhase();
+}
 
-	if (AvailableWidgets.Contains(EWidgetType::PlayerHUD))
+void UUIManagerComponent::BindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents)
+{
+	for (auto& Component : BindableComponents)
 	{
-		BindPlayerHUD(aPawn);
+		TSubclassOf<UUserWidgetBase> WidgetClass = Component->GetDefaultWidgetClass();
+		if (!WidgetClass) continue;
+
+		for (UUserWidgetBase* Widget : AvailableWidgets)
+		{
+			if (Widget->IsA(WidgetClass))
+			{
+				Component->BindComponent(Widget);
+				break;
+			}
+		}
+	}
+}
+
+void UUIManagerComponent::UnbindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents)
+{
+	for (auto& Component : BindableComponents)
+	{
+		TSubclassOf<UUserWidgetBase> WidgetClass = Component->GetDefaultWidgetClass();
+		if (!WidgetClass) continue;
+
+		for (UUserWidgetBase* Widget : AvailableWidgets)
+		{
+			if (Widget->IsA(WidgetClass))
+			{
+				Component->UnbindComponent(Widget);
+				break;
+			}
+		}
 	}
 }
 
@@ -85,17 +117,17 @@ void UUIManagerComponent::CreateWidgetsForPhase(EGamePhase Phase)
 	{
 		if (UUserWidgetBase* WidgetBase = CreateWidget<UUserWidgetBase>(OwnerController, WidgetClass))
 		{
-			AvailableWidgets.Add(WidgetBase->GetWidgetType(), WidgetBase);
+			AvailableWidgets.Add(WidgetBase);
 			COMMON_LOG(LogGameplay, Log, TEXT("Saved widget name : %s"), *WidgetBase->GetClass()->GetName());
 		}
 	}
 
-	for (auto& [WidgetType, Widget] : AvailableWidgets)
+	for (auto& Widget : AvailableWidgets)
 	{
 		Widget->AddToViewport();
 	}
 
-	ShowDefaultWidget(CurrentPhaseWidgetClasses->DefaultWidget);
+	ShowDefaultWidget(CurrentPhaseWidgetClasses->DefaultWidgetClass);
 }
 
 EGamePhase UUIManagerComponent::ConvertLevelNameToPhase(FName LevelName)
@@ -113,12 +145,23 @@ EGamePhase UUIManagerComponent::ConvertLevelNameToPhase(FName LevelName)
 	return *PhasePtr;
 }
 
-void UUIManagerComponent::ShowDefaultWidget(EWidgetType DefaultType)
+void UUIManagerComponent::ShowDefaultWidget(TSubclassOf<UUserWidgetBase> WidgetClass)
 {
-	TObjectPtr<UUserWidgetBase>* WidgetBasePtr = AvailableWidgets.Find(DefaultType);
-	if (!WidgetBasePtr)
+	if (!WidgetClass) return;
+
+	UUserWidgetBase* FoundWidget = nullptr;
+	for (UUserWidgetBase* Widget : AvailableWidgets)
 	{
-		COMMON_LOG(LogGameplay, Error, TEXT("No widget found for DefaultWidget. WidgetType : %s"), *UEnum::GetValueAsString(DefaultType));
+		if (Widget->IsA(WidgetClass))
+		{
+			FoundWidget = Widget;
+			break;
+		}
+	}
+
+	if (!FoundWidget)
+	{
+		COMMON_LOG(LogGameplay, Error, TEXT("No widget found for DefaultWidgetClass. CurrentPhase is %s"), *UEnum::GetValueAsString(CurrentPhase));
 		return;
 	}
 
@@ -128,65 +171,7 @@ void UUIManagerComponent::ShowDefaultWidget(EWidgetType DefaultType)
 		CurrentWidget = nullptr;
 	}
 
-	CurrentWidget = *WidgetBasePtr;
+	CurrentWidget = FoundWidget;
 	CurrentWidget->SetUp();
-	COMMON_LOG(LogGameplay, Log, TEXT("Set up widget name : %s"), *WidgetBasePtr->GetClass()->GetName());
-}
-
-void UUIManagerComponent::BindPlayerHUD(APawn* Pawn)
-{
-	UnbindPlayerHUD(Pawn);
-
-	if (!Pawn)
-	{
-		COMMON_LOG(LogGameplay, Warning, TEXT("BindToPawn failed. Pawn is nullptr."));
-		return;
-	}
-
-	TObjectPtr<UPlayerHUD> PlayerHUD = Cast<UPlayerHUD>(AvailableWidgets.FindRef(EWidgetType::PlayerHUD));
-	if (!PlayerHUD)
-	{
-		COMMON_LOG(LogGameplay, Warning, TEXT("PlayerHUD is nullptr."));
-		return;
-	}
-
-	if (UCombatComponent* CombatComp = Pawn->FindComponentByClass<UCombatComponent>())
-	{
-		CombatComp->OnAmmoChangedDelegate.AddUObject(PlayerHUD, &UPlayerHUD::SetAmmo);
-		CombatComp->OnCurrentWeaponChanged.AddUObject(PlayerHUD, &UPlayerHUD::SetWeapon);
-	}
-
-	if (UInventoryComponent* InventoryComp = Pawn->FindComponentByClass<UInventoryComponent>())
-	{
-		// QuickSlot 변경 델리게이트에 PlayerHUD 함수 등록.
-	}
-
-	// 나중에 StatComponent. 상태 관리 컴포넌트 같은 것도 필요함.
-}
-
-void UUIManagerComponent::UnbindPlayerHUD(APawn* Pawn)
-{
-	if (!Pawn)
-	{
-		COMMON_LOG(LogGameplay, Warning, TEXT("BindToPawn failed. Pawn is nullptr."));
-		return;
-	}
-
-	TObjectPtr<UPlayerHUD> PlayerHUD = Cast<UPlayerHUD>(AvailableWidgets.FindRef(EWidgetType::PlayerHUD));
-	if (!PlayerHUD)
-	{
-		COMMON_LOG(LogGameplay, Warning, TEXT("PlayerHUD is nullptr."));
-		return;
-	}
-
-	if (UCombatComponent* CombatComp = Pawn->FindComponentByClass<UCombatComponent>())
-	{
-		CombatComp->OnAmmoChangedDelegate.RemoveAll(PlayerHUD);
-		CombatComp->OnCurrentWeaponChanged.RemoveAll(PlayerHUD);
-	}
-
-	if (UInventoryComponent* InventoryComp = Pawn->FindComponentByClass<UInventoryComponent>())
-	{
-		// QuickSlot 변경 델리게이트에 등록된 PlayerHUD 함수 제거
-	}
+	COMMON_LOG(LogGameplay, Log, TEXT("Set up widget name : %s"), *GetNameSafe(CurrentWidget->GetClass()));
 }

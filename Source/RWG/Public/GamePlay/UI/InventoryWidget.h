@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Common/UI/UserWidgetBase.h"
+#include "GamePlay/UI/GameplayWidget.h"
 #include "InventoryWidget.generated.h"
 
 class UInventoryComponent;
@@ -14,7 +14,7 @@ class UItemSlot;
  * 
  */
 UCLASS()
-class RWG_API UInventoryWidget : public UUserWidgetBase
+class RWG_API UInventoryWidget : public UGameplayWidget
 {
 	GENERATED_BODY()
 
@@ -25,12 +25,12 @@ public:
 
 protected:
 	void NativeConstruct() override;
-
-	void NativeDestruct() override;
-
+	
 	void ToggleInventory();
 	
 	void RefreshInventory();
+
+	void NativeDestruct() override;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWrapBox> ItemGrid;

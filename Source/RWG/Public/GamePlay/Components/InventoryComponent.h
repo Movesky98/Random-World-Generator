@@ -95,4 +95,12 @@ private:
 
 	UPROPERTY(Replicated)
 	float VestDurability = 0.0f;
+
+	// IWidgetBindable
+protected:
+	virtual TSubclassOf<UUserWidgetBase> GetDefaultWidgetClass() const override;
+
+	virtual void BindComponent(UUserWidgetBase* Widget) override;
+
+	virtual void UnbindComponent(UUserWidgetBase* Widget) override;
 };

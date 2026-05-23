@@ -5,6 +5,7 @@
 #include "GamePlay/DataAssets/InventoryInputConfig.h"
 #include "GamePlay/Items/WeaponBase.h"
 #include "GamePlay/Items/ArmorData.h"
+#include "GamePlay/UI/InventoryWidget.h"
 #include "CommonLogCategories.h"
 
 #include "GameFramework/Character.h"
@@ -292,5 +293,27 @@ float UInventoryComponent::ProcessArmorHit(FName BoneName)
 	}
 
 	return 1.0f;
+}
+
+TSubclassOf<UUserWidgetBase> UInventoryComponent::GetDefaultWidgetClass() const
+{
+	return UInventoryWidget::StaticClass();
+}
+
+void UInventoryComponent::BindComponent(UUserWidgetBase* Widget)
+{
+	if (UInventoryWidget* InvWidget = Cast<UInventoryWidget>(Widget))
+	{
+		InvWidget->InitInventory(this);
+	}
+}
+
+void UInventoryComponent::UnbindComponent(UUserWidgetBase* Widget)
+{
+	if (UInventoryWidget* InvWidget = Cast<UInventoryWidget>(Widget))
+	{
+		OnInventoryChanged.RemoveAll(InvWidget);
+		OnInventoryToggled.RemoveAll(InvWidget);
+	}
 }
 

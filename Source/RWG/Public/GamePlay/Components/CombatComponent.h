@@ -120,4 +120,12 @@ private:
 	void Multicast_PlayMontage(UAnimMontage* Montage, EWeaponActionState ActionState);
 
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	// IWidgetBindable
+protected:
+	virtual TSubclassOf<UUserWidgetBase> GetDefaultWidgetClass() const override;
+
+	virtual void BindComponent(UUserWidgetBase* Widget) override;
+
+	virtual void UnbindComponent(UUserWidgetBase* Widget) override;
 };

@@ -8,6 +8,7 @@
 
 enum class EWidgetType : uint8;
 class UUserWidgetBase;
+class IWidgetBindable;
 
 UENUM(BlueprintType)
 enum class EGamePhase : uint8
@@ -28,7 +29,7 @@ public:
 
 	/* Phase에서 기본적으로 보여줄 위젯 */
 	UPROPERTY(EditDefaultsOnly)
-	EWidgetType DefaultWidget;
+	TSubclassOf<UUserWidgetBase> DefaultWidgetClass;
 };
 
 
@@ -48,6 +49,10 @@ protected:
 public:
 	void InitializePawnWidgets(APawn* aPawn);
 
+	void BindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
+
+	void UnbindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
+
 protected:
 	void DisplayWidgetsForPhase();
 
@@ -57,7 +62,7 @@ protected:
 
 	EGamePhase ConvertLevelNameToPhase(FName LevelName);
 
-	void ShowDefaultWidget(EWidgetType DefaultType);
+	void ShowDefaultWidget(TSubclassOf<UUserWidgetBase> WidgetClass);
 
 	/* 에디터 설정용 TMap */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
@@ -73,17 +78,11 @@ private:
 	APlayerController* OwnerController;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
-	TMap<EWidgetType, TObjectPtr<UUserWidgetBase>> AvailableWidgets;
+	TArray<UUserWidgetBase*> AvailableWidgets;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UUserWidgetBase> CurrentWidget;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	EGamePhase CurrentPhase;
-
-	/* PlayerHUD */
-protected:
-	void BindPlayerHUD(APawn* Pawn);
-
-	void UnbindPlayerHUD(APawn* Pawn);
 };

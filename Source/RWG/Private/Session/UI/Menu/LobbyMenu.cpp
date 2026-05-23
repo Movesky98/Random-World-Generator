@@ -15,7 +15,7 @@ DEFINE_LOG_CATEGORY(LogLobbyMenu);
 
 ULobbyMenu::ULobbyMenu()
 {
-	WidgetType = EWidgetType::LobbyMenu;
+
 }
 
 void ULobbyMenu::NativeConstruct()

@@ -6,16 +6,6 @@
 #include "Blueprint/UserWidget.h"
 #include "UserWidgetBase.generated.h"
 
-UENUM(BlueprintType)
-enum class EWidgetType : uint8
-{
-	None,
-	SessionMenu,
-	LobbyMenu,
-	PlayerHUD,
-	Inventory
-};
-
 /**
  * 
  */
@@ -28,10 +18,4 @@ public:
 	virtual void SetUp();
 
 	virtual void TearDown();
-
-	EWidgetType GetWidgetType() const;
-
-protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget")
-	EWidgetType WidgetType;
 };

@@ -5,6 +5,7 @@
 #include "GamePlay/Components/UIManagerComponent.h"
 #include "GamePlay/Components/InputHandlerComponent.h"
 #include "GamePlay/Interfaces/InputBindable.h"
+#include "GamePlay/Interfaces/WidgetBindable.h"
 #include "GamePlay/Components/InventoryComponent.h"
 #include "GamePlay/UI/InventoryWidget.h"
 
@@ -49,6 +50,7 @@ void AExpeditionPlayerController::AcknowledgePossession(APawn* aPawn)
 {
 	Super::AcknowledgePossession(aPawn);
 
+	// IInputBindable 수집
 	TArray<UActorComponent*> Components = aPawn->GetComponentsByInterface(UInputBindable::StaticClass());
 
 	TArray<TScriptInterface<IInputBindable>> BindableComponents;
@@ -69,15 +71,18 @@ void AExpeditionPlayerController::AcknowledgePossession(APawn* aPawn)
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 		InputHandlerComponent->RegisterBindableComponents(BindableComponents, EnhancedInput);
 
+	// IWidgetBindable 수집
+	TArray<UActorComponent*> WidgetBindableComps = aPawn->GetComponentsByInterface(UWidgetBindable::StaticClass());
+
+	TArray<TScriptInterface<IWidgetBindable>> WidgetBindables;
+	for (UActorComponent* Component : WidgetBindableComps)
+	{
+		TScriptInterface<IWidgetBindable> Bindable;
+		Bindable.SetObject(Component);
+		Bindable.SetInterface(Cast<IWidgetBindable>(Component));
+		WidgetBindables.Add(Bindable);
+	}
+
 	UIManagerComponent->InitializePawnWidgets(aPawn);
-}
-
-void AExpeditionPlayerController::HandleInventoryToggled()
-{
-	if (bIsInventoryOpen)
-		InventoryWidget->SetVisibility(ESlateVisibility::Visible);
-	else
-		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
-
-	bIsInventoryOpen = !bIsInventoryOpen;
+	UIManagerComponent->BindDelegatesFromGameplayWidgets(WidgetBindables);
 }

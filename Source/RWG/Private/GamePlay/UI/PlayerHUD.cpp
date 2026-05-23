@@ -9,7 +9,7 @@
 
 UPlayerHUD::UPlayerHUD()
 {
-	WidgetType = EWidgetType::PlayerHUD;
+
 }
 
 void UPlayerHUD::SetUp()

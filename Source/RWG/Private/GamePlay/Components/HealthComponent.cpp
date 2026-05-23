@@ -2,6 +2,7 @@
 
 
 #include "GamePlay/Components/HealthComponent.h"
+#include "GamePlay/UI/PlayerHUD.h"
 #include "CommonLogCategories.h"
 
 #include "Net/UnrealNetwork.h"
@@ -106,4 +107,27 @@ void UHealthComponent::StopRegen()
 void UHealthComponent::OnRep_CurrentHealth()
 {
 	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+}
+
+/********************************** IWidgetBindable **********************************/
+
+TSubclassOf<UUserWidgetBase> UHealthComponent::GetDefaultWidgetClass() const
+{
+	return UPlayerHUD::StaticClass();
+}
+
+void UHealthComponent::BindComponent(UUserWidgetBase* Widget)
+{
+	if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
+	{
+		// Bind PlayerHUD's function to OnHealthChanged delegate.
+	}
+}
+
+void UHealthComponent::UnbindComponent(UUserWidgetBase* Widget)
+{
+	if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
+	{
+		// Unind PlayerHUD's function to OnHealthChanged delegate.
+	}
 }

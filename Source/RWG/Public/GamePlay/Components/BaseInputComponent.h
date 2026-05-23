@@ -5,16 +5,18 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GamePlay/Interfaces/InputBindable.h"
+#include "GamePlay/Interfaces/WidgetBindable.h"
 #include "BaseInputComponent.generated.h"
 
 class UBaseInputConfig;
+class UUserWidgetBase;
 
 const FName InputConfigName = FName("InputConfig");
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnConfigLoaded, UBaseInputComponent* InputComponent);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RWG_API UBaseInputComponent : public UActorComponent, public IInputBindable
+class RWG_API UBaseInputComponent : public UActorComponent, public IInputBindable, public IWidgetBindable
 {
 	GENERATED_BODY()
 
@@ -56,4 +58,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	int32 IMCPriority = 0;
+
+	// IWidgetBindable
+protected:
+	virtual TSubclassOf<UUserWidgetBase> GetDefaultWidgetClass() const override;
+
+	virtual void BindComponent(UUserWidgetBase* Widget) override;
+
+	virtual void UnbindComponent(UUserWidgetBase* Widget) override;
 };

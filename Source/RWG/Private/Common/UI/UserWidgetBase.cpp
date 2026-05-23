@@ -34,8 +34,3 @@ void UUserWidgetBase::TearDown()
 
 	SetVisibility(ESlateVisibility::Collapsed);
 }
-
-EWidgetType UUserWidgetBase::GetWidgetType() const
-{
-	return WidgetType;
-}

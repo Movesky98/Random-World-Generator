@@ -26,7 +26,6 @@ Enhanced Input
 → LocomotionComponent / CombatComponent / InteractionComponent / InventoryComponent
 (Character 소유) 
 (BaseInputComponent의 파생 클래스, IInputBindable 구현)
-
 ```
 
 ### 구현 포인트
@@ -52,7 +51,7 @@ TSubclassOf<UBaseInputConfig> UInteractionComponent::GetConfigClass()
 ```
 
 ### 설계 판단
-입력 처리 책임을 `InputHandlerComponent`에 집중하지 않고 
+입력 처리 책임을 `InputHandlerComponent`에 집중하지 않고
 실제 입력이 필요한 각 기능 컴포넌트가 직접 자신의 입력을 바인딩하도록 구성했습니다.
 
 `InputHandlerComponent`는 입력 대상 컴포넌트를 찾고, 각 컴포넌트가 입력을 바인딩할 수 있도록 `PlayerController의 InputComponent`를 전달하는 관리자 역할을 담당합니다.
@@ -237,3 +236,170 @@ UI 관리 책임을 `UIManagerComponent`로 분리하고,
 
 이를 통해 새로운 레벨이나 Phase가 추가되어도
 PlayerController 코드를 수정하지 않고 Blueprint 설정만으로 UI 흐름을 확장할 수 있도록 하였습니다.
+
+---
+## UI 바인딩 시스템
+
+컴포넌트와 위젯 간의 델리게이트 바인딩을 자동화하는 시스템.
+
+PlayerController가 Pawn을 빙의할 때 IWidgetBindable 구현체를 수집하고
+UIManagerComponent가 위젯과 매칭하여 각 컴포넌트가 직접 바인딩을 처리합니다.
+
+### 위젯 계층 구조
+
+```mermaid
+classDiagram
+	class UUserWidget
+	class UUserWidgetBase {
+		+SetUp()
+		+TearDown()
+	}
+	class UGameplayWidget
+	class UPlayerHUD {
+		+SetAmmo()
+		+SetWeapon()
+	}
+	class UInventoryWidget {
+		+InitInventory()
+	}
+	class USessionMenu
+	class ULobbyMenu
+	
+	UUserWidget <|-- UUserWidgetBase
+	UUserWidgetBase <|-- UGameplayWidget
+	UUserWidgetBase <|-- USessionMenu
+	UUserWidgetBase <|-- ULobbyMenu
+	UGameplayWidget <|-- UPlayerHUD
+	UGameplayWidget <|-- UInventoryWidget
+	
+```
+
+### 시스템 구조
+
+```mermaid
+graph TD
+	PC[PlayerController]
+	
+	PC --> UIManager[UIManagerComponent]
+	PC --> InputHandler[InputHandlerComponent]
+	
+	InputHandler ~~~ Character
+	
+	PC -->|Possess| Character
+	Character[CharacterBase]
+	
+	Character --> Locomotion[LocomotionComponent]
+	Character --> Interaction[InteractionComponent]
+	Character --> Combat[CombatComponent]
+	Character --> Inventory[InventoryComponent]
+	Character --> Health[HealthComponent]
+```
+
+### 컴포넌트 상속 및 인터페이스 구조
+
+```mermaid
+classDiagram  
+class IWidgetBindable {  
+<<interface>>  
++BindToWidget()  
+}  
+  
+class UActorComponent  
+  
+class UBaseInputComponent {  
++BindInput()  
+}  
+  
+class ULocomotionComponent  
+class UInteractionComponent  
+class UCombatComponent  
+class UInventoryComponent  
+class UHealthComponent  
+  
+UActorComponent <|-- UBaseInputComponent  
+UActorComponent <|-- UHealthComponent
+  
+UBaseInputComponent <|-- ULocomotionComponent  
+UBaseInputComponent <|-- UInteractionComponent  
+UBaseInputComponent <|-- UCombatComponent  
+UBaseInputComponent <|-- UInventoryComponent  
+  
+IWidgetBindable <|.. UBaseInputComponent  
+IWidgetBindable <|.. UHealthComponent
+```
+
+### 흐름
+```mermaid
+sequenceDiagram
+	participant PC as PlayerController
+	participant Character as CharacterBase
+	participant UI as UIManagerComponent
+	participant Comp as IWidgetBindable Components
+	participant Widget as Each Widgets
+	
+	PC->>Character: GetComponentsByInterface(UWidgetBindable)
+	Character-->>PC: Return WidgetBindable Components
+	PC->>UI: BindDelegatesFromGameplayWidgets(Components)
+	UI->>UI: Find Widget for each Component
+	UI->>Comp: Bind Component to Widget
+	Comp->>Widget: Bind Widget update function to Component delegate
+```
+
+
+### 설계 판단
+
+#### 1. UI 델리게이트 바인딩 경로 집중
+
+기존에는 UI 델리게이트 바인딩 책임이 여러 위치에 흩어져 있었습니다.
+
+```txt
+PlayerController
+UIManagerComponent
+Widget
+BaseInputComponent의 파생 클래스들 
+```
+
+각 시스템이 직접 Widget을 찾거나, Widget이 Component를 찾거나, UIManagerComponent가 하나의 Widget을 위해 Component 별로 바인딩하는 처리 방식은 컴포넌트가 늘어날 수록 무겁고 복잡해집니다.
+
+따라서 UI 바인딩 흐름을 다음 구조로 집중시켰습니다.
+```txt
+PlayerController
+→ IWidgetBindable Component 수집
+→ UIManagerComponent에게 전달
+→ UIManagerComponent가 Widget 매칭
+→ Component와 Widget간 Delegate Binding 수행
+```
+
+이 구조를 통해 UI 바인딩은 
+`PlayerController → UIMangerComponent → IWidgetBindable Component → Widget`흐름으로 정리됩니다.
+
+#### 2. 기존 Input Binding 구조 재사용
+
+입력 시스템에서는 이미 `PlayerController`가 `AcknowledgePossession` 시점에 Character의 입력 컴포넌트들을 수집하고, 이를 InputHandlerComponent에 전달하는 구조를 사용하고 있습니다.
+
+UI 바인딩도 이와 유사한 흐름으로 구성했습니다.
+```txt
+Input Binding
+PlayerController
+→ Character로부터 IInputBindable Component 수집
+→ InputHandlerComponent에 전달
+→ 각 Component가 Input Binding 수행
+
+UI Binding
+PlayerController
+→ Character로부터 IWidgetBindable Component 수집
+→ UIManagerComponent에 전달
+→ 각 Component가 Widget Binding 수행
+```
+
+즉, `PlayerController`는 Possession 이후 현재 조작 중인 Character를 기준으로
+**필요한 컴포넌트를 수집하는 역할을 담당**하고,
+`InputHandler`와 `UIManagerComponent`는 각각 입력 바인딩과 UI 바인딩을 처리하는 중재자로 분리했습니다.
+
+#### 3. IWidgetBindable 분리
+
+UI에 데이터를 제공해야 하는 컴포넌트가 항상 입력을 필요로 하는 것은 아닙니다.
+
+예를 들어 `HealthComponent`는 입력 처리가 필요하지 않지만, 체력 변화는 HUD에 반영되어야 합니다.
+
+따라서, UI 바인딩 가능 여부를 `BaseInputComponent` 상속 여부와 묶지 않고 `IWidgetBindable` 인터페이스로 분리했습니다.

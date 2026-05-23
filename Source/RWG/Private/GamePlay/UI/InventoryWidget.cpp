@@ -9,7 +9,7 @@
 
 UInventoryWidget::UInventoryWidget()
 {
-	WidgetType = EWidgetType::Inventory;
+
 }
 
 void UInventoryWidget::InitInventory(UInventoryComponent* InInventoryComponent)
@@ -51,11 +51,6 @@ void UInventoryWidget::NativeConstruct()
 	{
 		COMMON_LOG(LogGameplay, Warning, TEXT("GetOwningPlayerPawn is nullptr."));
 		return;
-	}
-
-	if (UInventoryComponent* InventoryComp = Pawn->FindComponentByClass<UInventoryComponent>())
-	{
-		InitInventory(InventoryComp);
 	}
 }
 
