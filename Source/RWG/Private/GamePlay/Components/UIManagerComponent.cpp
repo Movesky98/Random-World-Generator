@@ -53,15 +53,19 @@ void UUIManagerComponent::BindDelegatesFromGameplayWidgets(const TArray<TScriptI
 {
 	for (auto& Component : BindableComponents)
 	{
-		TSubclassOf<UUserWidgetBase> WidgetClass = Component->GetDefaultWidgetClass();
-		if (!WidgetClass) continue;
+		TArray<TSubclassOf<UUserWidgetBase>> WidgetClasses = Component->GetDefaultWidgetClasses();
 
-		for (UUserWidgetBase* Widget : AvailableWidgets)
+		for (TSubclassOf<UUserWidgetBase>& WidgetClass : WidgetClasses)
 		{
-			if (Widget->IsA(WidgetClass))
+			if (!WidgetClass) continue;
+
+			for (UUserWidgetBase* Widget : AvailableWidgets)
 			{
-				Component->BindComponent(Widget);
-				break;
+				if (Widget->IsA(WidgetClass))
+				{
+					Component->BindComponent(Widget);
+					break;
+				}
 			}
 		}
 	}
@@ -71,15 +75,19 @@ void UUIManagerComponent::UnbindDelegatesFromGameplayWidgets(const TArray<TScrip
 {
 	for (auto& Component : BindableComponents)
 	{
-		TSubclassOf<UUserWidgetBase> WidgetClass = Component->GetDefaultWidgetClass();
-		if (!WidgetClass) continue;
+		TArray<TSubclassOf<UUserWidgetBase>> WidgetClasses = Component->GetDefaultWidgetClasses();
 
-		for (UUserWidgetBase* Widget : AvailableWidgets)
+		for (TSubclassOf<UUserWidgetBase>& WidgetClass : WidgetClasses)
 		{
-			if (Widget->IsA(WidgetClass))
+			if (!WidgetClass) continue;
+
+			for (UUserWidgetBase* Widget : AvailableWidgets)
 			{
-				Component->UnbindComponent(Widget);
-				break;
+				if (Widget->IsA(WidgetClass))
+				{
+					Component->UnbindComponent(Widget);
+					break;
+				}
 			}
 		}
 	}

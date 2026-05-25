@@ -111,16 +111,17 @@ void UHealthComponent::OnRep_CurrentHealth()
 
 /********************************** IWidgetBindable **********************************/
 
-TSubclassOf<UUserWidgetBase> UHealthComponent::GetDefaultWidgetClass() const
+TArray<TSubclassOf<UUserWidgetBase>> UHealthComponent::GetDefaultWidgetClasses() const
 {
-	return UPlayerHUD::StaticClass();
+	return { UPlayerHUD::StaticClass() };
 }
 
 void UHealthComponent::BindComponent(UUserWidgetBase* Widget)
 {
 	if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
 	{
-		// Bind PlayerHUD's function to OnHealthChanged delegate.
+		OnHealthChanged.AddUObject(HUD, &UPlayerHUD::SetHealth);
+		HUD->SetHealth(CurrentHealth, MaxHealth);
 	}
 }
 
@@ -128,6 +129,6 @@ void UHealthComponent::UnbindComponent(UUserWidgetBase* Widget)
 {
 	if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
 	{
-		// Unind PlayerHUD's function to OnHealthChanged delegate.
+		OnHealthChanged.RemoveAll(HUD);
 	}
 }

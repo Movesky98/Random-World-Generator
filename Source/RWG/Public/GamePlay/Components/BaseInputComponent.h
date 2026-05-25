@@ -61,7 +61,7 @@ protected:
 
 	// IWidgetBindable
 protected:
-	virtual TSubclassOf<UUserWidgetBase> GetDefaultWidgetClass() const override;
+	virtual TArray<TSubclassOf<UUserWidgetBase>> GetDefaultWidgetClasses() const override;
 
 	virtual void BindComponent(UUserWidgetBase* Widget) override;
 

@@ -6,6 +6,7 @@
 #include "GamePlay/Items/WeaponBase.h"
 #include "GamePlay/Items/ArmorData.h"
 #include "GamePlay/UI/InventoryWidget.h"
+#include "GamePlay/UI/PlayerHUD.h"
 #include "CommonLogCategories.h"
 
 #include "GameFramework/Character.h"
@@ -273,9 +274,9 @@ float UInventoryComponent::ProcessArmorHit(FName BoneName)
 	return 1.0f;
 }
 
-TSubclassOf<UUserWidgetBase> UInventoryComponent::GetDefaultWidgetClass() const
+TArray<TSubclassOf<UUserWidgetBase>> UInventoryComponent::GetDefaultWidgetClasses() const
 {
-	return UInventoryWidget::StaticClass();
+	return { UInventoryWidget::StaticClass(), UPlayerHUD::StaticClass() };
 }
 
 void UInventoryComponent::BindComponent(UUserWidgetBase* Widget)
@@ -283,6 +284,11 @@ void UInventoryComponent::BindComponent(UUserWidgetBase* Widget)
 	if (UInventoryWidget* InvWidget = Cast<UInventoryWidget>(Widget))
 	{
 		InvWidget->InitInventory(this);
+	}
+	else if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
+	{
+		// 방어도 델리게이트 바인딩
+		COMMON_LOG(LogGameplay, Log, TEXT("Bind delegate for PlayerHUD"));
 	}
 }
 
@@ -292,6 +298,11 @@ void UInventoryComponent::UnbindComponent(UUserWidgetBase* Widget)
 	{
 		OnInventoryChanged.RemoveAll(InvWidget);
 		OnInventoryToggled.RemoveAll(InvWidget);
+	}
+	else if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
+	{
+		// 방어도 델리게이트 언바인딩
+		COMMON_LOG(LogGameplay, Log, TEXT("Unbind delegate for PlayerHUD"));
 	}
 }
 

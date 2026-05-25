@@ -8,6 +8,7 @@
 
 class AWeaponBase;
 class UTextBlock;
+class UProgressBar;
 
 /**
  * 
@@ -28,7 +29,12 @@ public:
 
 	void SetWeapon(AWeaponBase* Weapon);
 
+	void SetHealth(float CurrentHealth, float MaxHealth);
+
 private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> AmmoTextBlock;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UProgressBar> HealthProgressBar;
 };

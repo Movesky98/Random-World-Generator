@@ -23,7 +23,7 @@ class RWG_API IWidgetBindable
 	GENERATED_BODY()
 
 public:
-	virtual TSubclassOf<UUserWidgetBase> GetDefaultWidgetClass() const = 0;
+	virtual TArray<TSubclassOf<UUserWidgetBase>> GetDefaultWidgetClasses() const = 0;
 
 	virtual void BindComponent(UUserWidgetBase* Widget) = 0;
 

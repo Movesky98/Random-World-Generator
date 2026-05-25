@@ -431,9 +431,9 @@ void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 
 /********************************** IWidgetBindable **********************************/
 
-TSubclassOf<UUserWidgetBase> UCombatComponent::GetDefaultWidgetClass() const
+TArray<TSubclassOf<UUserWidgetBase>> UCombatComponent::GetDefaultWidgetClasses() const
 {
-	return UPlayerHUD::StaticClass();
+	return { UPlayerHUD::StaticClass() };
 }
 
 void UCombatComponent::BindComponent(UUserWidgetBase* Widget)

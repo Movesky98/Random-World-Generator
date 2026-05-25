@@ -104,9 +104,9 @@ void UBaseInputComponent::BindOnConfigLoaded(TFunction<void()> Callback)
 	OnConfigLoaded.AddLambda([Callback](UBaseInputComponent*) {Callback(); });
 }
 
-TSubclassOf<UUserWidgetBase> UBaseInputComponent::GetDefaultWidgetClass() const
+TArray<TSubclassOf<UUserWidgetBase>> UBaseInputComponent::GetDefaultWidgetClasses() const
 {
-	return nullptr;
+	return TArray<TSubclassOf<UUserWidgetBase>>();
 }
 
 void UBaseInputComponent::BindComponent(UUserWidgetBase* Widget)

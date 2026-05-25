@@ -6,6 +6,7 @@
 #include "CommonLogCategories.h"
 
 #include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
 
 UPlayerHUD::UPlayerHUD()
 {
@@ -46,4 +47,10 @@ void UPlayerHUD::SetWeapon(AWeaponBase* Weapon)
 	
 	Weapon ? AmmoTextBlock->SetVisibility(ESlateVisibility::Visible) : 
 		AmmoTextBlock->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UPlayerHUD::SetHealth(float CurrentHealth, float MaxHealth)
+{
+	if (MaxHealth <= 0.0f) return;
+	HealthProgressBar->SetPercent(CurrentHealth / MaxHealth);
 }
