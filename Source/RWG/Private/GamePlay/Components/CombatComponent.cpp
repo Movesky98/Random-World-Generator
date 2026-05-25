@@ -256,13 +256,17 @@ void UCombatComponent::Reload()
 	if (!Gun) return;
 
 	UGunData* GunData = Gun->GetItemData<UGunData>();
-	if (GunData && GunData->AmmoType)
-	{
-		if (GunData->MagazineSize - Gun->GetCurrentAmmo() <= 0) return;
-		
-		WeaponActionState = EWeaponActionState::Reload;
-		Multicast_PlayMontage(GunData->ReloadMontage, EWeaponActionState::Reload);
-	}
+	if (!GunData || !GunData->AmmoType) return;
+
+	int32 NeededAmmo = GunData->MagazineSize - Gun->GetCurrentAmmo();
+	if (NeededAmmo <= 0) return;
+
+	int32 Available = InventoryComponent->GetAmmoCount(GunData->AmmoType);
+	int32 ToLoad = FMath::Min(NeededAmmo, Available);
+	if (ToLoad <= 0) return;
+
+	WeaponActionState = EWeaponActionState::Reload;
+	Multicast_PlayMontage(GunData->ReloadMontage, EWeaponActionState::Reload);
 }
 
 void UCombatComponent::OnReloadEnded()
@@ -278,7 +282,7 @@ void UCombatComponent::OnReloadEnded()
 		int32 Available = InventoryComponent->GetAmmoCount(GunData->AmmoType);
 		int32 ToLoad = FMath::Min(NeededAmmo, Available);
 
-		InventoryComponent->ConsumeAmmo(GunData->AmmoType, ToLoad);
+		InventoryComponent->RemoveItem(GunData->AmmoType, ToLoad);
 		Gun->SetCurrentAmmo(Gun->GetCurrentAmmo() + ToLoad);
 	}
 }

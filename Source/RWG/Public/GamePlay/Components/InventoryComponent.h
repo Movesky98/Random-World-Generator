@@ -59,6 +59,8 @@ private:
 
 	int32 FindExistingSlot(UItemData* ItemData) const;
 
+	int32 FindSlot(UItemData* ItemData) const;
+
 	/* Weapon */
 public:
 	void TryAddWeapon(AWeaponBase* Weapon);
@@ -66,13 +68,6 @@ public:
 	AWeaponBase* GetWeaponAtSlot(int32 SlotIndex) const;
 
 	int32 GetAmmoCount(UItemData* AmmoType) const;
-
-	bool ConsumeAmmo(UItemData* AmmoType, int32 Amount);
-
-	void Debug_AddAmmo(UItemData* AmmoType, int32 Amount);
-
-	UPROPERTY(EditDefaultsOnly, Category = "Debug")
-	TObjectPtr<UItemData> Debug_DefaultAmmo;
 
 protected:
 	UPROPERTY(Replicated)

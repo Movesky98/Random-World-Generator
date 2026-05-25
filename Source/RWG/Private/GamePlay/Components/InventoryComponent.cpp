@@ -20,8 +20,6 @@ void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(Debug_DefaultAmmo)
-		Debug_AddAmmo(Debug_DefaultAmmo, 90);
 }
 
 void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -145,15 +143,20 @@ bool UInventoryComponent::RemoveItem(UItemData* ItemData, int32 Quantity)
 {
 	if (!ItemData || Quantity <= 0) return false;
 
-	int32 ExistingIndex = FindExistingSlot(ItemData);
-	if (ExistingIndex == INDEX_NONE) return false;
-
-	FItemInstance& Existing = Slots[ExistingIndex];
-	Existing.Quantity -= Quantity;
-
-	if (Existing.Quantity <= 0)
+	int32 Remainig = Quantity;
+	while (Remainig > 0)
 	{
-		Slots.RemoveAt(ExistingIndex);
+		int32 Index = FindSlot(ItemData);
+		if (Index == INDEX_NONE) return false;
+
+		int32 ToRemove = FMath::Min(Remainig, Slots[Index].Quantity);
+		Slots[Index].Quantity -= Remainig;
+		Remainig -= ToRemove;
+
+		if (Slots[Index].Quantity == 0)
+		{
+			Slots.RemoveAt(Index);
+		}
 	}
 
 	OnInventoryChanged.Broadcast();
@@ -198,6 +201,17 @@ int32 UInventoryComponent::FindExistingSlot(UItemData* ItemData) const
 	return INDEX_NONE;
 }
 
+int32 UInventoryComponent::FindSlot(UItemData* ItemData) const
+{
+	for (int32 i = 0; i < Slots.Num(); i++)
+	{
+		if (Slots[i].ItemData == ItemData)
+			return i;
+	}
+
+	return INDEX_NONE;
+}
+
 void UInventoryComponent::TryAddWeapon(AWeaponBase* Weapon)
 {
 	if (!Weapon) return;
@@ -228,42 +242,6 @@ int32 UInventoryComponent::GetAmmoCount(UItemData* AmmoType) const
 	}
 
 	return Total;
-}
-
-bool UInventoryComponent::ConsumeAmmo(UItemData* AmmoType, int32 Amount)
-{
-	if (!AmmoType || Amount <= 0) return false;
-
-	for (FItemInstance& Item : Slots)
-	{
-		if (Item.ItemData == AmmoType)
-		{
-			if (Item.Quantity < Amount)
-			{
-				COMMON_LOG(LogGameplay, Warning, TEXT("Not enough ammo."));
-				return false;
-			}
-
-			Item.Quantity -= Amount;
-			return true;
-		}
-	}
-
-	COMMON_LOG(LogGameplay, Warning, TEXT("Ammo type not found in bag."));
-	return false;
-}
-
-void UInventoryComponent::Debug_AddAmmo(UItemData* AmmoType, int32 Amount)
-{
-	if (!AmmoType || Amount <= 0) return;
-
-	FItemInstance AmmoInstance;
-
-	AmmoInstance.ItemData = AmmoType;
-	AmmoInstance.Quantity = Amount;
-	Slots.Add(AmmoInstance);
-
-	COMMON_LOG(LogGameplay, Log, TEXT("Debug ammo added : %d"), Amount);
 }
 
 float UInventoryComponent::ProcessArmorHit(FName BoneName)
