@@ -78,13 +78,12 @@ void AGunBase::Fire()
 
 	COMMON_LOG(LogGameplay, Log, TEXT("Fire: %s"), *GetName());
 	SpawnBulletProjectile();
+	SetCurrentAmmo(CurrentAmmo - 1);
 }
 
 bool AGunBase::CanFire() const
 {
-	// 예상 조건
-	// 1. CurrentAmmo > 0... 정도?
-
+	if (CurrentAmmo <= 0) return false;
 	if (bIsFiring) return false;
 
 	return true;

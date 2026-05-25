@@ -289,7 +289,7 @@ void UCombatComponent::OnReloadEnded()
 
 void UCombatComponent::OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo)
 {
-	if (CurrentAmmo <= 0 || MaxAmmo <= 0) return;
+	if (CurrentAmmo < 0 || MaxAmmo <= 0) return;
 
 	OnAmmoChangedDelegate.Broadcast(CurrentAmmo, MaxAmmo);
 }
