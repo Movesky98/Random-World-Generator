@@ -19,8 +19,9 @@ public class RWG : ModuleRules
 			"PCG",
 			"OnlineSubsystem",
 			"OnlineSubsystemNull",
-			"OnlineSubsystemUtils"
-		});
+			"OnlineSubsystemUtils",
+            "NavigationSystem"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

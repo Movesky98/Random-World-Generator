@@ -10,6 +10,7 @@
 #include "RandomWorldGeneration/Grid/CityGridBuilder.h"
 
 #include "PCGGraph.h"
+#include "NavigationSystem.h"
 
 DEFINE_LOG_CATEGORY(LogWorldGenerator);
 
@@ -18,6 +19,7 @@ AWorldGenerator::AWorldGenerator()
 {
 	ProceduralMeshComponent = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("GeneratedMesh"));
 	ProceduralMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	ProceduralMeshComponent->bFillCollisionUnderneathForNavmesh = true;
 	RootComponent = ProceduralMeshComponent;
 
 	RoadPCGComponent = CreateDefaultSubobject<UPCGComponent>(TEXT("RoadPCGComponent"));
@@ -55,6 +57,7 @@ void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>>
 	}
 
 	GenerateTerrain(GenConfig);
+	// FNavigationSystem::UpdateComponentData(*ProceduralMeshComponent);
 
 	if(!ensure(ThemeConfig))
 	{
@@ -146,6 +149,7 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 
 	// 3. 실제 메쉬 섹션 생성
 	ProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UV0, VertexColors, Tangents, true);
+	// ProceduralMeshComponent->UpdateBounds();
 
 	// 4. 충돌체 활성화
 	ProceduralMeshComponent->ContainsPhysicsTriMeshData(true);
@@ -207,6 +211,7 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 					TSoftObjectPtr<UObject> ThemePtr(Config);
 					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
 
+					BuildingPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnBuildingPCGGenerated);
 					BuildingPCGComponent->Generate();
 				}
 			}
@@ -222,6 +227,15 @@ void AWorldGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void AWorldGenerator::OnBuildingPCGGenerated(UPCGComponent* InComponent)
+{
+	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	if (NavSystem)
+	{
+		NavSystem->Build();
+	}
 }
 
 void AWorldGenerator::DrawDebugGrid()

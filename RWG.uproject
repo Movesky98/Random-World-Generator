@@ -11,7 +11,8 @@
 			"AdditionalDependencies": [
 				"PCG",
 				"Engine",
-				"UMG"
+				"UMG",
+				"AIModule"
 			]
 		}
 	],

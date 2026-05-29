@@ -42,6 +42,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void OnBuildingPCGGenerated(UPCGComponent* InComponent);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
 	FVector CityCenter;
 

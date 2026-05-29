@@ -2,11 +2,6 @@
 
 
 #include "GamePlay/Characters/CharacterBase/CharacterBase.h"
-
-#include "GamePlay/Components/LocomotionComponent.h"
-#include "GamePlay/Components/CombatComponent.h"
-#include "GamePlay/Components/InventoryComponent.h"
-#include "GamePlay/Components/InteractionComponent.h"
 #include "GamePlay/Components/HealthComponent.h"
 #include "CommonLogCategories.h"
 
@@ -17,19 +12,6 @@
 // Sets default values
 ACharacterBase::ACharacterBase()
 {
-	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	SpringArmComponent->SetupAttachment(RootComponent);
-	SpringArmComponent->TargetArmLength = 200.0f;
-	SpringArmComponent->bUsePawnControlRotation = true;
-
-	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	CameraComponent->SetupAttachment(SpringArmComponent, USpringArmComponent::SocketName);
-	CameraComponent->bUsePawnControlRotation = false;
-
-	LocomotionComponent = CreateDefaultSubobject<ULocomotionComponent>(TEXT("LocomotionComponent"));
-	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
-	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
-	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 }
 
@@ -71,9 +53,6 @@ void ACharacterBase::ProcessDamage(const FDamageInfo& DamageInfo)
 	if (!HasAuthority()) return;
 	if (HealthComponent->IsDead()) return;
 
-	float DamageMultiplier = InventoryComponent->ProcessArmorHit(DamageInfo.HitBoneName);
-	float FinalDamage = DamageInfo.BaseDamage * DamageMultiplier;
-
-	HealthComponent->DecreaseHealth(FinalDamage, DamageInfo);
+	HealthComponent->DecreaseHealth(DamageInfo.BaseDamage, DamageInfo);
 }
 

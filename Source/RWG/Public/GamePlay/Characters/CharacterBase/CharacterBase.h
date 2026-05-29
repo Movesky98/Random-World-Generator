@@ -34,23 +34,5 @@ protected:
 	virtual void ProcessDamage(const FDamageInfo& DamageInfo) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	TObjectPtr<USpringArmComponent> SpringArmComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	TObjectPtr<UCameraComponent> CameraComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	ULocomotionComponent* LocomotionComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	UCombatComponent* CombatComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	UInventoryComponent* InventoryComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	UInteractionComponent* InteractionComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<UHealthComponent> HealthComponent;
 };

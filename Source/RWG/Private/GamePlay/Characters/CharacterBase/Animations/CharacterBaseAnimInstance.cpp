@@ -4,6 +4,7 @@
 #include "GamePlay/Characters/CharacterBase/Animations/CharacterBaseAnimInstance.h"
 #include "GamePlay/Characters/CharacterBase/CharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "CommonLogCategories.h"
 
 DEFINE_LOG_CATEGORY(LogCharacterAnimation);
 
@@ -22,13 +23,11 @@ void UCharacterBaseAnimInstance::NativeInitializeAnimation()
 
 		if (!OwnerCharacter)
 		{
-			UE_LOG(LogCharacterAnimation, Error, TEXT("[%s] %s (%d) : OwnerCharacter is null"),
-				TEXT(__FUNCTION__),
-				TEXT(__FILE__),
-				__LINE__
-			);
+			COMMON_LOG(LogGameplay, Warning, TEXT("OwnerCharacter is null."));
+			return;
 		}
 
+		COMMON_LOG(LogGameplay, Warning, TEXT("OwnerCharacter is %s"), *GetNameSafe(OwnerCharacter));
 		MovementComponent = OwnerCharacter->GetCharacterMovement();
 	}
 }
