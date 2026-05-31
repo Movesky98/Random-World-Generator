@@ -9,3 +9,15 @@ void UZombieAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	bShouldMove = Speed > MoveThreshold;
 }
+
+void UZombieAnimInstance::PlayAttackMontage(int32 MontageIndex)
+{
+	if (!AttackMontages.IsValidIndex(MontageIndex)) return;
+	Montage_Play(AttackMontages[MontageIndex]);
+}
+
+void UZombieAnimInstance::PlayDeathMontage()
+{
+	if (!DeathMontage) return;
+	Montage_Play(DeathMontage);
+}

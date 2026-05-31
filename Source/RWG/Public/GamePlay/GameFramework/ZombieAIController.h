@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "GenericTeamAgentInterface.h"
 #include "ZombieAIController.generated.h"
 
 class UBehaviorTreeComponent;
@@ -22,12 +23,21 @@ class RWG_API AZombieAIController : public AAIController
 public:
     AZombieAIController();
 
+    void StopBehaviorTree();
+
 protected:
     virtual void OnPossess(APawn* InPawn) override;
     virtual void OnUnPossess() override;
 
     UFUNCTION()
     void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+    FGenericTeamId GetGenericTeamId() const override;
+
+    ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GenericTeam")
+    uint8 TeamId;
 
 private:
     UPROPERTY()

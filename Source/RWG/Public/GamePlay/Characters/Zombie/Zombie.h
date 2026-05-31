@@ -4,16 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GamePlay/Characters/CharacterBase/CharacterBase.h"
-#include "GenericTeamAgentInterface.h"
 #include "Zombie.generated.h"
 
 class UBehaviorTree;
+
+DECLARE_DELEGATE(FOnAttackFinished)
 
 /**
  * 
  */
 UCLASS()
-class RWG_API AZombie : public ACharacterBase, public IGenericTeamAgentInterface
+class RWG_API AZombie : public ACharacterBase
 {
 	GENERATED_BODY()
 	
@@ -29,10 +30,28 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "AI")
     float AttackDistance = 150.0f;
 
-    FGenericTeamId GetGenericTeamId() const override;
+protected:
+    virtual void BeginPlay() override;
 
-    ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+public:
+    FOnAttackFinished OnAttackFinished;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GenericTeam")
-    uint8 TeamId;
+    void RequestAttack();
+
+    void PerformAttack();
+
+protected:
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_PlayAttackMontage(int32 MontageIndex);
+
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_PlayDeathMontage();
+
+    void EnableRagdoll();
+
+    UFUNCTION()
+    void OnDeath(const FDamageInfo& DamageInfo);
+
+    UPROPERTY(EditDefaultsOnly, Category = "AI")
+    float AttackDamage = 20.f;
 };

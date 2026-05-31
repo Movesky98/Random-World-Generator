@@ -31,9 +31,21 @@ AZombieAIController::AZombieAIController()
     GetPerceptionComponent()->SetDominantSense(SightConfig->GetSenseImplementation());
 }
 
+void AZombieAIController::StopBehaviorTree()
+{
+    if (!HasAuthority()) return;
+
+    if (BehaviorTreeComponent)
+    {
+        BehaviorTreeComponent->StopTree();
+    }
+}
+
 void AZombieAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
+
+    if (!HasAuthority()) return;
 
     AZombie* Zombie = Cast<AZombie>(InPawn);
     if (!Zombie || !Zombie->BehaviorTree) return;
@@ -47,6 +59,9 @@ void AZombieAIController::OnPossess(APawn* InPawn)
 void AZombieAIController::OnUnPossess()
 {
     Super::OnUnPossess();
+
+    if (!HasAuthority()) return;
+
     BehaviorTreeComponent->StopTree();
 }
 
@@ -60,4 +75,23 @@ void AZombieAIController::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulu
     {
         GetBlackboardComponent()->SetValueAsObject(TargetActorKey, nullptr);
     }
+}
+
+FGenericTeamId AZombieAIController::GetGenericTeamId() const
+{
+    return TeamId;
+}
+
+ETeamAttitude::Type AZombieAIController::GetTeamAttitudeTowards(const AActor& Other) const
+{
+    const APawn* OtherPawn = Cast<APawn>(&Other);
+    if (OtherPawn)
+    {
+        const IGenericTeamAgentInterface* OtherTeamAgent = Cast<IGenericTeamAgentInterface>(OtherPawn->GetController());
+        if (OtherTeamAgent && OtherTeamAgent->GetGenericTeamId() == FGenericTeamId(TeamId))
+        {
+            return ETeamAttitude::Friendly;
+        }
+    }
+    return ETeamAttitude::Hostile;
 }

@@ -16,4 +16,15 @@ class RWG_API UZombieAnimInstance : public UCharacterBaseAnimInstance
 	
 protected:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "Montage")
+	TArray<TObjectPtr<UAnimMontage>> AttackMontages;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Montage")
+	TObjectPtr<UAnimMontage> DeathMontage;
+
+	void PlayAttackMontage(int32 MontageIndex);
+
+	void PlayDeathMontage();
 };
