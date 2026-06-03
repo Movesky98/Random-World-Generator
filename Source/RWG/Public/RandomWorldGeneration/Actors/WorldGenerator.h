@@ -44,6 +44,8 @@ protected:
 
 	void OnBuildingPCGGenerated(UPCGComponent* InComponent);
 
+	void GenerateNavProxyMesh(class UWorldGenConfig* Config);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
 	FVector CityCenter;
 
@@ -63,6 +65,9 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, Category = "PMC")
 	UProceduralMeshComponent* ProceduralMeshComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "PMC")
+	UProceduralMeshComponent* TerrainNavProxyPMC;
 
 	UPROPERTY(VisibleAnywhere, Category = "PCG")
 	UPCGComponent* RoadPCGComponent;

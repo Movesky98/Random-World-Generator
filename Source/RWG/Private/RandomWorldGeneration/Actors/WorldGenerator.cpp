@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
@@ -19,7 +19,6 @@ AWorldGenerator::AWorldGenerator()
 {
 	ProceduralMeshComponent = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("GeneratedMesh"));
 	ProceduralMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	ProceduralMeshComponent->bFillCollisionUnderneathForNavmesh = true;
 	RootComponent = ProceduralMeshComponent;
 
 	RoadPCGComponent = CreateDefaultSubobject<UPCGComponent>(TEXT("RoadPCGComponent"));
@@ -27,6 +26,15 @@ AWorldGenerator::AWorldGenerator()
 
 	BuildingPCGComponent = CreateDefaultSubobject<UPCGComponent>(TEXT("BuildingPCGComponent"));
 	BuildingPCGComponent->bAutoActivate = false;
+
+	ProceduralMeshComponent->bFillCollisionUnderneathForNavmesh = false;
+	ProceduralMeshComponent->SetCanEverAffectNavigation(false);
+
+	TerrainNavProxyPMC = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("TerrainNavProxyPMC"));
+	TerrainNavProxyPMC->SetupAttachment(RootComponent);
+	TerrainNavProxyPMC->SetHiddenInGame(true);
+	TerrainNavProxyPMC->bFillCollisionUnderneathForNavmesh = true;
+	TerrainNavProxyPMC->SetCanEverAffectNavigation(true);
 }
 
 void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs)
@@ -57,7 +65,7 @@ void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>>
 	}
 
 	GenerateTerrain(GenConfig);
-	// FNavigationSystem::UpdateComponentData(*ProceduralMeshComponent);
+	GenerateNavProxyMesh(GenConfig);
 
 	if(!ensure(ThemeConfig))
 	{
@@ -94,64 +102,63 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 		{
 			FVector2D CurrentPos(X, Y);
 
-			// 1. Perlin Noise·Î ±âº» ³ôÀÌ »ı¼º (Scale Á¶Àı·Î ±¼°î ºóµµ °áÁ¤)
-			// 1. --- ±âº» ³ëÀÌÁî ÁöÇü »ı¼º ---
+			// 1. Perlin Noiseë¡œ ê¸°ë³¸ ë†’ì´ ìƒì„± (Scale ì¡°ì ˆë¡œ êµ´ê³¡ ë¹ˆë„ ê²°ì •)
+			// 1. --- ê¸°ë³¸ ë…¸ì´ì¦ˆ ì§€í˜• ìƒì„± ---
 			float NoiseScale = 0.4;
 			float NoiseValue = FMath::PerlinNoise2D(FVector2D(CurrentPos * NoiseScale));
 
-			// ³ëÀÌÁî °ªÀº º¸Åë -1 ~ 1 »çÀÌ ¡æ 0 ~ 1·Î º¸Á¤ ÈÄ ³ôÀÌ °öÇÏ±â
-			// ±âº» ±¼°î
+			// ë…¸ì´ì¦ˆ ê°’ì€ ë³´í†µ -1 ~ 1 ì‚¬ì´ â†’ 0 ~ 1ë¡œ ë³´ì • í›„ ë†’ì´ ê³±í•˜ê¸°
+			// ê¸°ë³¸ êµ´ê³¡
 			float BaseHeight = (NoiseValue + 1.0f) * 0.5f * 500.0f;
 
-			// --- 2. µµ½Ã °í¿ø (Plateau) °è»ê ---
+			// --- 2. ë„ì‹œ ê³ ì› (Plateau) ê³„ì‚° ---
 			float DistToCenter = FVector2D::Distance(CurrentPos, CenterPos);
 			float CityMask = 0.0f;
 
 			if (DistToCenter < Config->CityRadius)
 			{
-				CityMask = 1.0f; // µµ½Ã ³»ºÎ (¿ÏÀü ÆòÁö)
+				CityMask = 1.0f; // ë„ì‹œ ë‚´ë¶€ (ì™„ì „ í‰ì§€)
 			}
 			else if (DistToCenter < Config->CityRadius + Config->CliffWidth)
 			{
-				// Àıº® ±¸°£ (1.0 ¡æ 0.0 ºÎµå·´°Ô °¨¼Ò)
+				// ì ˆë²½ êµ¬ê°„ (1.0 â†’ 0.0 ë¶€ë“œëŸ½ê²Œ ê°ì†Œ)
 				CityMask = 1.0f - ((DistToCenter - Config->CityRadius) / Config->CliffWidth);
 				CityMask = FMath::InterpEaseInOut(0.0f, 1.0f, CityMask, 2.0f);
 			}
 
-			// FinalZ = (µµ½Ã/´Ù¸® ³ôÀÌ·Î º¸°£) + (¸¶½ºÅ©°¡ ¾ø´Â °÷Àº ±âº» ³ëÀÌÁî ÁöÇü)
+			// FinalZ = (ë„ì‹œ/ë‹¤ë¦¬ ë†’ì´ë¡œ ë³´ê°„) + (ë§ˆìŠ¤í¬ê°€ ì—†ëŠ” ê³³ì€ ê¸°ë³¸ ë…¸ì´ì¦ˆ ì§€í˜•)
 			float FinalZ = FMath::Lerp(BaseHeight + Config->OuterHeight, Config->CityHeight, CityMask);
 
 			Vertices.Add(FVector(X * Config->GridSpacing, Y * Config->GridSpacing, FinalZ));
-			UV0.Add(FVector2D(X, Y));		// ÅØ½ºÃ³ Å¸ÀÏ¸µÀ» À§ÇØ Á¤¼ö ´ÜÀ§·Î ¼³Á¤
-			Normals.Add(FVector(0, 0, 1));	// ÇÏ´Ã ¹æÇâ
+			UV0.Add(FVector2D(X, Y));		// í…ìŠ¤ì²˜ íƒ€ì¼ë§ì„ ìœ„í•´ ì •ìˆ˜ ë‹¨ìœ„ë¡œ ì„¤ì •
+			Normals.Add(FVector(0, 0, 1));	// í•˜ëŠ˜ ë°©í–¥
 		}
 	}
 
-	// 2. »ï°¢Çü(Triangles) »ı¼º (ÀÎµ¦½º °è»ê)
-	// 1°³ÀÇ »ç°¢Çü(Quad)Àº 2°³ÀÇ »ï°¢ÇüÀ¸·Î ÀÌ·ç¾îÁø´Ù.
+	// 2. ì‚¼ê°í˜•(Triangles) ìƒì„± (ì¸ë±ìŠ¤ ê³„ì‚°)
+	// 1ê°œì˜ ì‚¬ê°í˜•(Quad)ì€ 2ê°œì˜ ì‚¼ê°í˜•ìœ¼ë¡œ ì´ë£¨ì–´ì§„ë‹¤.
 	for (int32 Y = 0; Y < Config->YSize; Y++)
 	{
 		for (int32 X = 0; X < Config->XSize; X++)
 		{
 			int32 VertexIndex = X + (Y * (Config->XSize + 1));
 
-			// Ã¹ ¹øÂ° »ï°¢Çü
+			// ì²« ë²ˆì§¸ ì‚¼ê°í˜•
 			Triangles.Add(VertexIndex);
 			Triangles.Add(VertexIndex + Config->XSize + 1);
 			Triangles.Add(VertexIndex + 1);
 
-			// µÎ ¹øÂ° »ï°¢Çü
+			// ë‘ ë²ˆì§¸ ì‚¼ê°í˜•
 			Triangles.Add(VertexIndex + 1);
 			Triangles.Add(VertexIndex + Config->XSize + 1);
 			Triangles.Add(VertexIndex + Config->XSize + 2);
 		}
 	}
 
-	// 3. ½ÇÁ¦ ¸Ş½¬ ¼½¼Ç »ı¼º
+	// 3. ì‹¤ì œ ë©”ì‰¬ ì„¹ì…˜ ìƒì„±
 	ProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UV0, VertexColors, Tangents, true);
-	// ProceduralMeshComponent->UpdateBounds();
 
-	// 4. Ãæµ¹Ã¼ È°¼ºÈ­
+	// 4. ì¶©ëŒì²´ í™œì„±í™”
 	ProceduralMeshComponent->ContainsPhysicsTriMeshData(true);
 	ProceduralMeshComponent->bUseComplexAsSimpleCollision = true;
 	ProceduralMeshComponent->UpdateBounds();
@@ -234,8 +241,55 @@ void AWorldGenerator::OnBuildingPCGGenerated(UPCGComponent* InComponent)
 	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	if (NavSystem)
 	{
+		UE_LOG(LogWorldGenerator, Warning, TEXT("Build NavSystem."));
 		NavSystem->Build();
 	}
+}
+
+void AWorldGenerator::GenerateNavProxyMesh(UWorldGenConfig* Config)
+{
+	int32 NavGridSize = 60;
+	float NavSpacing = (CityRadius * 2.0f) / NavGridSize;
+
+	TArray<FVector> Vertices;
+	TArray<int32> Triangles;
+	TArray<FVector> Normals;
+	TArray<FVector2D> UV0;
+
+	for (int32 Y = 0; Y <= NavGridSize; Y++)
+	{
+		for (int32 X = 0; X <= NavGridSize; X++)
+		{
+			float WorldX = CityCenter.X - CityRadius + X * NavSpacing;
+			float WorldY = CityCenter.Y - CityRadius + Y * NavSpacing;
+
+			Vertices.Add(FVector(WorldX, WorldY, CityHeight));
+			UV0.Add(FVector2D(X, Y));
+			Normals.Add(FVector(0, 0, 1));
+		}
+	}
+
+	for (int32 Y = 0; Y < NavGridSize; Y++)
+	{
+		for (int32 X = 0; X < NavGridSize; X++)
+		{
+			int32 V = X + Y * (NavGridSize + 1);
+			Triangles.Add(V);
+			Triangles.Add(V + NavGridSize + 1);
+			Triangles.Add(V + 1);
+			Triangles.Add(V + 1);
+			Triangles.Add(V + NavGridSize + 1);
+			Triangles.Add(V + NavGridSize + 2);
+		}
+	}
+
+	TArray<FLinearColor> Colors;
+	TArray<FProcMeshTangent> Tangents;
+	TerrainNavProxyPMC->CreateMeshSection_LinearColor(0, Vertices, Triangles,
+		Normals, UV0, Colors, Tangents, true);
+
+	TerrainNavProxyPMC->UpdateBounds();
+	FNavigationSystem::UpdateComponentData(*TerrainNavProxyPMC);
 }
 
 void AWorldGenerator::DrawDebugGrid()
@@ -280,13 +334,13 @@ void AWorldGenerator::DrawDebugGrid()
 			int32 X = i % CityGrid.GetWidth();
 			int32 Y = i / CityGrid.GetWidth();
 
-			// Block ÇÒ´ç ½Ã
+			// Block í• ë‹¹ ì‹œ
 			Color = CityCells[i].BlockId != -1 ? Colors[CityCells[i].BlockId] : FColor::Black;
 
-			// Block ÇÒ´ç ¾ÈÇÒ °æ¿ì
+			// Block í• ë‹¹ ì•ˆí•  ê²½ìš°
 			//Color = FColor::White;
 
-			// Lot Ç¥½Ã
+			// Lot í‘œì‹œ
 			for (const FCityLot& Lot : CityGrid.GetLots())
 			{
 				if (Lot.CellIndices.Contains(CityGrid.Index(X, Y)))
