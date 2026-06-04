@@ -65,6 +65,7 @@ void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>>
 	}
 
 	GenerateTerrain(GenConfig);
+
 	GenerateNavProxyMesh(GenConfig);
 
 	if(!ensure(ThemeConfig))
@@ -248,7 +249,7 @@ void AWorldGenerator::OnBuildingPCGGenerated(UPCGComponent* InComponent)
 
 void AWorldGenerator::GenerateNavProxyMesh(UWorldGenConfig* Config)
 {
-	int32 NavGridSize = 60;
+	int32 NavGridSize = Config->GridSpacing;
 	float NavSpacing = (CityRadius * 2.0f) / NavGridSize;
 
 	TArray<FVector> Vertices;
@@ -273,6 +274,17 @@ void AWorldGenerator::GenerateNavProxyMesh(UWorldGenConfig* Config)
 	{
 		for (int32 X = 0; X < NavGridSize; X++)
 		{
+			// 쿼드 중심점이 도시 영역 안인지 체크
+			float MidX = CityCenter.X - CityRadius + (X + 0.5f) * NavSpacing;
+			float MidY = CityCenter.Y - CityRadius + (Y + 0.5f) * NavSpacing;
+
+			float Dist = FVector2D::Distance(
+				FVector2D(MidX, MidY),
+				FVector2D(CityCenter.X, CityCenter.Y)
+			);
+
+			if (Dist > CityRadius) continue; // 도시 영역 밖이면 트라이앵글 생성 안 함
+
 			int32 V = X + Y * (NavGridSize + 1);
 			Triangles.Add(V);
 			Triangles.Add(V + NavGridSize + 1);
