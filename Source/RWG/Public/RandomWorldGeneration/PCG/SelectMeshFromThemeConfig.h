@@ -51,17 +51,7 @@ public:
 	FName ThemeConfigAttribute = FName("ThemeConfig");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Output")
-	FName OutMeshAttribute = FName("Output");
-
-/**
-* Define various user facing properties here. 
-* Tooltip can be added above UPROPERTY line.
-* PCG_Overridable meta tag allows the properties to be overriden with other attributes in the graph editor.
-*
-* public:
-*	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Settings, meta = (PCG_Overridable))
-*	bool CheckBox = true;
-*/
+	FName OutAttribute = FName("Output");
 };
 
 class FSelectMeshFromThemeConfigElement : public IPCGElement
@@ -73,5 +63,5 @@ protected:
 
 	void ExtractRoadMesh(int32 Seed, class UWorldThemeConfig* WorldConfig, class UPCGPointData* OutPointData, FName MeshAttribute) const;
 
-	void ExtractBuildingMesh(int32 Seed, class UWorldThemeConfig* WorldConfig, class UPCGPointData* OutPointData, FName MeshAttribute) const;
+	void ExtractBuildingMesh(int32 Seed, class UWorldThemeConfig* WorldConfig, class UPCGPointData* OutPointData, FName ActorClassAttribute) const;
 };

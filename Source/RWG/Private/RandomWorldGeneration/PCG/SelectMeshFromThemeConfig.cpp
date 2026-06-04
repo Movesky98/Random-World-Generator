@@ -5,11 +5,13 @@
 #include "RandomWorldGeneration/PCG/RoadGraph.h"
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
+#include "RandomWorldGeneration/Actors/BuildingActor.h"
 
 #include "Data/PCGPointData.h"
 #include "Metadata/PCGMetadata.h"
 #include "PCGParamData.h"
 #include "PCGContext.h"
+#include "UObject/SoftObjectPath.h"
 
 #define LOCTEXT_NAMESPACE "SelectMeshFromThemeConfigElement"
 
@@ -112,10 +114,10 @@ bool FSelectMeshFromThemeConfigElement::ExecuteInternal(FPCGContext* Context) co
 	switch (Settings->StructureType)
 	{
 	case EStructureType::Road:
-		ExtractRoadMesh(Seed, Config, OutPointData, Settings->OutMeshAttribute);
+		ExtractRoadMesh(Seed, Config, OutPointData, Settings->OutAttribute);
 		break;
 	case EStructureType::Building:
-		ExtractBuildingMesh(Seed, Config, OutPointData, Settings->OutMeshAttribute);
+		ExtractBuildingMesh(Seed, Config, OutPointData, Settings->OutAttribute);
 		break;
 	default:
 		break;
@@ -187,54 +189,51 @@ void FSelectMeshFromThemeConfigElement::ExtractRoadMesh(int32 Seed, class UWorld
 	}
 }
 
-void FSelectMeshFromThemeConfigElement::ExtractBuildingMesh(int32 Seed, class UWorldThemeConfig* WorldConfig, UPCGPointData* OutPointData, FName MeshAttribute) const
+void FSelectMeshFromThemeConfigElement::ExtractBuildingMesh(int32 Seed, class UWorldThemeConfig* WorldConfig, class UPCGPointData* OutPointData, FName ActorClassAttribute) const
 {
 	TArray<FPCGPoint>& OutPoints = OutPointData->GetMutablePoints();
 	UPCGMetadata* Metadata = OutPointData->MutableMetadata();
 
 	check(Metadata);
 
-	auto* MeshAttr = Metadata->CreateAttribute<FString>(MeshAttribute, FString(), false, true);
+	auto* ActorClassAttr = Metadata->CreateAttribute<FSoftClassPath>(ActorClassAttribute, FSoftClassPath(), false, true);
 
 	const FPCGMetadataAttribute<int32>* WidthAttr = Metadata->GetConstTypedAttribute<int32>(LotAttribute::Width);
 	const FPCGMetadataAttribute<int32>* HeightAttr = Metadata->GetConstTypedAttribute<int32>(LotAttribute::Height);
 
-	// TODO : 사이즈에 맞춰서 메시를 연결해줘야 함.
+	FRandomStream ContentStream(Seed);
+	
 	for (FPCGPoint& Point : OutPoints)
 	{
 		const int32 Width = WidthAttr->GetValue(Point.MetadataEntry);
 		const int32 Height = HeightAttr->GetValue(Point.MetadataEntry);
 
-		TArray<TSoftObjectPtr<UStaticMesh>> MeshPaths;
-		
-		FRandomStream ContentStream(Seed);
+		TArray<FBuildingAssetEntry*> ValidEntries;
 
-		// 조건에 만족하는 Mesh들을 저장
 		for (auto& BuildingEntry : WorldConfig->BuildingEntries)
 		{
 			if (BuildingEntry.FootprintSizeX <= Width && BuildingEntry.FootprintSizeY <= Height)
 			{
-				MeshPaths.Add(BuildingEntry.Mesh);
+				ValidEntries.Add(&BuildingEntry);
 			}
 		}
 
-		const int32 Index = ContentStream.RandRange(0, MeshPaths.Num() - 1);
+		if (ValidEntries.Num() == 0) continue;
 
-		FBuildingAssetEntry* Found = WorldConfig->BuildingEntries.FindByPredicate(
-			[&](const FBuildingAssetEntry& Entry)
-			{
-				return Entry.Mesh == MeshPaths[Index];
-			});
+		const int32 Index = ContentStream.RandRange(0, ValidEntries.Num() - 1);
+		FBuildingAssetEntry* Found = ValidEntries[Index];
 
+		if (!Found->ActorClass) continue;
+
+		// 스케일 처리 (1x1 기본 크기 액터만)
 		if (Found->FootprintSizeX == 1 && Found->FootprintSizeY == 1)
 		{
 			const float ScaleSize = WorldConfig->CellSize / 100.0f;
-
 			Point.Transform.SetScale3D(FVector(Width * ScaleSize, Height * ScaleSize, Width * Height / ScaleSize));
 		}
-	
+
 		const PCGMetadataEntryKey Key = Point.MetadataEntry;
-		MeshAttr->SetValue(Key, MeshPaths[Index].ToSoftObjectPath().ToString());
+		ActorClassAttr->SetValue(Key, FSoftClassPath(Found->ActorClass.Get()));
 	}
 }
 

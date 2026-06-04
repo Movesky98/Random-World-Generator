@@ -7,6 +7,8 @@
 #include "RandomWorldGeneration/Core/WorldGenTypes.h"
 #include "WorldThemeConfig.generated.h"
 
+class ABuildingActor;
+
 USTRUCT(BlueprintType)
 struct FBuildingAssetEntry
 {
@@ -15,7 +17,7 @@ struct FBuildingAssetEntry
 public:
 	/* 건물 에셋 경로 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building")
-	TSoftObjectPtr<UStaticMesh> Mesh;
+	TSubclassOf<ABuildingActor> ActorClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Building")
 	int32 FootprintSizeX;

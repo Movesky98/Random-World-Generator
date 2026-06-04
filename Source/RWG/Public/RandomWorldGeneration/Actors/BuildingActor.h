@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "BuildingActor.generated.h"
 
+class UBoxComponent;
+
 UCLASS()
 class RWG_API ABuildingActor : public AActor
 {
@@ -15,15 +17,17 @@ public:
 	// Sets default values for this actor's properties
 	ABuildingActor();
 
+	const TArray<UBoxComponent*>& GetItemSpawnVolumes() const { return ItemSpawnVolumes; }
+
 protected:
+	virtual void PostInitializeComponents() override;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Buildings")
-	TObjectPtr<UStaticMesh> BuildingMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* ExteriorMesh;
 
-	virtual void PostActorCreated() override;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item Spawn")
+	TArray<TObjectPtr<UBoxComponent>> ItemSpawnVolumes;
 };
