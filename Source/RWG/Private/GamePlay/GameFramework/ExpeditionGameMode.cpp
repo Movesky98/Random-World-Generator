@@ -7,6 +7,7 @@
 #include "GamePlay/GameFramework/ExpeditionPlayerState.h"
 #include "GamePlay/Characters/CharacterBase/CharacterBase.h"
 #include "GamePlay/Components/SpawnDirectorComponent.h"
+#include "GamePlay/Components/DayNightComponent.h"
 
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
 
@@ -20,6 +21,7 @@ AExpeditionGameMode::AExpeditionGameMode()
 	PlayerStateClass = AExpeditionPlayerState::StaticClass();
 
 	SpawnDirectorComponent = CreateDefaultSubobject<USpawnDirectorComponent>(TEXT("SpawnDirectorComponent"));
+    DayNightComponent = CreateDefaultSubobject<UDayNightComponent>(TEXT("DayNightComponent"));
 }
 
 void AExpeditionGameMode::BeginPlay()

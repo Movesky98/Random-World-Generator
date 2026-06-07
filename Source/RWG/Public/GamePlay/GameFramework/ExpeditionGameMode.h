@@ -7,6 +7,7 @@
 #include "ExpeditionGameMode.generated.h"
 
 class USpawnDirectorComponent;
+class UDayNightComponent;
 
 /**
  * 
@@ -23,4 +24,7 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<USpawnDirectorComponent> SpawnDirectorComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<UDayNightComponent> DayNightComponent;
 };

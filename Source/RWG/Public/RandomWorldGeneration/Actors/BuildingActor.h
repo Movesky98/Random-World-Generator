@@ -38,9 +38,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Spawn")
 	TArray<TObjectPtr<UBoxComponent>> ItemSpawnVolumes;
 
-	UPROPERTY(EditAnywhere, Category = "Spawn")
-	TObjectPtr<UBoxComponent> ProximityTrigger;
-
 	FOnPlayerEntered OnPlayerEntered;
 	FOnPlayerExited OnPlayerExited;
 

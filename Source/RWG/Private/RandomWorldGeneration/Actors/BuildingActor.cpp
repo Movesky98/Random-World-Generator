@@ -11,9 +11,6 @@ ABuildingActor::ABuildingActor()
     ExteriorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ExteriorMesh"));
     
     RootComponent = ExteriorMesh;
-
-    ProximityTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("ProximityTrigger"));
-    ProximityTrigger->SetupAttachment(RootComponent);
 }
 
 void ABuildingActor::PostInitializeComponents()
@@ -21,7 +18,6 @@ void ABuildingActor::PostInitializeComponents()
     Super::PostInitializeComponents();
 
     GetComponents<UBoxComponent>(ItemSpawnVolumes);
-    ItemSpawnVolumes.Remove(ProximityTrigger);
 }
 
 // Called when the game starts or when spawned
