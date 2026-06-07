@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "RandomWorldGeneration/Actors/BuildingActor.h"
@@ -28,31 +28,17 @@ void ABuildingActor::PostInitializeComponents()
 void ABuildingActor::BeginPlay()
 {
 	Super::BeginPlay();
-
-    if (!HasAuthority()) return; // ¼­¹ö¸¸ ¹ÙÀÎµù
-
-    ProximityTrigger->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnProximityBeginOverlap);
-    ProximityTrigger->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnProximityEndOverlap);
 }
 
-void ABuildingActor::OnProximityBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-    bool bFromSweep, const FHitResult& SweepResult)
+void ABuildingActor::OnPlayerApproach(APawn* Player)
 {
-    APawn* Pawn = Cast<APawn>(OtherActor);
-    if (!Pawn || !Pawn->IsPlayerControlled()) return;
-
     PlayersInside++;
     if (PlayersInside == 1)
         OnPlayerEntered.Broadcast();
 }
 
-void ABuildingActor::OnProximityEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void ABuildingActor::OnPlayerLeave(APawn* Player)
 {
-    APawn* Pawn = Cast<APawn>(OtherActor);
-    if (!Pawn || !Pawn->IsPlayerControlled()) return;
-
     PlayersInside = FMath::Max(0, PlayersInside - 1);
     if (PlayersInside == 0)
         OnPlayerExited.Broadcast();

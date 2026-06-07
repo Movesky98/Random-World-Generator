@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GamePlay/Interfaces/PlayerDetectable.h"
 #include "BuildingActor.generated.h"
 
 class UBoxComponent;
@@ -13,7 +14,7 @@ DECLARE_MULTICAST_DELEGATE(FOnPlayerEntered);
 DECLARE_MULTICAST_DELEGATE(FOnPlayerExited);
 
 UCLASS()
-class RWG_API ABuildingActor : public AActor
+class RWG_API ABuildingActor : public AActor, public IPlayerDetectable
 {
 	GENERATED_BODY()
 	
@@ -46,12 +47,7 @@ public:
 private:
 	int32 PlayersInside = 0;
 
-	UFUNCTION()
-	void OnProximityBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-		bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnProximityEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+public:
+	virtual void OnPlayerApproach(APawn* Player) override;
+	virtual void OnPlayerLeave(APawn* Player) override;
 };

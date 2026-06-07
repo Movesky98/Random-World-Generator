@@ -15,6 +15,7 @@ class UHealthComponent;
 
 class USpringArmComponent;
 class UCameraComponent;
+class USphereComponent;
 
 /**
  * 
@@ -27,9 +28,20 @@ public:
 	AConvict();
 
 protected:
+	virtual void PostInitializeComponents() override;
+
 	virtual void ProcessDamage(const FDamageInfo& DamageInfo) override;
 	
 protected:
+	UFUNCTION()
+	void OnProximityBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnProximityEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<USpringArmComponent> SpringArmComponent;
 
@@ -50,4 +62,7 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSourceComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Detection")
+	TObjectPtr<USphereComponent> ProximityDetector;
 };
