@@ -12,6 +12,7 @@
 #include "WorldGenerator.generated.h"
 
 RWG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenerator, Log, All);
+DECLARE_MULTICAST_DELEGATE(FOnWorldGenerationComplete);
 
 /*
 * World Generator Actor.
@@ -80,5 +81,16 @@ private:
 	FCityGrid CityGrid;
 
 	TArray<FCityBlock> CityBlocks;
+
+public:
+	FOnWorldGenerationComplete OnWorldGenerationComplete;
+
+private:
+	bool bPCGComplete = false;
+	bool bNavComplete = false;
+
+	void CheckAllComplete();
+	UFUNCTION()
+	void OnNavMeshBuilt(ANavigationData* NavData);
 };
 

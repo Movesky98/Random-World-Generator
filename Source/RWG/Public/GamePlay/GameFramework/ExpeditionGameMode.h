@@ -6,6 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "ExpeditionGameMode.generated.h"
 
+class USpawnDirectorComponent;
+
 /**
  * 
  */
@@ -15,5 +17,10 @@ class RWG_API AExpeditionGameMode : public AGameModeBase
 	GENERATED_BODY()
 public:
 	AExpeditionGameMode();
+
+protected:
+	virtual void BeginPlay() override;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<USpawnDirectorComponent> SpawnDirectorComponent;
 };

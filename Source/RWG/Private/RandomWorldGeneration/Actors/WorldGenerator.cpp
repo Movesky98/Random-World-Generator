@@ -12,6 +12,9 @@
 #include "PCGGraph.h"
 #include "NavigationSystem.h"
 
+#include "RandomWorldGeneration/Actors/BuildingActor.h"
+#include "Kismet/GameplayStatics.h"
+
 DEFINE_LOG_CATEGORY(LogWorldGenerator);
 
 // Sets default values
@@ -188,7 +191,7 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 	CityBlocks = FCityGridBuilder::BuildBlocks(CityGrid);
 	FCityGridBuilder::ExtractLotsFromBlock(CityGrid, CityBlocks);
 
-	DebugSeedResult();
+	// DebugSeedResult();
 
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this, Config]()
 		{
@@ -235,16 +238,24 @@ void AWorldGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+	{
+		NavSys->OnNavigationGenerationFinishedDelegate.AddDynamic(
+			this, &AWorldGenerator::OnNavMeshBuilt);
+	}
 }
 
 void AWorldGenerator::OnBuildingPCGGenerated(UPCGComponent* InComponent)
 {
-	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-	if (NavSystem)
+	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	if (NavSys)
 	{
 		UE_LOG(LogWorldGenerator, Warning, TEXT("Build NavSystem."));
-		NavSystem->Build();
+		NavSys->Build();
 	}
+
+	bPCGComplete = true;
+	CheckAllComplete();
 }
 
 void AWorldGenerator::GenerateNavProxyMesh(UWorldGenConfig* Config)
@@ -417,4 +428,16 @@ void AWorldGenerator::DebugSeedResult()
 	UE_LOG(LogWorldGenerator, Warning, TEXT("Lots : %d"), CityGrid.GetLots().Num());
 	UE_LOG(LogWorldGenerator, Warning, TEXT("Blocks : %d"), CityBlocks.Num());
 
+}
+
+void AWorldGenerator::CheckAllComplete()
+{
+	if (!bPCGComplete || !bNavComplete) return;
+	OnWorldGenerationComplete.Broadcast();
+}
+
+void AWorldGenerator::OnNavMeshBuilt(ANavigationData* NavData)
+{
+	bNavComplete = true;
+	CheckAllComplete();
 }

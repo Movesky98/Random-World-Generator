@@ -7,6 +7,10 @@
 #include "BuildingActor.generated.h"
 
 class UBoxComponent;
+class AItem;
+
+DECLARE_MULTICAST_DELEGATE(FOnPlayerEntered);
+DECLARE_MULTICAST_DELEGATE(FOnPlayerExited);
 
 UCLASS()
 class RWG_API ABuildingActor : public AActor
@@ -28,6 +32,26 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* ExteriorMesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item Spawn")
+	// Item
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Spawn")
 	TArray<TObjectPtr<UBoxComponent>> ItemSpawnVolumes;
+
+	UPROPERTY(EditAnywhere, Category = "Spawn")
+	TObjectPtr<UBoxComponent> ProximityTrigger;
+
+	FOnPlayerEntered OnPlayerEntered;
+	FOnPlayerExited OnPlayerExited;
+
+private:
+	int32 PlayersInside = 0;
+
+	UFUNCTION()
+	void OnProximityBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnProximityEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };
