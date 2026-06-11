@@ -45,7 +45,6 @@ void USpawnDirectorComponent::CollectItemSpawnPoints()
         }
 
         BindBuildingDelegates(Building);
-        UE_LOG(LogTemp, Warning, TEXT("Building %s has %d spawn volumes"), *Building->GetName(), Building->ItemSpawnVolumes.Num());
     }
 
     COMMON_LOG(LogTemp, Warning, TEXT("Buildings found: %d"), Buildings.Num());

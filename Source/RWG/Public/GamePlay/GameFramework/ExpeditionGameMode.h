@@ -7,8 +7,7 @@
 #include "ExpeditionGameMode.generated.h"
 
 class USpawnDirectorComponent;
-class UDayNightComponent;
-
+class UTimeManagementComponent;
 /**
  * 
  */
@@ -21,10 +20,10 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<USpawnDirectorComponent> SpawnDirectorComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	TObjectPtr<UDayNightComponent> DayNightComponent;
+	TObjectPtr<UTimeManagementComponent> TimeManagementComponent;
 };
