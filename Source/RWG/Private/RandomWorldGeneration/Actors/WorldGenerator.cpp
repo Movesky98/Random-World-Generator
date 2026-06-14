@@ -434,6 +434,11 @@ void AWorldGenerator::CheckAllComplete()
 {
 	if (!bPCGComplete || !bNavComplete) return;
 	OnWorldGenerationComplete.Broadcast();
+
+	if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+	{
+		NavSys->OnNavigationGenerationFinishedDelegate.RemoveAll(this);
+	}
 }
 
 void AWorldGenerator::OnNavMeshBuilt(ANavigationData* NavData)

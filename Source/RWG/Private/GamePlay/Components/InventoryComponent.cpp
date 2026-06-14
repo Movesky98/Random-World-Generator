@@ -117,7 +117,7 @@ bool UInventoryComponent::AddItem(const FItemInstance& NewItem)
 			}
 			else
 			{
-				// »õ ½½·Ô »ý¼º
+				// ìƒˆ ìŠ¬ë¡¯ ìƒì„±
 				FItemInstance NewSlot;
 				NewSlot.ItemData = NewItem.ItemData;
 				NewSlot.Quantity = FMath::Min(RemainingQuantity, NewItem.ItemData->MaxStackSize);
@@ -127,7 +127,7 @@ bool UInventoryComponent::AddItem(const FItemInstance& NewItem)
 		}
 		else
 		{
-			// »õ ½½·Ô »ý¼º
+			// ìƒˆ ìŠ¬ë¡¯ ìƒì„±
 			FItemInstance NewSlot;
 			NewSlot.ItemData = NewItem.ItemData;
 			NewSlot.Quantity = FMath::Min(RemainingQuantity, NewItem.ItemData->MaxStackSize);
@@ -217,7 +217,7 @@ void UInventoryComponent::TryAddWeapon(AWeaponBase* Weapon)
 {
 	if (!Weapon) return;
 
-	// ÀÏ´Ü ÁÖ¹«±âºÎÅÍ
+	// ë¬´ê¸° ëª©ë¡ì— ì¶”ê°€
 	Weapons.Add(Weapon);
 	Weapon->AttachToHolster(Cast<ACharacter>(GetOwner()));
 
@@ -247,7 +247,7 @@ int32 UInventoryComponent::GetAmmoCount(UItemData* AmmoType) const
 
 float UInventoryComponent::ProcessArmorHit(FName BoneName)
 {
-	// ¸Ó¸®
+	// ë¨¸ë¦¬
 	if (BoneName == "spine_05")
 	{
 		if (HelmetSlot.ItemData && HelmetDurability > 0.0f)
@@ -261,6 +261,7 @@ float UInventoryComponent::ProcessArmorHit(FName BoneName)
 	}
 	else if (BoneName == "spine_02" || BoneName == "spine_04")
 	{
+		// ëª¸í†µ
 		if (VestSlot.ItemData && VestDurability > 0.0f)
 		{
 			if (UArmorData* ArmorData = Cast<UArmorData>(VestSlot.ItemData))
@@ -287,7 +288,6 @@ void UInventoryComponent::BindComponent(UUserWidgetBase* Widget)
 	}
 	else if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
 	{
-		// ¹æ¾îµµ µ¨¸®°ÔÀÌÆ® ¹ÙÀÎµù
 		COMMON_LOG(LogGameplay, Log, TEXT("Bind delegate for PlayerHUD"));
 	}
 }
@@ -301,7 +301,6 @@ void UInventoryComponent::UnbindComponent(UUserWidgetBase* Widget)
 	}
 	else if (UPlayerHUD* HUD = Cast<UPlayerHUD>(Widget))
 	{
-		// ¹æ¾îµµ µ¨¸®°ÔÀÌÆ® ¾ð¹ÙÀÎµù
 		COMMON_LOG(LogGameplay, Log, TEXT("Unbind delegate for PlayerHUD"));
 	}
 }

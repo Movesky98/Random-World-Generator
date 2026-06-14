@@ -19,6 +19,7 @@ ABulletProjectile::ABulletProjectile()
 
 	CollisionComponent->SetSphereRadius(5.0f);
 	CollisionComponent->SetCollisionProfileName(FName("Projectile"));
+	CollisionComponent->SetCanEverAffectNavigation(false);
 	
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileMovementComponent->InitialSpeed = 30000.0f;

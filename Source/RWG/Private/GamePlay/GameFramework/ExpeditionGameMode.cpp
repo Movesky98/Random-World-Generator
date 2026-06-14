@@ -29,18 +29,13 @@ void AExpeditionGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-    TArray<AActor*> Generators;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWorldGenerator::StaticClass(), Generators);
-
-    if (Generators.Num() > 0)
+    if (AWorldGenerator* Generator = Cast<AWorldGenerator>(UGameplayStatics::GetActorOfClass(GetWorld(), AWorldGenerator::StaticClass())))
     {
-        if (AWorldGenerator* Generator = Cast<AWorldGenerator>(Generators[0]))
-        {
-            Generator->OnWorldGenerationComplete.AddLambda([this]()
-                {
-                    SpawnDirectorComponent->InitializeSpawnData();
-                });
-        }
+        Generator->OnWorldGenerationComplete.AddLambda([this]()
+            {
+                COMMON_LOG(LogGameplay, Log, TEXT("World generation is completed. Now spawn ItemData."));
+                SpawnDirectorComponent->InitializeSpawnData();
+            });
     }
 }
 

@@ -146,12 +146,12 @@ void USpawnDirectorComponent::OnDayCycleChanged(EDayCycle DayCycle)
 {
     if (DayCycle == EDayCycle::Night)
     {
-        StartNightWave();
+        StartZombieWave();
     }
     else
     {
         // Stop Night Wave
-        StopNightWave();
+        StopZombieWave();
     }
 }
 
@@ -174,7 +174,7 @@ void USpawnDirectorComponent::UnregisterPlayer(APawn* PlayerPawn)
     }
 }
 
-void USpawnDirectorComponent::StartNightWave()
+void USpawnDirectorComponent::StartZombieWave()
 {
     if (ZombieAssignmentMap.IsEmpty() || !ZombieClass)
     {
@@ -217,7 +217,7 @@ void USpawnDirectorComponent::StartNightWave()
     }
 }
 
-void USpawnDirectorComponent::StopNightWave()
+void USpawnDirectorComponent::StopZombieWave()
 {
 
 }

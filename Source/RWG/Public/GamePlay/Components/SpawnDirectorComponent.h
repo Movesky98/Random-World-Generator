@@ -69,9 +69,9 @@ public:
     void UnregisterPlayer(APawn* PlayerPawn);
 
 protected:
-    void StartNightWave();
+    void StartZombieWave();
 
-    void StopNightWave();
+    void StopZombieWave();
 
     FVector FindSpawnLocation(const FVector PlayerLocation);
 
