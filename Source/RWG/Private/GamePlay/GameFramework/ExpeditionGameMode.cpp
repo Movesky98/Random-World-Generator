@@ -43,3 +43,24 @@ void AExpeditionGameMode::BeginPlay()
         }
     }
 }
+
+void AExpeditionGameMode::RestartPlayer(AController* NewPlayer)
+{
+    Super::RestartPlayer(NewPlayer);    // 이 시점에 Pawn이 Spawn + Possess
+
+    if (!NewPlayer->GetPawn())
+    {
+        COMMON_LOG(LogGameplay, Warning, TEXT("Can't find player pawn."));
+
+        return;
+    }
+
+    SpawnDirectorComponent->RegisterPlayer(NewPlayer->GetPawn());
+}
+
+void AExpeditionGameMode::Logout(AController* Exiting)
+{
+    SpawnDirectorComponent->UnregisterPlayer(Exiting->GetPawn());
+    
+    Super::Logout(Exiting);
+}

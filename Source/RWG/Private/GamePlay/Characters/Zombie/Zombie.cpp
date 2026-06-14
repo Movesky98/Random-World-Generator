@@ -5,6 +5,7 @@
 #include "GamePlay/Components/HealthComponent.h"
 #include "GamePlay/Characters/Zombie/Animation/ZombieAnimInstance.h"
 #include "GamePlay/GameFramework/ZombieAIController.h"
+#include "CommonLogCategories.h"
 
 #include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
@@ -22,7 +23,7 @@ void AZombie::BeginPlay()
 
     if (HasAuthority())
     {
-        HealthComponent->OnDeath.AddUObject(this, &AZombie::OnDeath);
+        HealthComponent->OnDeathByDamage.AddUObject(this, &AZombie::OnDeath);
     }
 }
 
@@ -112,18 +113,10 @@ void AZombie::Multicast_PlayDeathMontage_Implementation()
 
     EnableRagdoll();
 
-    // 좀비의 Death Animation 재생 시 몸이 땅에 박혀서 Ragdoll로 변경하면 날아가는 문제 있음.
-    // 제대로 된 Animation을 구하기 전까지는 바로 Ragdoll을 활성화하는 방식으로 갈 것.
-    // 
-    //ZombieAnim->PlayDeathMontage();
-
-    //// 몽타주 끝나고 래그돌 전환
-    //FOnMontageEnded MontageEndedDelegate;
-    //MontageEndedDelegate.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
-    //    {
-    //        EnableRagdoll();
-    //    });
-    //ZombieAnim->Montage_SetEndDelegate(MontageEndedDelegate, ZombieAnim->DeathMontage);
+    /* 문제 발생
+    * 좀비의 Death Animation 재생 시 몸이 땅에 박혀서 Ragdoll로 변경하면 날아가는 문제 있음.
+    * 제대로 된 Animation을 구하기 전까지는 바로 Ragdoll을 활성화하는 방식으로 갈 것.
+    */
 }
 
 void AZombie::EnableRagdoll()
@@ -142,4 +135,21 @@ void AZombie::OnDeath(const FDamageInfo& DamageInfo)
     }
 
     Multicast_PlayDeathMontage();
+    OnZombieDeath.Broadcast(this);
+}
+
+void AZombie::InitializeZombie(ACharacterBase* InAssignedCharacter)
+{
+    if (!InAssignedCharacter)
+    {
+        COMMON_LOG(LogGameplay, Warning, TEXT("InAssignedCharacter is nullptr"));
+        return;
+    }
+
+    AssignedCharacter = InAssignedCharacter;
+}
+
+ACharacterBase* AZombie::GetAssignedCharacter() const
+{
+    return AssignedCharacter;
 }

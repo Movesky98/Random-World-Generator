@@ -8,7 +8,7 @@
 #include "ExpeditionGameState.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimeOfDayUpdated, float /* TimeOfDay */);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnCycleChanged, EDayCycle /* DayCycle */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDayCycleChanged, EDayCycle /* DayCycle */);
 
 /**
  * 
@@ -26,7 +26,7 @@ public:
 
 	FOnTimeOfDayUpdated OnTimeOfDayUpdated;
 
-	FOnCycleChanged OnCycleChanged;
+	FOnDayCycleChanged OnDayCycleChanged;
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

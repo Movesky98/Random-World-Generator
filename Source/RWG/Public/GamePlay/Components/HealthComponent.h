@@ -9,7 +9,7 @@
 #include "HealthComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float /* CurrentHealth */, float /* MaxHealth */);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnDeath, const FDamageInfo& /* DamageInfo */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDeathByDamage, const FDamageInfo& /* DamageInfo */);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -42,7 +42,7 @@ public:
 
 	FOnHealthChanged OnHealthChanged;
 
-	FOnDeath OnDeath;
+	FOnDeathByDamage OnDeathByDamage;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Health")

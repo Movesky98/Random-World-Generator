@@ -52,7 +52,7 @@ void UHealthComponent::DecreaseHealth(float FinalDamage, const FDamageInfo& Dama
 	if (IsDead())
 	{
 		StopRegen();
-		OnDeath.Broadcast(DamageInfo);
+		OnDeathByDamage.Broadcast(DamageInfo);
 
 		FString MessageStr;
 		MessageStr += GetNameSafe(GetOwner()) + FString(" is dead.\n");

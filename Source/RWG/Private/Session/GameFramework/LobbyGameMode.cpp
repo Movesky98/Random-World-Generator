@@ -61,7 +61,6 @@ void ALobbyGameMode::HandleReadyRequest(APlayerControllerBase* PC, bool bNewRead
 
 void ALobbyGameMode::TryStartGame()
 {
-	// 랜덤 월드 제네레이션 레벨로 단체 이동
 	UWorld* World = GetWorld();
 	if (World)
 	{

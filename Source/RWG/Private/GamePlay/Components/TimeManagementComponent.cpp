@@ -37,7 +37,7 @@ void UTimeManagementComponent::BeginPlay()
 	}
 	else
 	{
-		COMMON_LOG(LogGameplay, Log, TEXT("Can't find ExpeditionGameState"));
+		COMMON_LOG(LogGameplay, Warning, TEXT("Can't find ExpeditionGameState"));
 	}
 }
 
@@ -59,6 +59,7 @@ void UTimeManagementComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 		bIsDay = bIsNewDay;
 		
 		GameState->SetDayCycle(bIsDay ? EDayCycle::Day : EDayCycle::Night);
+		OnDayCycleChanged.Broadcast(bIsDay ? EDayCycle::Day : EDayCycle::Night);
 	}
 
 	ElapsedTimeUpdate += DeltaTime;

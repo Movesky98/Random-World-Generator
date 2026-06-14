@@ -15,7 +15,7 @@ void AExpeditionGameState::SetDayCycle(EDayCycle InDayCycle)
 {
 	DayCycle = InDayCycle;
 	COMMON_LOG(LogGameplay, Log, TEXT("%s"), InDayCycle == EDayCycle::Day ? TEXT("Now Day") : TEXT("Now Night"));
-	OnCycleChanged.Broadcast(DayCycle);
+	OnDayCycleChanged.Broadcast(DayCycle);
 }
 
 float AExpeditionGameState::GetFullDuration() const
@@ -40,5 +40,5 @@ void AExpeditionGameState::OnRep_TimeOfDay()
 
 void AExpeditionGameState::OnRep_DayCycle()
 {
-	OnCycleChanged.Broadcast(DayCycle);
+	OnDayCycleChanged.Broadcast(DayCycle);
 }

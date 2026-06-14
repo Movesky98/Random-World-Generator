@@ -10,6 +10,8 @@ class UBehaviorTree;
 
 DECLARE_DELEGATE(FOnAttackFinished)
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnZombieDeath, AZombie* /* self */);
+
 /**
  * 
  */
@@ -54,4 +56,14 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, Category = "AI")
     float AttackDamage = 20.f;
+
+public:
+    FOnZombieDeath OnZombieDeath;
+
+    void InitializeZombie(ACharacterBase* InAssignedCharacter);
+
+    ACharacterBase* GetAssignedCharacter() const;
+
+protected:
+    TObjectPtr<ACharacterBase> AssignedCharacter;
 };

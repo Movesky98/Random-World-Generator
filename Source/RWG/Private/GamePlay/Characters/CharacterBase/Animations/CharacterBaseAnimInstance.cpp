@@ -27,7 +27,6 @@ void UCharacterBaseAnimInstance::NativeInitializeAnimation()
 			return;
 		}
 
-		COMMON_LOG(LogGameplay, Warning, TEXT("OwnerCharacter is %s"), *GetNameSafe(OwnerCharacter));
 		MovementComponent = OwnerCharacter->GetCharacterMovement();
 	}
 }

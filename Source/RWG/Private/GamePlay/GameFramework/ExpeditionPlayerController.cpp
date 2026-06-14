@@ -50,7 +50,7 @@ void AExpeditionPlayerController::AcknowledgePossession(APawn* aPawn)
 {
 	Super::AcknowledgePossession(aPawn);
 
-	// IInputBindable ¼öÁý
+	// IInputBindable ìˆ˜ì§‘
 	TArray<UActorComponent*> Components = aPawn->GetComponentsByInterface(UInputBindable::StaticClass());
 
 	TArray<TScriptInterface<IInputBindable>> BindableComponents;
@@ -62,7 +62,6 @@ void AExpeditionPlayerController::AcknowledgePossession(APawn* aPawn)
 		BindableComponents.Add(Bindable);
 	}
 
-	// Priority Á¤·Ä
 	BindableComponents.Sort([](const TScriptInterface<IInputBindable>& A, const TScriptInterface<IInputBindable>& B)
 		{
 			return A->GetIMCPriority() < B->GetIMCPriority();
@@ -71,7 +70,7 @@ void AExpeditionPlayerController::AcknowledgePossession(APawn* aPawn)
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 		InputHandlerComponent->RegisterBindableComponents(BindableComponents, EnhancedInput);
 
-	// IWidgetBindable ¼öÁý
+	// IWidgetBindable ìˆ˜ì§‘
 	TArray<UActorComponent*> WidgetBindableComps = aPawn->GetComponentsByInterface(UWidgetBindable::StaticClass());
 
 	TArray<TScriptInterface<IWidgetBindable>> WidgetBindables;

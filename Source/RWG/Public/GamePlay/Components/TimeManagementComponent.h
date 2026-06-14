@@ -7,6 +7,9 @@
 #include "GamePlay/Enums/DayNightTypes.h"
 #include "TimeManagementComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDayCycleChanged, EDayCycle /* DayCycle */);
+
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RWG_API UTimeManagementComponent : public UActorComponent
 {
@@ -15,6 +18,8 @@ class RWG_API UTimeManagementComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UTimeManagementComponent();
+
+	FOnDayCycleChanged OnDayCycleChanged;
 
 protected:
 	virtual void InitializeComponent() override;
