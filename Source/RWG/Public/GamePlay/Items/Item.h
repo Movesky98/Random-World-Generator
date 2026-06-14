@@ -28,7 +28,7 @@ protected:
 
 	UStaticMeshComponent* GetStaticMeshComponent() const { return MeshComponent; }
 
-	UPROPERTY(EditInstanceOnly, Category = "Item")
+	UPROPERTY(EditAnywhere, Category = "Item")
 	TObjectPtr<UItemData> ItemData;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Item")

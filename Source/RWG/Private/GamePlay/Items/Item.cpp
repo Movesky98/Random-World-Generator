@@ -3,6 +3,7 @@
 
 #include "GamePlay/Items/Item.h"
 #include "GamePlay/Components/InventoryComponent.h"
+#include "CommonLogCategories.h"
 
 
 // Sets default values
@@ -25,15 +26,23 @@ void AItem::BeginPlay()
 
 void AItem::Interact(AActor* Interactor)
 {
-	if (!ItemData) return;
+	if (!ItemData)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Item %s's Data is nullptr"), *GetNameSafe(this));
+		return;
+	}
 
-	UInventoryComponent* InventoryComp = Interactor->FindComponentByClass<UInventoryComponent>();
-	if (!InventoryComp) return;
+	if (UInventoryComponent* InventoryComp = Interactor->FindComponentByClass<UInventoryComponent>())
+	{
+		FItemInstance NewInstance;
+		NewInstance.ItemData = ItemData;
+		NewInstance.Quantity = DropQuantity;
 
-	FItemInstance NewInstance;
-	NewInstance.ItemData = ItemData;
-	NewInstance.Quantity = DropQuantity;
-
-	InventoryComp->AddItem(NewInstance);
-	Destroy();
+		InventoryComp->AddItem(NewInstance);
+		Destroy();
+	}
+	else
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Can't find InventoryCompoennt in %s"), *GetNameSafe(Interactor));
+	}
 }
