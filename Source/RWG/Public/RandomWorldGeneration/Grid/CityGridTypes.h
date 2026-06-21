@@ -1,149 +1,149 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
-
-#include "CoreMinimal.h"
-
-#include "RandomWorldGeneration/PCG/RoadGraph.h"
-
-enum class ECellType : uint8
-{
-	Empty,
-	Road,
-	Blocked
-};
-
-enum class ERoadClass : uint8
-{
-	None,
-	Primary,
-	Secondary,
-	Tertiary
-};
-
-// NESW 4¹æÇâ ¿¬°á ºñÆ®
-enum class ERoadConnection : uint8
-{
-	Conn_N = 1 << 0,
-	Conn_E = 1 << 1,
-	Conn_S = 1 << 2,
-	Conn_W = 1 << 3,
-};
-
-struct FCityCell
-{
-	// Static
-	int32 X = 0;
-	int32 Y = 0;
-	FVector WorldPosition = FVector::ZeroVector;
-	float DistToCenter = 0.0f;
-
-	// Dynamic
-	ECellType Type = ECellType::Empty;
-	ERoadClass RoadClass = ERoadClass::None;
-
-	// Neighborhood
-	uint8 ConnectionMask = 0; // ERoadConnection Bits
-
-	// Result
-	int32 BlockId = -1;
-};
-
-/// <summary>
-/// ºí·Ï ±¸Á¶Ã¼.
-/// ±×¸®µå À§¿¡ ±×·ÁÁø ¼¿ Áß, °Ç¹°À» ¹èÄ¡ÇÒ ¼ö ÀÖ´Â ¼¿µé·Î ºí·ÏÈ­ÇÑ °ÍÀ» ÀúÀåÇÏ´Â ±¸Á¶Ã¼
-/// </summary>
-struct FCityBlock
-{
-	int32 BlockId = -1;
-	TArray<int32> CellIndices;
-	int32 CellCount = 0;
-};
-
-/// <summary>
-/// ÇÊÁö ±¸Á¶Ã¼. 
-/// ¿©·¯ ¼¿À» ¹­¾î °Ç¹°À» ¹èÄ¡ÇÒ °ø°£À» ÀúÀåÇÏ´Â ±¸Á¶Ã¼
-/// </summary>
-struct FCityLot
-{
-	int32 LotId = -1;
-	int32 BlockId = -1;
-
-	TArray<int32> CellIndices;
-
-	int32 MinX = 0;
-	int32 MaxX = 0;
-	int32 MinY = 0;
-	int32 MaxY = 0;
-
-	FVector Center = FVector::ZeroVector;
-
-	bool bTouchesRoad = false;	// µµ·Î¿Í ¸Â´ê¾Æ ÀÖ´ÂÁö
-	FVector FacingDirection = FVector::ForwardVector;
-
-	FORCEINLINE int32 GetWidthInCells() const
-	{
-		return MaxX - MinX + 1;
-	}
-
-	FORCEINLINE int32 GetHeightInCells() const
-	{
-		return MaxY - MinY + 1;
-	}
-
-	FORCEINLINE int32 GetAreaInCells() const
-	{
-		return CellIndices.Num();
-	}
-};
-
-class RWG_API FCityGrid
-{
-public:
-	const FVector GetOrigin() const;
-	void SetOirin(const FVector InOrigin);
-
-	const int32 GetWidth() const;
-	void SetWidth(const int32 InWidth);
-
-	const int32 GetHeight() const;
-	void SetHeight(const int32 InHeight);
-
-	const float GetCellSize() const { return CellSize; }
-	void SetCellSize(const float InCellSize);
-
-	const TArray<FCityCell> GetCityCells() const;
-	TArray<FCityCell>& GetCityCellsMutable();
-
-	FORCEINLINE int32 Index(int32 X, int32 Y) const
-	{
-		return X + Y * Width;
-	}
-
-	FORCEINLINE bool IsValid(int32 X, int32 Y) const
-	{
-		return X >= 0 && X < Width && Y >= 0 && Y < Height;
-	}
-
-	void GenerateGrid(FVector CityCenter, float CityRadius, float InCellSize, const FRoadGraph& RoadGraph);
-	
-	void SetWorldPosition(int32 X, int32 Y, FVector InPosition);
-
-	FVector GetWorldPosition(int32 X, int32 Y);
-
-	const TArray<FCityLot> GetLots() const;
-	void SetLots(const TArray<FCityLot>& InLots);
-
-private:
-	TArray<FCityCell> CityCells;
-
-	// ¿ùµå ³» °¡·Î / ¼¼·Î ¼¿ °³¼ö
-	int32 Width, Height;
-
-	// ¼¿ÀÇ Å©±â
-	float CellSize = 200.0f;
-
-	FVector Origin = FVector::ZeroVector;
-
-	TArray<FCityLot> Lots;
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+
+#include "RandomWorldGeneration/PCG/RoadGraph.h"
+
+enum class ECellType : uint8
+{
+	Empty,
+	Road,
+	Blocked
+};
+
+enum class ERoadClass : uint8
+{
+	None,
+	Primary,
+	Secondary,
+	Tertiary
+};
+
+// NESW 4ë°©í–¥ ì—°ê²° ë¹„íŠ¸
+enum class ERoadConnection : uint8
+{
+	Conn_N = 1 << 0,
+	Conn_E = 1 << 1,
+	Conn_S = 1 << 2,
+	Conn_W = 1 << 3,
+};
+
+struct FCityCell
+{
+	// Static
+	int32 X = 0;
+	int32 Y = 0;
+	FVector WorldPosition = FVector::ZeroVector;
+	float DistToCenter = 0.0f;
+
+	// Dynamic
+	ECellType Type = ECellType::Empty;
+	ERoadClass RoadClass = ERoadClass::None;
+
+	// Neighborhood
+	uint8 ConnectionMask = 0; // ERoadConnection Bits
+
+	// Result
+	int32 BlockId = -1;
+};
+
+/// <summary>
+/// ë¸”ë¡ êµ¬ì¡°ì²´.
+/// ê·¸ë¦¬ë“œ ìœ„ì— ê·¸ë ¤ì§„ ì…€ ì¤‘, ê±´ë¬¼ì„ ë°°ì¹˜í•  ìˆ˜ ìˆëŠ” ì…€ë“¤ë¡œ ë¸”ë¡í™”í•œ ê²ƒì„ ì €ì¥í•˜ëŠ” êµ¬ì¡°ì²´
+/// </summary>
+struct FCityBlock
+{
+	int32 BlockId = -1;
+	TArray<int32> CellIndices;
+	int32 CellCount = 0;
+};
+
+/// <summary>
+/// í•„ì§€ êµ¬ì¡°ì²´. 
+/// ì—¬ëŸ¬ ì…€ì„ ë¬¶ì–´ ê±´ë¬¼ì„ ë°°ì¹˜í•  ê³µê°„ì„ ì €ì¥í•˜ëŠ” êµ¬ì¡°ì²´
+/// </summary>
+struct FCityLot
+{
+	int32 LotId = -1;
+	int32 BlockId = -1;
+
+	TArray<int32> CellIndices;
+
+	int32 MinX = 0;
+	int32 MaxX = 0;
+	int32 MinY = 0;
+	int32 MaxY = 0;
+
+	FVector Center = FVector::ZeroVector;
+
+	bool bTouchesRoad = false;	// ë„ë¡œì™€ ë§ë‹¿ì•„ ìˆëŠ”ì§€
+	FVector FacingDirection = FVector::ForwardVector;
+
+	FORCEINLINE int32 GetWidthInCells() const
+	{
+		return MaxX - MinX + 1;
+	}
+
+	FORCEINLINE int32 GetHeightInCells() const
+	{
+		return MaxY - MinY + 1;
+	}
+
+	FORCEINLINE int32 GetAreaInCells() const
+	{
+		return CellIndices.Num();
+	}
+};
+
+class RWG_API FCityGrid
+{
+public:
+	const FVector GetOrigin() const;
+	void SetOirin(const FVector InOrigin);
+
+	const int32 GetWidth() const;
+	void SetWidth(const int32 InWidth);
+
+	const int32 GetHeight() const;
+	void SetHeight(const int32 InHeight);
+
+	const float GetCellSize() const { return CellSize; }
+	void SetCellSize(const float InCellSize);
+
+	const TArray<FCityCell> GetCityCells() const;
+	TArray<FCityCell>& GetCityCellsMutable();
+
+	FORCEINLINE int32 Index(int32 X, int32 Y) const
+	{
+		return X + Y * Width;
+	}
+
+	FORCEINLINE bool IsValid(int32 X, int32 Y) const
+	{
+		return X >= 0 && X < Width && Y >= 0 && Y < Height;
+	}
+
+	void GenerateGrid(FVector CityCenter, float CityRadius, float InCellSize, const FRoadGraph& RoadGraph);
+	
+	void SetWorldPosition(int32 X, int32 Y, FVector InPosition);
+
+	FVector GetWorldPosition(int32 X, int32 Y);
+
+	const TArray<FCityLot> GetLots() const;
+	void SetLots(const TArray<FCityLot>& InLots);
+
+private:
+	TArray<FCityCell> CityCells;
+
+	// ì›”ë“œ ë‚´ ê°€ë¡œ / ì„¸ë¡œ ì…€ ê°œìˆ˜
+	int32 Width, Height;
+
+	// ì…€ì˜ í¬ê¸°
+	float CellSize = 200.0f;
+
+	FVector Origin = FVector::ZeroVector;
+
+	TArray<FCityLot> Lots;
 };

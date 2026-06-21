@@ -1,82 +1,82 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
-
-#include "CoreMinimal.h"
-
-enum class ERoadNodeType : uint8
-{
-	Unknown,
-	DeadEnd,		// Degree == 1, ¸·´Ù¸¥ ±æ
-	PassThrough,	// Degree == 2, Á÷¼± µµ·Î
-	Bend,			// Degree == 2, Ä¿ºê
-	Intersection,	// Degree >= 3, ±³Â÷·Î
-};
-
-struct FRoadNode
-{
-	int32 Id = INDEX_NONE;
-	FVector Position = FVector::ZeroVector;
-
-	// ÀÎÁ¢ ¿§Áö Id ¸®½ºÆ®
-	TArray<int32> EdgeIds;
-
-	explicit FRoadNode(int32 InId = INDEX_NONE, const FVector& InPos = FVector::ZeroVector)
-		: Id(InId), Position(InPos) { }
-};
-
-struct FRoadEdge
-{
-	int32 Id = INDEX_NONE;
-	int32 StartNodeId = INDEX_NONE;
-	int32 EndNodeId = INDEX_NONE;
-
-	// ¸ŞÅ¸ µ¥ÀÌÅÍ
-	float Width = 400.0f;
-	int32 RoadType = 0;
-	FVector Direction = FVector::ZeroVector;
-
-	// ÀÚ¿¬ °î¼±À» À§ÇÑ Á¦¾îÁ¡. ¿ùµå ÁÂÇ¥ ±âÁØ Áß°£Á¡µéÀÓ 
-	TArray<FVector> SegmentPoints;
-
-	FRoadEdge() = default;
-	FRoadEdge(int32 InId, int32 InStartNodeId, int32 InEndNodeId, float InWidth = 400.0f, int32 InRoadType = 0)
-		: Id(InId), StartNodeId(InStartNodeId), EndNodeId(InEndNodeId), Width(InWidth), RoadType(InRoadType) { }
-};
-
-/**
- * 
- */
-class RWG_API FRoadGraph
-{
-public:
-	int32 AddNode(const FVector& Position);
-	int32 AddEdge(int32 StartNodeId, int32 EndNodeId, float Width = 400.0f, int32 RoadType = 0);
-
-	const FRoadNode* GetNode(int32 NodeId) const;
-	FRoadNode* GetNodeMutable(int32 NodeId);
-
-	const FRoadEdge* GetEdge(int32 EdgeId) const;
-	FRoadEdge* GetEdgeMutable(int32 EdgeId);
-
-	int32 GetNodeDegree(int32 NodeId) const;
-
-	// NodeId ¸¦ ±âÁØÀ¸·Î Edge ¹İ´ëÆí¿¡ ¿¬°áµÈ NodeId ¹İÈ¯
-	int32 GetOtherNode(int32 EdgeId, int32 NodeId) const;
-
-	ERoadNodeType ClassifyNode(int32 NodeId, float StraightDotThreshold = 0.95f) const;
-	
-	// Degree == 2ÀÏ ¶§, Á÷¼± µµ·ÎÀÎÁö ÆÇ´ÜÇÏ´Â ÇÔ¼ö
-	bool IsPassThrough(int32 NodeId, float StraightDotThreshold = 0.95f) const;
-
-	// ÄÁÅ×ÀÌ³Ê
-	const TArray<FRoadNode>& GetNodes() const { return Nodes; }
-	const TArray<FRoadEdge>& GetEdges() const { return Edges; }
-
-private:
-	TArray<FRoadNode> Nodes;
-	TArray<FRoadEdge> Edges;
-
-	bool IsValidNodeId(int32 NodeId) const { return Nodes.IsValidIndex(NodeId); }
-	bool IsValidEdgeId(int32 EdgeId) const { return Edges.IsValidIndex(EdgeId); }
-};
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+
+enum class ERoadNodeType : uint8
+{
+	Unknown,
+	DeadEnd,		// Degree == 1, ë§‰ë‹¤ë¥¸ ê¸¸
+	PassThrough,	// Degree == 2, ì§ì„  ë„ë¡œ
+	Bend,			// Degree == 2, ì»¤ë¸Œ
+	Intersection,	// Degree >= 3, êµì°¨ë¡œ
+};
+
+struct FRoadNode
+{
+	int32 Id = INDEX_NONE;
+	FVector Position = FVector::ZeroVector;
+
+	// ì¸ì ‘ ì—£ì§€ Id ë¦¬ìŠ¤íŠ¸
+	TArray<int32> EdgeIds;
+
+	explicit FRoadNode(int32 InId = INDEX_NONE, const FVector& InPos = FVector::ZeroVector)
+		: Id(InId), Position(InPos) { }
+};
+
+struct FRoadEdge
+{
+	int32 Id = INDEX_NONE;
+	int32 StartNodeId = INDEX_NONE;
+	int32 EndNodeId = INDEX_NONE;
+
+	// ë©”íƒ€ ë°ì´í„°
+	float Width = 400.0f;
+	int32 RoadType = 0;
+	FVector Direction = FVector::ZeroVector;
+
+	// ìì—° ê³¡ì„ ì„ ìœ„í•œ ì œì–´ì . ì›”ë“œ ì¢Œí‘œ ê¸°ì¤€ ì¤‘ê°„ì ë“¤ì„ 
+	TArray<FVector> SegmentPoints;
+
+	FRoadEdge() = default;
+	FRoadEdge(int32 InId, int32 InStartNodeId, int32 InEndNodeId, float InWidth = 400.0f, int32 InRoadType = 0)
+		: Id(InId), StartNodeId(InStartNodeId), EndNodeId(InEndNodeId), Width(InWidth), RoadType(InRoadType) { }
+};
+
+/**
+ * 
+ */
+class RWG_API FRoadGraph
+{
+public:
+	int32 AddNode(const FVector& Position);
+	int32 AddEdge(int32 StartNodeId, int32 EndNodeId, float Width = 400.0f, int32 RoadType = 0);
+
+	const FRoadNode* GetNode(int32 NodeId) const;
+	FRoadNode* GetNodeMutable(int32 NodeId);
+
+	const FRoadEdge* GetEdge(int32 EdgeId) const;
+	FRoadEdge* GetEdgeMutable(int32 EdgeId);
+
+	int32 GetNodeDegree(int32 NodeId) const;
+
+	// NodeId ë¥¼ ê¸°ì¤€ìœ¼ë¡œ Edge ë°˜ëŒ€í¸ì— ì—°ê²°ëœ NodeId ë°˜í™˜
+	int32 GetOtherNode(int32 EdgeId, int32 NodeId) const;
+
+	ERoadNodeType ClassifyNode(int32 NodeId, float StraightDotThreshold = 0.95f) const;
+	
+	// Degree == 2ì¼ ë•Œ, ì§ì„  ë„ë¡œì¸ì§€ íŒë‹¨í•˜ëŠ” í•¨ìˆ˜
+	bool IsPassThrough(int32 NodeId, float StraightDotThreshold = 0.95f) const;
+
+	// ì»¨í…Œì´ë„ˆ
+	const TArray<FRoadNode>& GetNodes() const { return Nodes; }
+	const TArray<FRoadEdge>& GetEdges() const { return Edges; }
+
+private:
+	TArray<FRoadNode> Nodes;
+	TArray<FRoadEdge> Edges;
+
+	bool IsValidNodeId(int32 NodeId) const { return Nodes.IsValidIndex(NodeId); }
+	bool IsValidEdgeId(int32 EdgeId) const { return Edges.IsValidIndex(EdgeId); }
+};

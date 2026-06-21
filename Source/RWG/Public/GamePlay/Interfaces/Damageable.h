@@ -1,55 +1,55 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
-
-#include "CoreMinimal.h"
-#include "UObject/Interface.h"
-#include "Damageable.generated.h"
-
-USTRUCT(BlueprintType)
-struct FDamageInfo
-{
-	GENERATED_BODY()
-	
-	// ∞¯∞› ¡÷√º
-	UPROPERTY()
-	TObjectPtr<AActor> Instigator;
-
-	// µ•πÃ¡ˆ∏¶ ∞°«— π´±‚
-	UPROPERTY()
-	TObjectPtr<AActor> DamageCauser;
-
-	// ∏¬¿∫ ∫Œ¿ß
-	UPROPERTY()
-	FName HitBoneName;
-
-	// ±‚∫ª µ•πÃ¡ˆ
-	UPROPERTY()
-	float BaseDamage;
-
-	// µ•πÃ¡ˆ ¿Ø«¸ (√—±‚, ∆¯πﬂ, ±Ÿ¡¢)
-	UPROPERTY()
-	TSubclassOf<UDamageType> DamageType;
-
-	FDamageInfo() : Instigator(nullptr), DamageCauser(nullptr), HitBoneName(NAME_None), BaseDamage(0.0f), DamageType(nullptr)
-	{  }
-};
-
-// This class does not need to be modified.
-UINTERFACE(MinimalAPI)
-class UDamageable : public UInterface
-{
-	GENERATED_BODY()
-};
-
-/**
- * 
- */
-class RWG_API IDamageable
-{
-	GENERATED_BODY()
-
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
-public:
-	virtual void ProcessDamage(const FDamageInfo& DamageInfo) = 0;
-};
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/Interface.h"
+#include "Damageable.generated.h"
+
+USTRUCT(BlueprintType)
+struct FDamageInfo
+{
+	GENERATED_BODY()
+	
+	// Í≥µÍ≤© Ï£ºÏ≤¥
+	UPROPERTY()
+	TObjectPtr<AActor> Instigator;
+
+	// Îç∞ÎØ∏ÏßÄÎ•º Í∞ÄÌïú Î¨¥Í∏∞
+	UPROPERTY()
+	TObjectPtr<AActor> DamageCauser;
+
+	// ÎßûÏùÄ Î∂ÄÏúÑ
+	UPROPERTY()
+	FName HitBoneName;
+
+	// Í∏∞Î≥∏ Îç∞ÎØ∏ÏßÄ
+	UPROPERTY()
+	float BaseDamage;
+
+	// Îç∞ÎØ∏ÏßÄ Ïú†Ìòï (Ï¥ùÍ∏∞, Ìè≠Î∞ú, Í∑ºÏ†ë)
+	UPROPERTY()
+	TSubclassOf<UDamageType> DamageType;
+
+	FDamageInfo() : Instigator(nullptr), DamageCauser(nullptr), HitBoneName(NAME_None), BaseDamage(0.0f), DamageType(nullptr)
+	{  }
+};
+
+// This class does not need to be modified.
+UINTERFACE(MinimalAPI)
+class UDamageable : public UInterface
+{
+	GENERATED_BODY()
+};
+
+/**
+ * 
+ */
+class RWG_API IDamageable
+{
+	GENERATED_BODY()
+
+	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
+public:
+	virtual void ProcessDamage(const FDamageInfo& DamageInfo) = 0;
+};

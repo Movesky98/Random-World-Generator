@@ -1,88 +1,88 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
-
-#include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
-#include "UIManagerComponent.generated.h"
-
-enum class EWidgetType : uint8;
-class UUserWidgetBase;
-class IWidgetBindable;
-
-UENUM(BlueprintType)
-enum class EGamePhase : uint8
-{
-	None,		// ≈◊Ω∫∆ÆøÎ
-	Session,
-	Lobby,
-	Gameplay
-};
-
-USTRUCT(BlueprintType)
-struct FWidgetClassList
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(EditDefaultsOnly)
-	TArray<TSubclassOf<UUserWidgetBase>> WidgetClasses;
-
-	/* Phaseø°º≠ ±‚∫ª¿˚¿∏∑Œ ∫∏ø©¡Ÿ ¿ß¡¨ */
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UUserWidgetBase> DefaultWidgetClass;
-};
-
-
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RWG_API UUIManagerComponent : public UActorComponent
-{
-	GENERATED_BODY()
-public:
-	UUIManagerComponent();
-
-protected:
-	void InitializeComponent() override;
-
-	virtual void BeginPlay() override;
-
-	/* Initialize Settings */
-public:
-	void InitializePawnWidgets(APawn* aPawn);
-
-	void BindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
-
-	void UnbindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
-
-protected:
-	void DisplayWidgetsForPhase();
-
-	void InitializeLevelNameMap();
-
-	void CreateWidgetsForPhase(EGamePhase Phase);
-
-	EGamePhase ConvertLevelNameToPhase(FName LevelName);
-
-	void ShowDefaultWidget(TSubclassOf<UUserWidgetBase> WidgetClass);
-
-	/* ø°µ≈Õ º≥¡§øÎ TMap */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	TMap<TSoftObjectPtr<UWorld>, EGamePhase> LevelToPhaseMap;
-
-	/* ∑±≈∏¿” ¡∂»∏øÎ TMap */
-	TMap<FName, EGamePhase> LevelNameToPhaseMap;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	TMap<EGamePhase, FWidgetClassList> WidgetClassMap;
-
-private:
-	APlayerController* OwnerController;
-
-	UPROPERTY(VisibleAnywhere, Category = "UI")
-	TArray<UUserWidgetBase*> AvailableWidgets;
-
-	UPROPERTY(VisibleAnywhere, Category = "UI")
-	TObjectPtr<UUserWidgetBase> CurrentWidget;
-
-	UPROPERTY(VisibleAnywhere, Category = "UI")
-	EGamePhase CurrentPhase;
-};
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/ActorComponent.h"
+#include "UIManagerComponent.generated.h"
+
+enum class EWidgetType : uint8;
+class UUserWidgetBase;
+class IWidgetBindable;
+
+UENUM(BlueprintType)
+enum class EGamePhase : uint8
+{
+	None,		// ÌÖåÏä§Ìä∏Ïö©
+	Session,
+	Lobby,
+	Gameplay
+};
+
+USTRUCT(BlueprintType)
+struct FWidgetClassList
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditDefaultsOnly)
+	TArray<TSubclassOf<UUserWidgetBase>> WidgetClasses;
+
+	/* PhaseÏóêÏÑú Í∏∞Î≥∏Ï†ÅÏúºÎ°ú Î≥¥Ïó¨Ï§Ñ ÏúÑÏ†Ø */
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidgetBase> DefaultWidgetClass;
+};
+
+
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class RWG_API UUIManagerComponent : public UActorComponent
+{
+	GENERATED_BODY()
+public:
+	UUIManagerComponent();
+
+protected:
+	void InitializeComponent() override;
+
+	virtual void BeginPlay() override;
+
+	/* Initialize Settings */
+public:
+	void InitializePawnWidgets(APawn* aPawn);
+
+	void BindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
+
+	void UnbindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
+
+protected:
+	void DisplayWidgetsForPhase();
+
+	void InitializeLevelNameMap();
+
+	void CreateWidgetsForPhase(EGamePhase Phase);
+
+	EGamePhase ConvertLevelNameToPhase(FName LevelName);
+
+	void ShowDefaultWidget(TSubclassOf<UUserWidgetBase> WidgetClass);
+
+	/* ÏóêÎîîÌÑ∞ ÏÑ§Ï†ïÏö© TMap */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TMap<TSoftObjectPtr<UWorld>, EGamePhase> LevelToPhaseMap;
+
+	/* Îü∞ÌÉÄÏûÑ Ï°∞ÌöåÏö© TMap */
+	TMap<FName, EGamePhase> LevelNameToPhaseMap;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TMap<EGamePhase, FWidgetClassList> WidgetClassMap;
+
+private:
+	APlayerController* OwnerController;
+
+	UPROPERTY(VisibleAnywhere, Category = "UI")
+	TArray<UUserWidgetBase*> AvailableWidgets;
+
+	UPROPERTY(VisibleAnywhere, Category = "UI")
+	TObjectPtr<UUserWidgetBase> CurrentWidget;
+
+	UPROPERTY(VisibleAnywhere, Category = "UI")
+	EGamePhase CurrentPhase;
+};

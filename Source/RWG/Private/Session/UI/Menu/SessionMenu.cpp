@@ -1,272 +1,272 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "Session/UI/Menu/SessionMenu.h"
-#include "Session/UI/SessionSlot.h"
-#include "Session/GameFramework/SessionSubsystem.h"
-
-#include "Components/Slider.h"
-#include "Components/EditableTextBox.h"
-#include "Components/CheckBox.h"
-#include "Components/Button.h"
-#include "Components/TextBlock.h"
-#include "Components/ScrollBox.h"
-#include "Components/CircularThrobber.h"
-
-DEFINE_LOG_CATEGORY(LogSessionMenu);
-
-USessionMenu::USessionMenu()
-{
-
-}
-
-void USessionMenu::NativeConstruct()
-{
-	Super::NativeConstruct();
-
-	if (!ensure(MaxPlayersSlider != nullptr)) return;
-	if (!ensure(CreateSessionButton != nullptr)) return;
-	if (!ensure(FindSessionsButton != nullptr)) return;
-	if (!ensure(SessionNameText != nullptr)) return;
-	if (!ensure(LANCheckBox != nullptr)) return;
-	if (!ensure(SessionScrollBox != nullptr)) return;
-	if (!ensure(LoadingThrobber != nullptr)) return;
-	if (!ensure(MaxPlayersText != nullptr)) return;
-	if (!ensure(SessionSlotClass != nullptr)) return;
- 
-	MaxPlayersSlider->OnValueChanged.AddDynamic(this, &ThisClass::OnSliderValueChanged);
-	CreateSessionButton->OnClicked.AddDynamic(this, &ThisClass::OnCreateSessionButtonClicked);
-	FindSessionsButton->OnClicked.AddDynamic(this, &ThisClass::OnFindSessionButtonClicked);
-	LANCheckBox->OnCheckStateChanged.AddDynamic(this, &ThisClass::OnCheckStateChanged);
-	
-	LoadingThrobber->SetVisibility(ESlateVisibility::Hidden);
-
-	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
-	{
-		// RemoveAll(this), Áßº¹ ¹ÙÀÎµù ¹æÁö
-		SessionSubsystem->OnCreateSessionCompletedEvent.RemoveAll(this);
-		SessionSubsystem->OnFindSessionsCompletedEvent.RemoveAll(this);
-		SessionSubsystem->OnJoinSessionsCompletedEvent.RemoveAll(this);
-
-		// ¼¼¼Ç µ¨¸®°ÔÀÌÆ® ¹ÙÀÎµù
-		SessionSubsystem->OnCreateSessionCompletedEvent.AddUObject(this, &ThisClass::OnCreateSessionCompleted);
-		SessionSubsystem->OnFindSessionsCompletedEvent.AddUObject(this, &ThisClass::OnFindSessionsCompleted);
-		SessionSubsystem->OnJoinSessionsCompletedEvent.AddUObject(this, &ThisClass::OnJoinSessionCompleted);
-
-		UE_LOG(LogSessionMenu, Warning, TEXT("NativeConstruct() :: SessionMenu's delegate binding is succeeded."));
-	}
-	else
-		UE_LOG(LogSessionMenu, Error, TEXT("NativeConstruct() :: Can't refer SessionSubsystem."));
-
-	SessionState = ESessionState::Idle;
-}
-
-void USessionMenu::NativeDestruct()
-{
-	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
-	{
-		SessionSubsystem->OnCreateSessionCompletedEvent.RemoveAll(this);
-		SessionSubsystem->OnFindSessionsCompletedEvent.RemoveAll(this);
-		SessionSubsystem->OnJoinSessionsCompletedEvent.RemoveAll(this);
-	}
-	else
-		UE_LOG(LogSessionMenu, Error, TEXT("NativeDesturct() :: Can't refer SessionSubsystem."));
-
-	Super::NativeDestruct();
-}
-
-USessionSubsystem* USessionMenu::GetSessionSubsystem() const
-{
-	if (UGameInstance* GI = GetGameInstance())
-	{
-		return GI->GetSubsystem<USessionSubsystem>();
-	}
-
-	return nullptr;
-}
-
-void USessionMenu::OnCreateSessionButtonClicked()
-{
-	FString SessionNameStr = SessionNameText->GetText().ToString().TrimStartAndEnd();
-
-	if (SessionNameStr.IsEmpty() || SessionState != ESessionState::Idle)
-	{
-		// Show Error Msg and UI
-
-		return;
-	}
-
-	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
-	{
-		SessionState = ESessionState::Creating;
-		const FName SessionName = FName(SessionNameText->GetText().ToString());
-		const int32 MaxPlayers = FMath::RoundToInt(MaxPlayersSlider->GetValue());
-
-		SessionSubsystem->CreateSession(MaxPlayers, SessionName, bIsLAN);
-	}
-	else
-		UE_LOG(LogSessionMenu, Error, TEXT("OnCreateSessionButtonClicked() :: Can't refer SessionSubsystem."));
-}
-
-void USessionMenu::OnCreateSessionCompleted(bool bWasSuccessful)
-{
-	ensure(SessionState == ESessionState::Creating);
-	SessionState = ESessionState::Idle;
-
-	if (!bWasSuccessful)
-	{
-		// Show Error Msg and UI
-		UE_LOG(LogSessionMenu, Warning, TEXT("OnCreateSessionCompleted() :: Failed to create session."));
-		HandleError(ESessionUIError::CreateFailed);
-
-		// »óÅÂ ÃÊ±âÈ­
-		FName SessionName(TEXT(""));
-		FName MaxPlayer(TEXT("1"));
-
-		SessionNameText->SetText(FText::FromName(SessionName));
-		MaxPlayersSlider->SetValue(1.0f);
-		MaxPlayersText->SetText(FText::FromName(MaxPlayer));
-	}
-}
-
-void USessionMenu::OnFindSessionButtonClicked()
-{
-	if (SessionState != ESessionState::Idle)
-		return;
-
-	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
-	{
-		SessionState = ESessionState::Finding;
-
-		int32 MaxSearchResult = 1000;
-		SessionSubsystem->FindSessions(MaxSearchResult, bIsLAN);
-
-		// LoadingThrobber active.
-		LoadingThrobber->SetVisibility(ESlateVisibility::Visible);
-	}
-	else
-		UE_LOG(LogSessionMenu, Error, TEXT("OnFindSessionsButtonClicked() :: Can't refer SessionSubsystem."));
-}
-
-void USessionMenu::OnFindSessionsCompleted(const TArray<FOnlineSessionSearchResult>& SearchResults, bool bWasSuccessful)
-{
-	ensure(SessionState == ESessionState::Finding);
-
-	if (!bWasSuccessful)
-	{
-		HandleError(ESessionUIError::FindFailed);
-		SessionState = ESessionState::Idle;
-		// Validate Find Sesions Result.
-		// Especially check the error type.
-		// Such as Failed to find sessions, no session slot class, no available sessions, etc...
-		// Show Error Msg and UI
-		UE_LOG(LogSessionMenu, Warning, TEXT("OnFindSessionsCompleted() :: Failed to find sessions."));
-		return;
-	}
-
-	SessionState = ESessionState::Idle;
-	LoadingThrobber->SetVisibility(ESlateVisibility::Hidden);
-
-	FindSessionsResults = SearchResults;
-
-	SessionScrollBox->ClearChildren();	// ¾Æ¸¶ SessionSlot »ı¼º ½Ã ¹ÙÀÎµùÇß´ø µ¨¸®°ÔÀÌÆ®¸¦ ÇØÁ¦ÇØÁà¾ßÇÒ ÇÊ¿ä°¡ ÀÖÀ» °ÍÀ¸·Î ÆÇ´ÜÇÔ.
-
-	DisplaySessionList(FindSessionsResults);
-}
-
-void USessionMenu::DisplaySessionList(const TArray<FOnlineSessionSearchResult>& SessionResults)
-{
-	int32 Index = 0;
-
-	for (const FOnlineSessionSearchResult& Result : SessionResults)
-	{
-		if (USessionSlot* SessionSlot = CreateWidget<USessionSlot>(GetWorld(), SessionSlotClass))
-		{
-			FString SessionName;
-			Result.Session.SessionSettings.Get(FName("SESSION_NAME"), SessionName);
-
-			int32 MaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
-			int32 CurrentPlayers = MaxPlayers - Result.Session.NumOpenPublicConnections;	// ÃÖ´ë ÀÎ¿ø ¼ö - ÇöÀç ¿­·ÁÀÖ´Â ½½·Ô ¼ö == ÇöÀç ÀÎ¿ø ¼ö
-			int32 Ping = Result.PingInMs;
-			
-			FSessionData SessionData;
-			SessionData.SessionIndex = Index++;
-			SessionData.SessionName = FName(SessionName);
-			SessionData.MaxPlayers = MaxPlayers;
-			SessionData.CurrentPlayers = CurrentPlayers;
-			SessionData.Ping = Ping;
-
-			SessionSlot->InitializeSessionData(SessionData);
-			SessionScrollBox->AddChild(SessionSlot);
-			SessionSlot->OnJoinButtonClickedEvent.AddUObject(this, &ThisClass::OnJoinButtonClicked);
-		}
-	}
-}
-
-void USessionMenu::OnJoinButtonClicked(int32 SessionIndex)
-{
-	if (SessionState != ESessionState::Idle || !FindSessionsResults.IsValidIndex(SessionIndex))
-	{
-		UE_LOG(LogSessionMenu, Error, TEXT("OnJoinButtonClicked() :: Invalid Input: State=[%s], Index=[%d]"), *UEnum::GetValueAsString(SessionState), SessionIndex);
-		return;
-	}
-
-	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
-	{
-		SessionState = ESessionState::Joining;
-		FString SessionName;
-		FindSessionsResults[SessionIndex].Session.SessionSettings.Get(FName("SESSION_NAME"), SessionName);
-
-		SessionSubsystem->JoinSession(FindSessionsResults[SessionIndex], FName(SessionName));
-	}
-}
-
-void USessionMenu::OnJoinSessionCompleted(EOnJoinSessionCompleteResult::Type Result)
-{
-	// Join¿¡ ¼º°øÇÏ¸é ·¹º§ ÀÌµ¿ ¡æ SessionMenu´Â ÇÒ ÀÏ ¾øÀ½
-	// ¿©±â¼­´Â ¿À·ù Ã³¸® ´ã´ç
-
-	if (Result == EOnJoinSessionCompleteResult::UnknownError)
-	{
-		HandleError(ESessionUIError::JoinFailed);
-		return;
-	}
-}
-
-void USessionMenu::OnSliderValueChanged(float Value)
-{
-	const int32 PlayerNum = FMath::RoundToInt(Value);
-	MaxPlayersText->SetText(FText::AsNumber(PlayerNum));
-}
-
-void USessionMenu::OnCheckStateChanged(bool bIsChecked)
-{
-	bIsLAN = bIsChecked;
-}
-
-void USessionMenu::ResetUIToIdle()
-{
-	SessionState = ESessionState::Idle;
-	LoadingThrobber->SetVisibility(ESlateVisibility::Hidden);
-}
-
-void USessionMenu::HandleError(ESessionUIError Error)
-{
-	ResetUIToIdle();
-
-	switch (Error)
-	{
-	case ESessionUIError::InvalidState:
-		break;
-	case ESessionUIError::SessionInterfaceNULL:
-		break;
-	case ESessionUIError::CreateFailed:
-		break;
-	case ESessionUIError::FindFailed:
-		break;
-	case ESessionUIError::JoinFailed:
-		break;
-	default:
-		break;
-	}
-}
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Session/UI/Menu/SessionMenu.h"
+#include "Session/UI/SessionSlot.h"
+#include "Session/GameFramework/SessionSubsystem.h"
+
+#include "Components/Slider.h"
+#include "Components/EditableTextBox.h"
+#include "Components/CheckBox.h"
+#include "Components/Button.h"
+#include "Components/TextBlock.h"
+#include "Components/ScrollBox.h"
+#include "Components/CircularThrobber.h"
+
+DEFINE_LOG_CATEGORY(LogSessionMenu);
+
+USessionMenu::USessionMenu()
+{
+
+}
+
+void USessionMenu::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	if (!ensure(MaxPlayersSlider != nullptr)) return;
+	if (!ensure(CreateSessionButton != nullptr)) return;
+	if (!ensure(FindSessionsButton != nullptr)) return;
+	if (!ensure(SessionNameText != nullptr)) return;
+	if (!ensure(LANCheckBox != nullptr)) return;
+	if (!ensure(SessionScrollBox != nullptr)) return;
+	if (!ensure(LoadingThrobber != nullptr)) return;
+	if (!ensure(MaxPlayersText != nullptr)) return;
+	if (!ensure(SessionSlotClass != nullptr)) return;
+ 
+	MaxPlayersSlider->OnValueChanged.AddDynamic(this, &ThisClass::OnSliderValueChanged);
+	CreateSessionButton->OnClicked.AddDynamic(this, &ThisClass::OnCreateSessionButtonClicked);
+	FindSessionsButton->OnClicked.AddDynamic(this, &ThisClass::OnFindSessionButtonClicked);
+	LANCheckBox->OnCheckStateChanged.AddDynamic(this, &ThisClass::OnCheckStateChanged);
+	
+	LoadingThrobber->SetVisibility(ESlateVisibility::Hidden);
+
+	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
+	{
+		// RemoveAll(this), ì¤‘ë³µ ë°”ì¸ë”© ë°©ì§€
+		SessionSubsystem->OnCreateSessionCompletedEvent.RemoveAll(this);
+		SessionSubsystem->OnFindSessionsCompletedEvent.RemoveAll(this);
+		SessionSubsystem->OnJoinSessionsCompletedEvent.RemoveAll(this);
+
+		// ì„¸ì…˜ ë¸ë¦¬ê²Œì´íŠ¸ ë°”ì¸ë”©
+		SessionSubsystem->OnCreateSessionCompletedEvent.AddUObject(this, &ThisClass::OnCreateSessionCompleted);
+		SessionSubsystem->OnFindSessionsCompletedEvent.AddUObject(this, &ThisClass::OnFindSessionsCompleted);
+		SessionSubsystem->OnJoinSessionsCompletedEvent.AddUObject(this, &ThisClass::OnJoinSessionCompleted);
+
+		UE_LOG(LogSessionMenu, Warning, TEXT("NativeConstruct() :: SessionMenu's delegate binding is succeeded."));
+	}
+	else
+		UE_LOG(LogSessionMenu, Error, TEXT("NativeConstruct() :: Can't refer SessionSubsystem."));
+
+	SessionState = ESessionState::Idle;
+}
+
+void USessionMenu::NativeDestruct()
+{
+	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
+	{
+		SessionSubsystem->OnCreateSessionCompletedEvent.RemoveAll(this);
+		SessionSubsystem->OnFindSessionsCompletedEvent.RemoveAll(this);
+		SessionSubsystem->OnJoinSessionsCompletedEvent.RemoveAll(this);
+	}
+	else
+		UE_LOG(LogSessionMenu, Error, TEXT("NativeDesturct() :: Can't refer SessionSubsystem."));
+
+	Super::NativeDestruct();
+}
+
+USessionSubsystem* USessionMenu::GetSessionSubsystem() const
+{
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		return GI->GetSubsystem<USessionSubsystem>();
+	}
+
+	return nullptr;
+}
+
+void USessionMenu::OnCreateSessionButtonClicked()
+{
+	FString SessionNameStr = SessionNameText->GetText().ToString().TrimStartAndEnd();
+
+	if (SessionNameStr.IsEmpty() || SessionState != ESessionState::Idle)
+	{
+		// Show Error Msg and UI
+
+		return;
+	}
+
+	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
+	{
+		SessionState = ESessionState::Creating;
+		const FName SessionName = FName(SessionNameText->GetText().ToString());
+		const int32 MaxPlayers = FMath::RoundToInt(MaxPlayersSlider->GetValue());
+
+		SessionSubsystem->CreateSession(MaxPlayers, SessionName, bIsLAN);
+	}
+	else
+		UE_LOG(LogSessionMenu, Error, TEXT("OnCreateSessionButtonClicked() :: Can't refer SessionSubsystem."));
+}
+
+void USessionMenu::OnCreateSessionCompleted(bool bWasSuccessful)
+{
+	ensure(SessionState == ESessionState::Creating);
+	SessionState = ESessionState::Idle;
+
+	if (!bWasSuccessful)
+	{
+		// Show Error Msg and UI
+		UE_LOG(LogSessionMenu, Warning, TEXT("OnCreateSessionCompleted() :: Failed to create session."));
+		HandleError(ESessionUIError::CreateFailed);
+
+		// ìƒíƒœ ì´ˆê¸°í™”
+		FName SessionName(TEXT(""));
+		FName MaxPlayer(TEXT("1"));
+
+		SessionNameText->SetText(FText::FromName(SessionName));
+		MaxPlayersSlider->SetValue(1.0f);
+		MaxPlayersText->SetText(FText::FromName(MaxPlayer));
+	}
+}
+
+void USessionMenu::OnFindSessionButtonClicked()
+{
+	if (SessionState != ESessionState::Idle)
+		return;
+
+	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
+	{
+		SessionState = ESessionState::Finding;
+
+		int32 MaxSearchResult = 1000;
+		SessionSubsystem->FindSessions(MaxSearchResult, bIsLAN);
+
+		// LoadingThrobber active.
+		LoadingThrobber->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+		UE_LOG(LogSessionMenu, Error, TEXT("OnFindSessionsButtonClicked() :: Can't refer SessionSubsystem."));
+}
+
+void USessionMenu::OnFindSessionsCompleted(const TArray<FOnlineSessionSearchResult>& SearchResults, bool bWasSuccessful)
+{
+	ensure(SessionState == ESessionState::Finding);
+
+	if (!bWasSuccessful)
+	{
+		HandleError(ESessionUIError::FindFailed);
+		SessionState = ESessionState::Idle;
+		// Validate Find Sesions Result.
+		// Especially check the error type.
+		// Such as Failed to find sessions, no session slot class, no available sessions, etc...
+		// Show Error Msg and UI
+		UE_LOG(LogSessionMenu, Warning, TEXT("OnFindSessionsCompleted() :: Failed to find sessions."));
+		return;
+	}
+
+	SessionState = ESessionState::Idle;
+	LoadingThrobber->SetVisibility(ESlateVisibility::Hidden);
+
+	FindSessionsResults = SearchResults;
+
+	SessionScrollBox->ClearChildren();	// ì•„ë§ˆ SessionSlot ìƒì„± ì‹œ ë°”ì¸ë”©í–ˆë˜ ë¸ë¦¬ê²Œì´íŠ¸ë¥¼ í•´ì œí•´ì¤˜ì•¼í•  í•„ìš”ê°€ ìˆì„ ê²ƒìœ¼ë¡œ íŒë‹¨í•¨.
+
+	DisplaySessionList(FindSessionsResults);
+}
+
+void USessionMenu::DisplaySessionList(const TArray<FOnlineSessionSearchResult>& SessionResults)
+{
+	int32 Index = 0;
+
+	for (const FOnlineSessionSearchResult& Result : SessionResults)
+	{
+		if (USessionSlot* SessionSlot = CreateWidget<USessionSlot>(GetWorld(), SessionSlotClass))
+		{
+			FString SessionName;
+			Result.Session.SessionSettings.Get(FName("SESSION_NAME"), SessionName);
+
+			int32 MaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
+			int32 CurrentPlayers = MaxPlayers - Result.Session.NumOpenPublicConnections;	// ìµœëŒ€ ì¸ì› ìˆ˜ - í˜„ì¬ ì—´ë ¤ìˆëŠ” ìŠ¬ë¡¯ ìˆ˜ == í˜„ì¬ ì¸ì› ìˆ˜
+			int32 Ping = Result.PingInMs;
+			
+			FSessionData SessionData;
+			SessionData.SessionIndex = Index++;
+			SessionData.SessionName = FName(SessionName);
+			SessionData.MaxPlayers = MaxPlayers;
+			SessionData.CurrentPlayers = CurrentPlayers;
+			SessionData.Ping = Ping;
+
+			SessionSlot->InitializeSessionData(SessionData);
+			SessionScrollBox->AddChild(SessionSlot);
+			SessionSlot->OnJoinButtonClickedEvent.AddUObject(this, &ThisClass::OnJoinButtonClicked);
+		}
+	}
+}
+
+void USessionMenu::OnJoinButtonClicked(int32 SessionIndex)
+{
+	if (SessionState != ESessionState::Idle || !FindSessionsResults.IsValidIndex(SessionIndex))
+	{
+		UE_LOG(LogSessionMenu, Error, TEXT("OnJoinButtonClicked() :: Invalid Input: State=[%s], Index=[%d]"), *UEnum::GetValueAsString(SessionState), SessionIndex);
+		return;
+	}
+
+	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
+	{
+		SessionState = ESessionState::Joining;
+		FString SessionName;
+		FindSessionsResults[SessionIndex].Session.SessionSettings.Get(FName("SESSION_NAME"), SessionName);
+
+		SessionSubsystem->JoinSession(FindSessionsResults[SessionIndex], FName(SessionName));
+	}
+}
+
+void USessionMenu::OnJoinSessionCompleted(EOnJoinSessionCompleteResult::Type Result)
+{
+	// Joinì— ì„±ê³µí•˜ë©´ ë ˆë²¨ ì´ë™ â†’ SessionMenuëŠ” í•  ì¼ ì—†ìŒ
+	// ì—¬ê¸°ì„œëŠ” ì˜¤ë¥˜ ì²˜ë¦¬ ë‹´ë‹¹
+
+	if (Result == EOnJoinSessionCompleteResult::UnknownError)
+	{
+		HandleError(ESessionUIError::JoinFailed);
+		return;
+	}
+}
+
+void USessionMenu::OnSliderValueChanged(float Value)
+{
+	const int32 PlayerNum = FMath::RoundToInt(Value);
+	MaxPlayersText->SetText(FText::AsNumber(PlayerNum));
+}
+
+void USessionMenu::OnCheckStateChanged(bool bIsChecked)
+{
+	bIsLAN = bIsChecked;
+}
+
+void USessionMenu::ResetUIToIdle()
+{
+	SessionState = ESessionState::Idle;
+	LoadingThrobber->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void USessionMenu::HandleError(ESessionUIError Error)
+{
+	ResetUIToIdle();
+
+	switch (Error)
+	{
+	case ESessionUIError::InvalidState:
+		break;
+	case ESessionUIError::SessionInterfaceNULL:
+		break;
+	case ESessionUIError::CreateFailed:
+		break;
+	case ESessionUIError::FindFailed:
+		break;
+	case ESessionUIError::JoinFailed:
+		break;
+	default:
+		break;
+	}
+}

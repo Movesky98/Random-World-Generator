@@ -1,54 +1,54 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
-
-#include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
-#include "WorldGenConfig.generated.h"
-
-/**
- * 
- */
-UCLASS()
-class RWG_API UWorldGenConfig : public UDataAsset
-{
-	GENERATED_BODY()
-	
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classes")
-	TSubclassOf<class AWorldGenerator> WorldGeneratorClass;
-
-	// °¡·Î Äõµå °³¼ö
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid Parameters")
-	int32 XSize = 1000;
-
-	// ¼¼·Î Äõµå °³¼ö
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid Parameters")
-	int32 YSize = 1000;
-
-	// ÇÑ °İÀÚÀÇ Å©±â (cm)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid Parameters")
-	float GridSpacing = 100.0f;
-
-	/* µµ½Ã(¼¶)ÀÇ Å©±â */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation Settings")
-	float CityRadius = 300.0f;
-
-	/* µµ½Ã(¼¶)ÀÇ °íµµ */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation Settings")
-	float CityHeight = 8000.0f;
-
-	/* Àıº® ³Êºñ */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation Settings")
-	float CliffWidth = 50.0f;
-
-	/* ÀÏ¹İ ÁöÇüÀÇ ±âº» °íµµ */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation Settings")
-	float OuterHeight = 100.0f;
-
-protected:
-	// Primary Asset Id ¿¡ 'WorldGenConfig' ÅÂ±×¸¦ Ãß°¡ÇÔ.
-	// Asset Manager¸¦ È°¿ëÇØ ÅÂ±×¸¦ ±â¹İÀ¸·Î Data AssetÀ» Ã£À» ¼ö ÀÖµµ·Ï ÇÔ.
-	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
-	
-};
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Engine/DataAsset.h"
+#include "WorldGenConfig.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class RWG_API UWorldGenConfig : public UDataAsset
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classes")
+	TSubclassOf<class AWorldGenerator> WorldGeneratorClass;
+
+	// ê°€ë¡œ ì¿¼ë“œ ê°œìˆ˜
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid Parameters")
+	int32 XSize = 1000;
+
+	// ì„¸ë¡œ ì¿¼ë“œ ê°œìˆ˜
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid Parameters")
+	int32 YSize = 1000;
+
+	// í•œ ê²©ìì˜ í¬ê¸° (cm)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid Parameters")
+	float GridSpacing = 100.0f;
+
+	/* ë„ì‹œ(ì„¬)ì˜ í¬ê¸° */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation Settings")
+	float CityRadius = 300.0f;
+
+	/* ë„ì‹œ(ì„¬)ì˜ ê³ ë„ */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation Settings")
+	float CityHeight = 8000.0f;
+
+	/* ì ˆë²½ ë„ˆë¹„ */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation Settings")
+	float CliffWidth = 50.0f;
+
+	/* ì¼ë°˜ ì§€í˜•ì˜ ê¸°ë³¸ ê³ ë„ */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation Settings")
+	float OuterHeight = 100.0f;
+
+protected:
+	// Primary Asset Id ì— 'WorldGenConfig' íƒœê·¸ë¥¼ ì¶”ê°€í•¨.
+	// Asset Managerë¥¼ í™œìš©í•´ íƒœê·¸ë¥¼ ê¸°ë°˜ìœ¼ë¡œ Data Assetì„ ì°¾ì„ ìˆ˜ ìˆë„ë¡ í•¨.
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
+	
+};

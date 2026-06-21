@@ -1,35 +1,35 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "GamePlay/AI/BTTask_ZombieAttack.h"
-#include "GamePlay/GameFramework/ZombieAIController.h"
-#include "GamePlay/Characters/Zombie/Zombie.h"
-#include "BehaviorTree/BehaviorTreeComponent.h"
-
-UBTTask_ZombieAttack::UBTTask_ZombieAttack()
-{
-	NodeName = TEXT("Zombie Attack");
-	bNotifyTaskFinished = true;
-}
-
-EBTNodeResult::Type UBTTask_ZombieAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
-{
-	Super::ExecuteTask(OwnerComp, NodeMemory);
-
-    AZombieAIController* AIController = Cast<AZombieAIController>(OwnerComp.GetAIOwner());
-    if (!AIController) return EBTNodeResult::Failed;
-
-    AZombie* Zombie = Cast<AZombie>(AIController->GetPawn());
-    if (!Zombie) return EBTNodeResult::Failed;
-
-    // ¸ùÅ¸ÁÖ Á¾·á µ¨¸®°ÔÀÌÆ® ¹ÙÀÎµù
-    Zombie->OnAttackFinished.BindLambda([this, &OwnerComp]()
-    {
-        FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
-    });
-
-    // °ø°Ý ¿äÃ»
-    Zombie->RequestAttack();
-
-    return EBTNodeResult::InProgress;
-}
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "GamePlay/AI/BTTask_ZombieAttack.h"
+#include "GamePlay/GameFramework/ZombieAIController.h"
+#include "GamePlay/Characters/Zombie/Zombie.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
+
+UBTTask_ZombieAttack::UBTTask_ZombieAttack()
+{
+	NodeName = TEXT("Zombie Attack");
+	bNotifyTaskFinished = true;
+}
+
+EBTNodeResult::Type UBTTask_ZombieAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	Super::ExecuteTask(OwnerComp, NodeMemory);
+
+    AZombieAIController* AIController = Cast<AZombieAIController>(OwnerComp.GetAIOwner());
+    if (!AIController) return EBTNodeResult::Failed;
+
+    AZombie* Zombie = Cast<AZombie>(AIController->GetPawn());
+    if (!Zombie) return EBTNodeResult::Failed;
+
+    // ëª½íƒ€ì£¼ ì¢…ë£Œ ë¸ë¦¬ê²Œì´íŠ¸ ë°”ì¸ë”©
+    Zombie->OnAttackFinished.BindLambda([this, &OwnerComp]()
+    {
+        FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+    });
+
+    // ê³µê²© ìš”ì²­
+    Zombie->RequestAttack();
+
+    return EBTNodeResult::InProgress;
+}

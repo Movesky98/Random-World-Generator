@@ -1,97 +1,97 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#include "RandomWorldGeneration/GameFramework/WorldGenSubsystem.h"
-
-#include "Engine/AssetManager.h"
-
-#include "RandomWorldGeneration/Core/WorldGenTypes.h"
-#include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
-#include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
-#include "RandomWorldGeneration/Actors/WorldGenerator.h"
-
-DEFINE_LOG_CATEGORY(LogWorldGenSubsystem);
-
-void UWorldGenSubsystem::InitiateWorldGeneration()
-{
-	for (auto& Config : LoadedConfigs)
-	{
-		if (Config.Key == FPrimaryAssetType(WorldConfigTags::GenConfigName))
-		{
-			UWorldGenConfig* GenConfig = Cast<UWorldGenConfig>(Config.Value);
-
-			WorldGenerator = GetWorld()->SpawnActor<AWorldGenerator>(GenConfig->WorldGeneratorClass);
-			break;
-		}
-		else
-			continue;
-	}
-	if (WorldGenerator)
-		WorldGenerator->GenerateWorld(LoadedConfigs);
-	else
-		UE_LOG(LogWorldGenSubsystem, Error, TEXT("WorldGenerator is not found."));
-}
-
-void UWorldGenSubsystem::InitializeWorldConfig()
-{
-	LoadConfigByType(FPrimaryAssetType(WorldConfigTags::GenConfigName));
-	LoadConfigByType(FPrimaryAssetType(WorldConfigTags::ThemeConfigName));
-}
-
-void UWorldGenSubsystem::LoadConfigByType(FPrimaryAssetType AssetType)
-{
-	UAssetManager& AssetManager = UAssetManager::Get();
-	TArray<FPrimaryAssetId> AssetIds;
-	AssetManager.GetPrimaryAssetIdList(AssetType, AssetIds);
-
-	if (AssetIds.IsEmpty())
-	{
-		UE_LOG(LogWorldGenSubsystem, Error, TEXT("%s PrimaryAssetId is not found."), *AssetType.ToString());
-		return;
-	}
-
-	if (UObject* LoadObject = AssetManager.GetPrimaryAssetObject(AssetIds[0]))
-	{
-		// ¿ÃπÃ ¿÷¥Ÿ∏È ¡ÔΩ√ ƒ›πÈ »£√‚
-		OnConfigInitialized(AssetType);
-	}
-	else
-	{
-		// ∫Òµø±‚ ∑ŒµÂ Ω√¿€
-		// ø©±‚º≠ AssetType¿ª πŸ¿Œµ˘«œø© OnConfigInitialized¿« ¿Œ¿⁄∏¶ ≥—∞‹¡‹
-		AssetManager.LoadPrimaryAssets(
-			AssetIds,
-			TArray<FName>(),
-			FStreamableDelegate::CreateUObject(this, &UWorldGenSubsystem::OnConfigInitialized, AssetType)
-		);
-
-		UE_LOG(LogWorldGenSubsystem, Log, TEXT("Starting async load for: %s"), *AssetType.ToString());
-	}
-}
-
-void UWorldGenSubsystem::OnConfigInitialized(FPrimaryAssetType AssetType)
-{
-	UAssetManager& AssetManager = UAssetManager::Get();
-	TArray<FPrimaryAssetId> AssetIds;
-	AssetManager.GetPrimaryAssetIdList(AssetType, AssetIds);
-
-	UObject* LoadObject = AssetManager.GetPrimaryAssetObject(AssetIds[0]);
-	if (!LoadObject) return;
-
-	LoadedConfigs.Add(AssetType, LoadObject);
-	if (LoadedConfigs.Num() >= ExpectedCount)
-	{
-		UE_LOG(LogWorldGenSubsystem, Log, TEXT("All Configs loaded. Starting world generation..."));
-		InitiateWorldGeneration();
-	}
-}
-
-void UWorldGenSubsystem::OnWorldBeginPlay(UWorld& World)
-{
-	Super::OnWorldBeginPlay(World);
-
-	FString LevelName = World.GetMapName();
-	LevelName.RemoveFromStart(World.StreamingLevelsPrefix);
-
-	if (LevelName.Contains("LandscapeGeneration"))
-		InitializeWorldConfig();
-}
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#include "RandomWorldGeneration/GameFramework/WorldGenSubsystem.h"
+
+#include "Engine/AssetManager.h"
+
+#include "RandomWorldGeneration/Core/WorldGenTypes.h"
+#include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
+#include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
+#include "RandomWorldGeneration/Actors/WorldGenerator.h"
+
+DEFINE_LOG_CATEGORY(LogWorldGenSubsystem);
+
+void UWorldGenSubsystem::InitiateWorldGeneration()
+{
+	for (auto& Config : LoadedConfigs)
+	{
+		if (Config.Key == FPrimaryAssetType(WorldConfigTags::GenConfigName))
+		{
+			UWorldGenConfig* GenConfig = Cast<UWorldGenConfig>(Config.Value);
+
+			WorldGenerator = GetWorld()->SpawnActor<AWorldGenerator>(GenConfig->WorldGeneratorClass);
+			break;
+		}
+		else
+			continue;
+	}
+	if (WorldGenerator)
+		WorldGenerator->GenerateWorld(LoadedConfigs);
+	else
+		UE_LOG(LogWorldGenSubsystem, Error, TEXT("WorldGenerator is not found."));
+}
+
+void UWorldGenSubsystem::InitializeWorldConfig()
+{
+	LoadConfigByType(FPrimaryAssetType(WorldConfigTags::GenConfigName));
+	LoadConfigByType(FPrimaryAssetType(WorldConfigTags::ThemeConfigName));
+}
+
+void UWorldGenSubsystem::LoadConfigByType(FPrimaryAssetType AssetType)
+{
+	UAssetManager& AssetManager = UAssetManager::Get();
+	TArray<FPrimaryAssetId> AssetIds;
+	AssetManager.GetPrimaryAssetIdList(AssetType, AssetIds);
+
+	if (AssetIds.IsEmpty())
+	{
+		UE_LOG(LogWorldGenSubsystem, Error, TEXT("%s PrimaryAssetId is not found."), *AssetType.ToString());
+		return;
+	}
+
+	if (UObject* LoadObject = AssetManager.GetPrimaryAssetObject(AssetIds[0]))
+	{
+		// Ïù¥ÎØ∏ ÏûàÎã§Î©¥ Ï¶âÏãú ÏΩúÎ∞± Ìò∏Ï∂ú
+		OnConfigInitialized(AssetType);
+	}
+	else
+	{
+		// ÎπÑÎèôÍ∏∞ Î°úÎìú ÏãúÏûë
+		// Ïó¨Í∏∞ÏÑú AssetTypeÏùÑ Î∞îÏù∏Îî©ÌïòÏó¨ OnConfigInitializedÏùò Ïù∏ÏûêÎ•º ÎÑòÍ≤®Ï§å
+		AssetManager.LoadPrimaryAssets(
+			AssetIds,
+			TArray<FName>(),
+			FStreamableDelegate::CreateUObject(this, &UWorldGenSubsystem::OnConfigInitialized, AssetType)
+		);
+
+		UE_LOG(LogWorldGenSubsystem, Log, TEXT("Starting async load for: %s"), *AssetType.ToString());
+	}
+}
+
+void UWorldGenSubsystem::OnConfigInitialized(FPrimaryAssetType AssetType)
+{
+	UAssetManager& AssetManager = UAssetManager::Get();
+	TArray<FPrimaryAssetId> AssetIds;
+	AssetManager.GetPrimaryAssetIdList(AssetType, AssetIds);
+
+	UObject* LoadObject = AssetManager.GetPrimaryAssetObject(AssetIds[0]);
+	if (!LoadObject) return;
+
+	LoadedConfigs.Add(AssetType, LoadObject);
+	if (LoadedConfigs.Num() >= ExpectedCount)
+	{
+		UE_LOG(LogWorldGenSubsystem, Log, TEXT("All Configs loaded. Starting world generation..."));
+		InitiateWorldGeneration();
+	}
+}
+
+void UWorldGenSubsystem::OnWorldBeginPlay(UWorld& World)
+{
+	Super::OnWorldBeginPlay(World);
+
+	FString LevelName = World.GetMapName();
+	LevelName.RemoveFromStart(World.StreamingLevelsPrefix);
+
+	if (LevelName.Contains("LandscapeGeneration"))
+		InitializeWorldConfig();
+}
