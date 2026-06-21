@@ -26,6 +26,8 @@ void USpawnDirectorComponent::InitializeSpawnData()
 {
     if (!GetOwner()->HasAuthority()) return;
 
+    COMMON_LOG(LogGameplay, Log, TEXT("Generating world items..."));
+
     CollectItemSpawnPoints();
 }
 
@@ -65,7 +67,7 @@ void USpawnDirectorComponent::CollectItemSpawnPoints()
         BindBuildingDelegates(Building);
     }
 
-    COMMON_LOG(LogTemp, Warning, TEXT("Buildings found: %d"), Buildings.Num());
+    COMMON_LOG(LogGameplay, Log, TEXT("World items generated."));
 }
 
 void USpawnDirectorComponent::BindBuildingDelegates(ABuildingActor* Building)

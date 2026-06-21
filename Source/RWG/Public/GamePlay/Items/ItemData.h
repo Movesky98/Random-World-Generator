@@ -28,9 +28,17 @@ public:
 		return FPrimaryAssetId("Item", GetFName());
 	}
 
+	/*
+	ì•„ì´í…œ ì‹ë³„ì - ë§¤ì¹­ / ë¡œì§ìš©
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")
+	FName ItemId;
+
+	/* í‘œì‹œ í…ìŠ¤íŠ¸ (ë¡œì»¬ë¼ì´ì œì´ì…˜ ëŒ€ìƒ) - UI ì „ìš©, ì‹ë³„ìë¡œ ì“°ì§€ ë§ ê²ƒ */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")
 	FText DisplayName;
 
+	/* í‘œì‹œ í…ìŠ¤íŠ¸ (ë¡œì»¬ë¼ì´ì œì´ì…˜ ëŒ€ìƒ) - UI ì „ìš©, ì‹ë³„ìë¡œ ì“°ì§€ ë§ ê²ƒ */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")
 	FText Description;
 
@@ -40,7 +48,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")
 	EItemType ItemType = EItemType::None;
 
-	/* ÀÎº¥Åä¸®¿¡¼­ °°Àº ¾ÆÀÌÅÛÀ» ÇÑ ½½·Ô¿¡ ½×À» ÃÖ´ë °³¼öÀÇ ¼ö*/
+	// ìŠ¬ë¡¯ì— ì €ì¥ ê°€ëŠ¥í•œ ìµœëŒ€ ê°œìˆ˜
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stack")
 	int32 MaxStackSize = 1;
 };

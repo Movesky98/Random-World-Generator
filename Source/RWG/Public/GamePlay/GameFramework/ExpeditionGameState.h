@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
 #include "GamePlay/Enums/DayNightTypes.h"
+#include "GamePlay/Data/ExtractionConditionRow.h"
 #include "ExpeditionGameState.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimeOfDayUpdated, float /* TimeOfDay */);
@@ -19,7 +20,6 @@ class RWG_API AExpeditionGameState : public AGameStateBase
 	GENERATED_BODY()
 public:
 	void SetTimeOfDay(float InTimeOfDay);
-
 	void SetDayCycle(EDayCycle InDayCycle);
 
 	float GetFullDuration() const;
@@ -27,6 +27,9 @@ public:
 	FOnTimeOfDayUpdated OnTimeOfDayUpdated;
 
 	FOnDayCycleChanged OnDayCycleChanged;
+
+	void SetExtractionConditions(const TArray<FExtractionCondition>& Conditions);
+	const TArray<FExtractionCondition>& GetExtractionConditions() const;
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -48,4 +51,7 @@ protected:
 
 	UFUNCTION()
 	void OnRep_DayCycle();
+
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Extraction|Conditions")
+	TArray<FExtractionCondition> ExtractionConditions;
 };

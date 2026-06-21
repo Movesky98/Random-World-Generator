@@ -32,4 +32,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<UTimeManagementComponent> TimeManagementComponent;
+
+public:
+	void InitializeExtractionConditions();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Extraction")
+	TObjectPtr<UDataTable> ExtractionConditionTable;
 };

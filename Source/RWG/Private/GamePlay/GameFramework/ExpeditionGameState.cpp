@@ -23,6 +23,19 @@ float AExpeditionGameState::GetFullDuration() const
 	return DayDuration + NightDuration;
 }
 
+void AExpeditionGameState::SetExtractionConditions(const TArray<FExtractionCondition>& Conditions)
+{
+	if (Conditions.Num())
+	{
+		ExtractionConditions = Conditions;
+	}
+}
+
+const TArray<FExtractionCondition>& AExpeditionGameState::GetExtractionConditions() const
+{
+	return ExtractionConditions;
+}
+
 void AExpeditionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -31,6 +44,7 @@ void AExpeditionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(AExpeditionGameState, DayCycle);
 	DOREPLIFETIME(AExpeditionGameState, DayDuration);
 	DOREPLIFETIME(AExpeditionGameState, NightDuration);
+	DOREPLIFETIME(AExpeditionGameState, ExtractionConditions);
 }
 
 void AExpeditionGameState::OnRep_TimeOfDay()
