@@ -6,6 +6,8 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "ItemDataRegistry.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnRegistryReady);
+
 class UItemData;
 
 /**
@@ -17,10 +19,21 @@ class RWG_API UItemDataRegistry : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
+	UItemData* FindItemDataByID(FName ID) const;
+
+	FOnRegistryReady OnRegistryReady;
+
+	bool IsReady() const;
+	
+protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	UItemData* FindItemDataByID(FName ID) const;
-	
+	void OnItemAssetsLoaded();
+
 private:
 	TMap<FName /*ItemID*/, TObjectPtr<UItemData>> CachedItems;
+
+	const FPrimaryAssetType AssetType = FPrimaryAssetType(FName("Item"));
+
+	bool bIsReady = false;
 };

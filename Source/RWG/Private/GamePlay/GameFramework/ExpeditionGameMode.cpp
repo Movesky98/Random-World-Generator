@@ -11,6 +11,10 @@
 #include "GamePlay/Data/ExtractionConditionRow.h"
 #include "CommonLogCategories.h"
 
+#include "GamePlay/Characters/Convict/Convict.h"
+#include "GamePlay/Components/InventoryComponent.h"
+
+
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
 
 #include "Kismet/GameplayStatics.h"
@@ -53,11 +57,21 @@ void AExpeditionGameMode::RestartPlayer(AController* NewPlayer)
     }
 
     SpawnDirectorComponent->RegisterPlayer(NewPlayer->GetPawn());
+
+    if (AConvict* Player = Cast<AConvict>(NewPlayer->GetPawn()))
+    {
+        SubscribeInventoryComponent(Player);
+    }
 }
 
 void AExpeditionGameMode::Logout(AController* Exiting)
 {
     SpawnDirectorComponent->UnregisterPlayer(Exiting->GetPawn());
+
+    if (AConvict* Player = Cast<AConvict>(Exiting->GetPawn()))
+    {
+        UnsubscribeInventoryComponent(Player);
+    }
     
     Super::Logout(Exiting);
 }
@@ -75,8 +89,19 @@ void AExpeditionGameMode::InitializeExtractionConditions()
     TArray<FExtractionConditionRow*> Rows;
     ExtractionConditionTable->GetAllRows<FExtractionConditionRow>(TEXT("Extraction Condition"), Rows);
 
+    if (Rows.IsEmpty())
+    {
+        COMMON_LOG(LogGameplay, Error, TEXT("ExtractionConditionTable has no rows."));
+        return;
+    }
+
     int32 RandIndex = FMath::RandRange(0, Rows.Num() - 1);
     FExtractionConditionRow* Selected = Rows[RandIndex];
+    if (Selected->ItemData == nullptr)
+    {
+        COMMON_LOG(LogGameplay, Error, TEXT("Selected row's ItemData is nullptr"));
+        return;
+    }
 
     COMMON_LOG(LogGameplay, Warning, TEXT("Extraction Condition is selected."));
     COMMON_LOG(LogGameplay, Warning, TEXT("Goal Item : %s, Goal Quantity : %d"), *GetNameSafe(Selected->ItemData), Selected->RequiredQuantity);
@@ -85,6 +110,48 @@ void AExpeditionGameMode::InitializeExtractionConditions()
     TArray<FExtractionCondition> Conditions;
     
     FExtractionCondition NewCondition;
-    // NewCondition.ItemName = Selected->ItemData->DisplayName;
-    // NewCondition
+    NewCondition.ItemID = Selected->ItemData->ItemID;
+    NewCondition.RequiredQuantity = Selected->RequiredQuantity;
+    NewCondition.CurrentQuantity = 0;
+    Conditions.Add(NewCondition);
+
+    if (AExpeditionGameState* GS = GetGameState<AExpeditionGameState>())
+    {
+        GS->SetExtractionConditions(Conditions);
+    }
+}
+
+void AExpeditionGameMode::SubscribeInventoryComponent(AConvict* Player)
+{
+    if (!Player)
+    {
+        return;
+    }
+
+    if (UInventoryComponent* InventoryComp = Player->GetComponentByClass<UInventoryComponent>())
+    {
+        InventoryComp->OnItemAdded.AddUObject(this, &ThisClass::OnInventoryItemAdded);
+    }
+}
+
+void AExpeditionGameMode::UnsubscribeInventoryComponent(AConvict* Player)
+{
+    if (!Player)
+    {
+        return;
+    }
+
+    if (UInventoryComponent* InventoryComp = Player->GetComponentByClass<UInventoryComponent>())
+    {
+        InventoryComp->OnItemAdded.RemoveAll(this);
+    }
+}
+
+void AExpeditionGameMode::OnInventoryItemAdded(UItemData* ItemData, int32 Quantity)
+{
+    AExpeditionGameState* GS = GetGameState<AExpeditionGameState>();
+    if (GS)
+    {
+        GS->UpdateExtractionProgress(ItemData->ItemID, Quantity);
+    }
 }

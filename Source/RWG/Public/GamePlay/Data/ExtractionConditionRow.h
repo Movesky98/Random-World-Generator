@@ -24,7 +24,7 @@ struct FExtractionCondition
 	GENERATED_BODY()
 	
 	UPROPERTY()
-	FName ItemName;
+	FName ItemID;
 
 	UPROPERTY()
 	int32 RequiredQuantity = 0;

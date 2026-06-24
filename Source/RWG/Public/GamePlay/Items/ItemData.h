@@ -32,7 +32,7 @@ public:
 	아이템 식별자 - 매칭 / 로직용
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")
-	FName ItemId;
+	FName ItemID;
 
 	/* 표시 텍스트 (로컬라이제이션 대상) - UI 전용, 식별자로 쓰지 말 것 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")

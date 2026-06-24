@@ -10,6 +10,7 @@
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimeOfDayUpdated, float /* TimeOfDay */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDayCycleChanged, EDayCycle /* DayCycle */);
+DECLARE_MULTICAST_DELEGATE(FOnExtractionConditionsUpdated);
 
 /**
  * 
@@ -19,17 +20,20 @@ class RWG_API AExpeditionGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 public:
+	FOnTimeOfDayUpdated OnTimeOfDayUpdated;
+
+	FOnDayCycleChanged OnDayCycleChanged;
+
+	FOnExtractionConditionsUpdated OnExtractionConditionsUpdated;
+
 	void SetTimeOfDay(float InTimeOfDay);
 	void SetDayCycle(EDayCycle InDayCycle);
 
 	float GetFullDuration() const;
 
-	FOnTimeOfDayUpdated OnTimeOfDayUpdated;
-
-	FOnDayCycleChanged OnDayCycleChanged;
-
 	void SetExtractionConditions(const TArray<FExtractionCondition>& Conditions);
 	const TArray<FExtractionCondition>& GetExtractionConditions() const;
+	void UpdateExtractionProgress(FName ItemID, int32 Quantity);
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -52,6 +56,9 @@ protected:
 	UFUNCTION()
 	void OnRep_DayCycle();
 
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "Extraction|Conditions")
+	UFUNCTION()
+	void OnRep_ExtractionConditions();
+
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_ExtractionConditions, Category = "Extraction|Conditions")
 	TArray<FExtractionCondition> ExtractionConditions;
 };

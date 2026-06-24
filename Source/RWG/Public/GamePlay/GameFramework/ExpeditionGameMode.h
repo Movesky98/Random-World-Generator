@@ -9,6 +9,8 @@
 
 class USpawnDirectorComponent;
 class UTimeManagementComponent;
+class AConvict;
+class UItemData;
 /**
  * 
  */
@@ -36,6 +38,14 @@ protected:
 public:
 	void InitializeExtractionConditions();
 
+protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Extraction")
 	TObjectPtr<UDataTable> ExtractionConditionTable;
+
+	// 탈출 조건 등록 임시 방편
+	void SubscribeInventoryComponent(AConvict* Player);
+
+	void UnsubscribeInventoryComponent(AConvict* Player);
+
+	void OnInventoryItemAdded(UItemData* ItemData, int32 Quantity);
 };

@@ -25,15 +25,47 @@ float AExpeditionGameState::GetFullDuration() const
 
 void AExpeditionGameState::SetExtractionConditions(const TArray<FExtractionCondition>& Conditions)
 {
+	if (!HasAuthority())
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Server authority required."));
+		return;
+	}
+
 	if (Conditions.Num())
 	{
 		ExtractionConditions = Conditions;
+		OnExtractionConditionsUpdated.Broadcast();
 	}
 }
 
 const TArray<FExtractionCondition>& AExpeditionGameState::GetExtractionConditions() const
 {
 	return ExtractionConditions;
+}
+
+void AExpeditionGameState::UpdateExtractionProgress(FName ItemID, int32 Quantity)
+{
+	if (!HasAuthority())
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Server authority required."));
+		return;
+	}
+
+	for (auto& Condition : ExtractionConditions)
+	{
+		if (Condition.ItemID == ItemID)
+		{
+			Condition.CurrentQuantity += Quantity;
+			OnExtractionConditionsUpdated.Broadcast();
+
+			if (Condition.IsSatisfied())
+			{
+				COMMON_LOG(LogGameplay, Warning, TEXT("Extraction Conditions Satisfied: %s"), *ItemID.ToString());
+			}
+
+			COMMON_LOG(LogGameplay, Warning, TEXT("Extraction Condition %s is updated. Now we have %d %s."), *ItemID.ToString(), Condition.CurrentQuantity, *ItemID.ToString());
+		}
+	}
 }
 
 void AExpeditionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -55,4 +87,9 @@ void AExpeditionGameState::OnRep_TimeOfDay()
 void AExpeditionGameState::OnRep_DayCycle()
 {
 	OnDayCycleChanged.Broadcast(DayCycle);
+}
+
+void AExpeditionGameState::OnRep_ExtractionConditions()
+{
+	OnExtractionConditionsUpdated.Broadcast();
 }

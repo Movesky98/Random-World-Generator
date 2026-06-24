@@ -11,6 +11,7 @@ class AWeaponBase;
 
 DECLARE_MULTICAST_DELEGATE(FOnInventoryChanged);
 DECLARE_MULTICAST_DELEGATE(FOnInventoryToggled);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnItemAdded, UItemData* /* ItemData */, int32 /* Quantity */);
 
 /**
  * 
@@ -40,6 +41,8 @@ public:
 	FOnInventoryChanged	OnInventoryChanged;
 
 	FOnInventoryToggled OnInventoryToggled;
+
+	FOnItemAdded OnItemAdded;
 
 	const TArray<FItemInstance> GetSlots();
 

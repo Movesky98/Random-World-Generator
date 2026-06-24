@@ -137,6 +137,7 @@ bool UInventoryComponent::AddItem(const FItemInstance& NewItem)
 	}
 
 	OnInventoryChanged.Broadcast();
+	OnItemAdded.Broadcast(NewItem.ItemData, NewItem.Quantity);
 	return true;
 }
 
