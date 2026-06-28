@@ -20,11 +20,8 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
 	virtual void OnPossess(APawn* aPawn) override;
-	
 	virtual void OnUnPossess() override;
-
 	virtual void AcknowledgePossession(APawn* aPawn) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
@@ -32,4 +29,14 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UInputHandlerComponent* InputHandlerComponent;
+
+	////////////////////////////// Game Over 관련 //////////////////////////////
+public:
+	void RequestReturnToLobby();
+
+protected:
+	UFUNCTION(Server, Reliable)
+	void Server_RequestReturnToLobby();
+
+	void HandleGameOver();
 };

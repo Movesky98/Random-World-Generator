@@ -2,6 +2,8 @@
 
 
 #include "GamePlay/GameFramework/ExpeditionPlayerController.h"
+#include "GamePlay/GameFramework/ExpeditionGameMode.h"
+#include "GamePlay/GameFramework/ExpeditionGameState.h"
 #include "GamePlay/Components/UIManagerComponent.h"
 #include "GamePlay/Components/InputHandlerComponent.h"
 #include "GamePlay/Interfaces/InputBindable.h"
@@ -84,4 +86,36 @@ void AExpeditionPlayerController::AcknowledgePossession(APawn* aPawn)
 
 	UIManagerComponent->InitializePawnWidgets(aPawn);
 	UIManagerComponent->BindDelegatesFromGameplayWidgets(WidgetBindables);
+
+	// GameOver 수신을 위해 델리게이트 구독
+	if (AExpeditionGameState* GS = GetWorld()->GetGameState<AExpeditionGameState>())
+	{
+		GS->OnGameOver.AddUObject(this, &ThisClass::HandleGameOver);
+	}
+}
+
+void AExpeditionPlayerController::RequestReturnToLobby()
+{
+	Server_RequestReturnToLobby();
+}
+
+void AExpeditionPlayerController::HandleGameOver()
+{
+	// TODO: UIManagerComponent에게 알림
+
+	if (IsLocalController() && UIManagerComponent)
+	{
+		UIManagerComponent->ShowGameOverWidget();
+	}
+}
+
+void AExpeditionPlayerController::Server_RequestReturnToLobby_Implementation()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	COMMON_LOG(LogGameplay, Log, TEXT("PC reqeust return to lobby."));
 }

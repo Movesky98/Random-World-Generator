@@ -7,12 +7,12 @@
 #include "GamePlay/GameFramework/ExpeditionPlayerState.h"
 #include "GamePlay/Characters/CharacterBase/CharacterBase.h"
 #include "GamePlay/Components/SpawnDirectorComponent.h"
+#include "GamePlay/Components/InventoryComponent.h"
 #include "GamePlay/Components/TimeManagementComponent.h"
 #include "GamePlay/Data/ExtractionConditionRow.h"
+#include "GamePlay/Characters/Convict/Convict.h"
 #include "CommonLogCategories.h"
 
-#include "GamePlay/Characters/Convict/Convict.h"
-#include "GamePlay/Components/InventoryComponent.h"
 
 
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
@@ -28,6 +28,8 @@ AExpeditionGameMode::AExpeditionGameMode()
 
 	SpawnDirectorComponent = CreateDefaultSubobject<USpawnDirectorComponent>(TEXT("SpawnDirectorComponent"));
     TimeManagementComponent = CreateDefaultSubobject<UTimeManagementComponent>(TEXT("TimeManagementComponent"));
+
+    bUseSeamlessTravel = true;
 }
 
 void AExpeditionGameMode::BeginPlay()
@@ -41,6 +43,11 @@ void AExpeditionGameMode::BeginPlay()
                 COMMON_LOG(LogGameplay, Log, TEXT("World generation is completed."));
                 SpawnDirectorComponent->InitializeSpawnData();
                 InitializeExtractionConditions();
+
+                if (AExpeditionGameState* GS = GetGameState<AExpeditionGameState>())
+                {
+                    GS->OnGameOver.AddUObject(this, &ThisClass::GameOver);
+                }
             });
     }
 }
@@ -119,6 +126,24 @@ void AExpeditionGameMode::InitializeExtractionConditions()
     {
         GS->SetExtractionConditions(Conditions);
     }
+}
+
+void AExpeditionGameMode::ReturnToLobby()
+{
+    if (UWorld* World = GetWorld())
+    {
+        World->ServerTravel("/Game/Features/Session/Levels/LV_Lobby?listen");
+    }
+}
+
+void AExpeditionGameMode::GameOver()
+{
+    // TODO : 타이머 설정
+    // 30초 후에 ReturnToLobby() 호출하는 타이머 설정
+    // 얘는 ExpeditionGameState::bGameOver가 설정될 때 호출됨.
+
+    GetWorldTimerManager().SetTimer(ReturnToLobbyTimerHandle, this, &ThisClass::ReturnToLobby, 10.0f, false);
+    COMMON_LOG(LogGameplay, Warning, TEXT("GameOver."));
 }
 
 void AExpeditionGameMode::SubscribeInventoryComponent(AConvict* Player)

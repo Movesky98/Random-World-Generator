@@ -51,6 +51,8 @@ void AExpeditionGameState::UpdateExtractionProgress(FName ItemID, int32 Quantity
 		return;
 	}
 
+	bAllExtractionConditionsSatisfied = true;
+
 	for (auto& Condition : ExtractionConditions)
 	{
 		if (Condition.ItemID == ItemID)
@@ -61,10 +63,19 @@ void AExpeditionGameState::UpdateExtractionProgress(FName ItemID, int32 Quantity
 			if (Condition.IsSatisfied())
 			{
 				COMMON_LOG(LogGameplay, Warning, TEXT("Extraction Conditions Satisfied: %s"), *ItemID.ToString());
+				continue;
 			}
 
 			COMMON_LOG(LogGameplay, Warning, TEXT("Extraction Condition %s is updated. Now we have %d %s."), *ItemID.ToString(), Condition.CurrentQuantity, *ItemID.ToString());
+			bAllExtractionConditionsSatisfied = false;
 		}
+	}
+
+	// 일단 바로 GameOver
+	if (bAllExtractionConditionsSatisfied)
+	{
+		bGameOver = true;
+		OnGameOver.Broadcast();
 	}
 }
 
@@ -77,6 +88,7 @@ void AExpeditionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(AExpeditionGameState, DayDuration);
 	DOREPLIFETIME(AExpeditionGameState, NightDuration);
 	DOREPLIFETIME(AExpeditionGameState, ExtractionConditions);
+	DOREPLIFETIME(AExpeditionGameState, bGameOver);
 }
 
 void AExpeditionGameState::OnRep_TimeOfDay()
@@ -92,4 +104,9 @@ void AExpeditionGameState::OnRep_DayCycle()
 void AExpeditionGameState::OnRep_ExtractionConditions()
 {
 	OnExtractionConditionsUpdated.Broadcast();
+}
+
+void AExpeditionGameState::OnRep_GameOver()
+{
+	OnGameOver.Broadcast();
 }

@@ -6,9 +6,19 @@
 #include "Components/ActorComponent.h"
 #include "UIManagerComponent.generated.h"
 
-enum class EWidgetType : uint8;
 class UUserWidgetBase;
 class IWidgetBindable;
+
+UENUM(BlueprintType)
+enum class EUIType : uint8
+{
+	None UMETA(DisplayName = "None"),
+	SessionMenu UMETA(DisplayName = "Session Menu"),
+	LobbyMenu UMETA(DisplayName = "Lobby Menu"),
+	PlayerHUD UMETA(DisplayName = "Player HUD"),
+	Inventory UMETA(DisplayName = "Inventory"),
+	GameOver UMETA(DisplayName = "GameOver"),
+};
 
 UENUM(BlueprintType)
 enum class EGamePhase : uint8
@@ -25,11 +35,11 @@ struct FWidgetClassList
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditDefaultsOnly)
-	TArray<TSubclassOf<UUserWidgetBase>> WidgetClasses;
+	TMap<EUIType, TSubclassOf<UUserWidgetBase>> WidgetClasses;
 
 	/* Phase에서 기본적으로 보여줄 위젯 */
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UUserWidgetBase> DefaultWidgetClass;
+	EUIType DefaultWidgetType;
 };
 
 
@@ -62,7 +72,7 @@ protected:
 
 	EGamePhase ConvertLevelNameToPhase(FName LevelName);
 
-	void ShowDefaultWidget(TSubclassOf<UUserWidgetBase> WidgetClass);
+	void ShowWidget(EUIType WidgetType);
 
 	/* 에디터 설정용 TMap */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
@@ -78,11 +88,15 @@ private:
 	APlayerController* OwnerController;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
-	TArray<UUserWidgetBase*> AvailableWidgets;
+	TMap<EUIType, TObjectPtr<UUserWidgetBase>> AvailableWidgets;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UUserWidgetBase> CurrentWidget;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	EGamePhase CurrentPhase;
+
+	////////////////////////////// Game Over 관련 //////////////////////////////
+public:
+	void ShowGameOverWidget();
 };

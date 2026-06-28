@@ -44,8 +44,11 @@ protected:
 
 	// 탈출 조건 등록 임시 방편
 	void SubscribeInventoryComponent(AConvict* Player);
-
 	void UnsubscribeInventoryComponent(AConvict* Player);
-
 	void OnInventoryItemAdded(UItemData* ItemData, int32 Quantity);
+
+	void ReturnToLobby();
+	void GameOver();
+
+	FTimerHandle ReturnToLobbyTimerHandle;
 };

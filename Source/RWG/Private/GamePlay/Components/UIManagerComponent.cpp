@@ -59,7 +59,7 @@ void UUIManagerComponent::BindDelegatesFromGameplayWidgets(const TArray<TScriptI
 		{
 			if (!WidgetClass) continue;
 
-			for (UUserWidgetBase* Widget : AvailableWidgets)
+			for (auto& [Type, Widget] : AvailableWidgets)
 			{
 				if (Widget->IsA(WidgetClass))
 				{
@@ -81,7 +81,7 @@ void UUIManagerComponent::UnbindDelegatesFromGameplayWidgets(const TArray<TScrip
 		{
 			if (!WidgetClass) continue;
 
-			for (UUserWidgetBase* Widget : AvailableWidgets)
+			for (auto& [Type, Widget] : AvailableWidgets)
 			{
 				if (Widget->IsA(WidgetClass))
 				{
@@ -121,21 +121,21 @@ void UUIManagerComponent::CreateWidgetsForPhase(EGamePhase Phase)
 	FWidgetClassList* CurrentPhaseWidgetClasses = WidgetClassMap.Find(Phase);
 	if (!CurrentPhaseWidgetClasses) return;
 
-	for (TSubclassOf<UUserWidgetBase> WidgetClass : CurrentPhaseWidgetClasses->WidgetClasses)
+	for (auto& [WidgetType, WidgetClass] : CurrentPhaseWidgetClasses->WidgetClasses)
 	{
 		if (UUserWidgetBase* WidgetBase = CreateWidget<UUserWidgetBase>(OwnerController, WidgetClass))
 		{
-			AvailableWidgets.Add(WidgetBase);
+			AvailableWidgets.Add(WidgetType, WidgetBase);
 			COMMON_LOG(LogGameplay, Log, TEXT("Saved widget name : %s"), *WidgetBase->GetClass()->GetName());
 		}
 	}
 
-	for (auto& Widget : AvailableWidgets)
+	for (auto& [Type, Widget] : AvailableWidgets)
 	{
 		Widget->AddToViewport();
 	}
 
-	ShowDefaultWidget(CurrentPhaseWidgetClasses->DefaultWidgetClass);
+	ShowWidget(CurrentPhaseWidgetClasses->DefaultWidgetType);
 }
 
 EGamePhase UUIManagerComponent::ConvertLevelNameToPhase(FName LevelName)
@@ -153,14 +153,14 @@ EGamePhase UUIManagerComponent::ConvertLevelNameToPhase(FName LevelName)
 	return *PhasePtr;
 }
 
-void UUIManagerComponent::ShowDefaultWidget(TSubclassOf<UUserWidgetBase> WidgetClass)
+void UUIManagerComponent::ShowWidget(EUIType WidgetType)
 {
-	if (!WidgetClass) return;
+	if (WidgetType == EUIType::None) return;
 
 	UUserWidgetBase* FoundWidget = nullptr;
-	for (UUserWidgetBase* Widget : AvailableWidgets)
+	for (auto& [Type, Widget] : AvailableWidgets)
 	{
-		if (Widget->IsA(WidgetClass))
+		if (Type == WidgetType)
 		{
 			FoundWidget = Widget;
 			break;
@@ -182,4 +182,12 @@ void UUIManagerComponent::ShowDefaultWidget(TSubclassOf<UUserWidgetBase> WidgetC
 	CurrentWidget = FoundWidget;
 	CurrentWidget->SetUp();
 	COMMON_LOG(LogGameplay, Log, TEXT("Set up widget name : %s"), *GetNameSafe(CurrentWidget->GetClass()));
+}
+
+void UUIManagerComponent::ShowGameOverWidget()
+{
+	ShowWidget(EUIType::GameOver);
+
+	COMMON_LOG(LogGameplay, Log, TEXT("Show gameover UI."));
+
 }

@@ -38,6 +38,7 @@ AWorldGenerator::AWorldGenerator()
 	TerrainNavProxyPMC->SetHiddenInGame(true);
 	TerrainNavProxyPMC->bFillCollisionUnderneathForNavmesh = true;
 	TerrainNavProxyPMC->SetCanEverAffectNavigation(true);
+	TerrainNavProxyPMC->SetIsReplicated(false);
 }
 
 void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs)

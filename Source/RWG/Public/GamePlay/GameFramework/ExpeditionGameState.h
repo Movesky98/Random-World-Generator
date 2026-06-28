@@ -11,6 +11,7 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimeOfDayUpdated, float /* TimeOfDay */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDayCycleChanged, EDayCycle /* DayCycle */);
 DECLARE_MULTICAST_DELEGATE(FOnExtractionConditionsUpdated);
+DECLARE_MULTICAST_DELEGATE(FOnGameOver);
 
 /**
  * 
@@ -25,6 +26,8 @@ public:
 	FOnDayCycleChanged OnDayCycleChanged;
 
 	FOnExtractionConditionsUpdated OnExtractionConditionsUpdated;
+
+	FOnGameOver OnGameOver;
 
 	void SetTimeOfDay(float InTimeOfDay);
 	void SetDayCycle(EDayCycle InDayCycle);
@@ -50,6 +53,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Time")
 	float NightDuration = 0.0f;
 
+	bool bAllExtractionConditionsSatisfied = false;
+
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_GameOver, Category = "Gameplay")
+	bool bGameOver = false;
+
 	UFUNCTION()
 	void OnRep_TimeOfDay();
 
@@ -58,6 +66,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_ExtractionConditions();
+
+	UFUNCTION()
+	void OnRep_GameOver();
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_ExtractionConditions, Category = "Extraction|Conditions")
 	TArray<FExtractionCondition> ExtractionConditions;

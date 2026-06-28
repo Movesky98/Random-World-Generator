@@ -14,72 +14,11 @@ DEFINE_LOG_CATEGORY(LogPlayerControllerBase);
 void APlayerControllerBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//if (!IsLocalController())
-	//{
-	//	return;
-	//}
-
-	//UpdateUIForCurrentLevel();
 }
 
 void APlayerControllerBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (CurrentWidget)
-	{
-		CurrentWidget->TearDown();
-		CurrentWidget = nullptr;
-	}
-
 	Super::EndPlay(EndPlayReason);
-}
-
-void APlayerControllerBase::UpdateUIForCurrentLevel()
-{
-	FString LevelName = UGameplayStatics::GetCurrentLevelName(this, true);
-	UE_LOG(LogPlayerControllerBase, Warning, TEXT("Current Level Name : %s"), *LevelName);
-
-	EUIType UIType = ConvertLevelNameToEnum(LevelName);
-
-	if(UIType != EUIType::None)
-		ShowUI(UIType);
-}
-
-EUIType APlayerControllerBase::ConvertLevelNameToEnum(FString LevelName)
-{
-	if (LevelName.Contains("Session"))
-		return EUIType::SessionMenu;
-
-	if (LevelName.Contains("Lobby"))
-		return EUIType::LobbyMenu;
-
-	if (LevelName.Contains("LandscapeGeneration"))
-		return EUIType::PlayerHUD;
-
-	UE_LOG(LogPlayerControllerBase, Error, TEXT("ConvertLevelNameToEnum() :: Failed to convert level name to enum."));
-	return EUIType::None;
-}
-
-void APlayerControllerBase::ShowUI(EUIType UIType)
-{
-	if (CurrentWidget)
-	{
-		CurrentWidget->TearDown();
-		CurrentWidget = nullptr;
-	}
-
-	TSubclassOf<UUserWidgetBase>* FoundClass = UIClassMap.Find(UIType);
-	if (!FoundClass || !(*FoundClass))
-	{
-		UE_LOG(LogPlayerControllerBase, Error, TEXT("ShowUI() :: Can't find UIClass from enum type. (%s)"), *UEnum::GetValueAsString(UIType));
-		return;
-	}
-
-	CurrentWidget = CreateWidget<UUserWidgetBase>(GetWorld(), *FoundClass);
-	if (CurrentWidget)
-	{
-		CurrentWidget->SetUp();
-	}
 }
 
 void APlayerControllerBase::RequestSetReady(bool bNewReady)
