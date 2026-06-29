@@ -57,6 +57,7 @@ void ALobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ALobbyGameState, LobbyInfo);
+	DOREPLIFETIME(ALobbyGameState, bLobbyInfoInitialized);
 }
 
 void ALobbyGameState::AddPlayerState(APlayerState* PlayerState)

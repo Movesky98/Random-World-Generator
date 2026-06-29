@@ -32,7 +32,7 @@ public:
 
 	bool AreAllPlayersReady();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Session")
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Session")
 	bool bLobbyInfoInitialized;
 
 protected:
@@ -52,6 +52,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Session|Lobby")
 	int32 ReadyPlayerCount;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Session|Lobby")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Session|Lobby")
 	bool bAllPlayersReady;
 };
