@@ -55,11 +55,13 @@ void ALobbyGameMode::HandleReadyRequest(APlayerControllerBase* PC, bool bNewRead
 
 	if (LobbyGS->AreAllPlayersReady())
 	{
-		TryStartGame();
+		FTimerHandle StartGameTimerHandle;
+
+		GetWorldTimerManager().SetTimer(StartGameTimerHandle, this, &ThisClass::StartGame, StartGameDelay, false);
 	}
 }
 
-void ALobbyGameMode::TryStartGame()
+void ALobbyGameMode::StartGame()
 {
 	UWorld* World = GetWorld();
 	if (World)

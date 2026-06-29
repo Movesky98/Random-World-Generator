@@ -23,5 +23,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	void TryStartGame();
+	void StartGame();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Lobby|Time")
+	float StartGameDelay = 5.0f;
 };
