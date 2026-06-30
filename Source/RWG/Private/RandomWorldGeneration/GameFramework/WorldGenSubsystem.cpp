@@ -18,15 +18,18 @@ void UWorldGenSubsystem::InitiateWorldGeneration()
 		if (Config.Key == FPrimaryAssetType(WorldConfigTags::GenConfigName))
 		{
 			UWorldGenConfig* GenConfig = Cast<UWorldGenConfig>(Config.Value);
-
 			WorldGenerator = GetWorld()->SpawnActor<AWorldGenerator>(GenConfig->WorldGeneratorClass);
 			break;
 		}
 		else
 			continue;
 	}
+
 	if (WorldGenerator)
+	{
+		WorldGenerator->OnWorldGenerationCompleted.AddUObject(this, &ThisClass::OnWorldGenerationCompleted);
 		WorldGenerator->GenerateWorld(LoadedConfigs);
+	}
 	else
 		UE_LOG(LogWorldGenSubsystem, Error, TEXT("WorldGenerator is not found."));
 }
@@ -94,4 +97,10 @@ void UWorldGenSubsystem::OnWorldBeginPlay(UWorld& World)
 
 	if (LevelName.Contains("LandscapeGeneration"))
 		InitializeWorldConfig();
+}
+
+void UWorldGenSubsystem::OnWorldGenerationCompleted()
+{
+	bWorldReady = true;
+	OnWorldReady.Broadcast();
 }

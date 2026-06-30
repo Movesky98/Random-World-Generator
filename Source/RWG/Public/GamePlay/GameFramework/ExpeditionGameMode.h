@@ -27,7 +27,11 @@ protected:
 	/* Pawn을 스폰하고 PlayerController에 Possess시키는 함수 */
 	virtual void RestartPlayer(AController* NewPlayer) override;
 
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+
 	virtual void Logout(AController* Exiting) override;
+
+	void OnWorldReady();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<USpawnDirectorComponent> SpawnDirectorComponent;

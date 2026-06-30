@@ -2,12 +2,12 @@
 
 
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
-
 #include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Core/WorldGenTypes.h"
 #include "RandomWorldGeneration/PCG/RoadGraphBuilder.h"
 #include "RandomWorldGeneration/Grid/CityGridBuilder.h"
+#include "CommonLogCategories.h"
 
 #include "PCGGraph.h"
 #include "NavigationSystem.h"
@@ -67,17 +67,24 @@ void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>>
 	{
 		return;
 	}
-
+	const double T0 = FPlatformTime::Seconds();
 	GenerateTerrain(GenConfig);
 
+	const double T1 = FPlatformTime::Seconds();
 	GenerateNavProxyMesh(GenConfig);
 
+	const double T2 = FPlatformTime::Seconds();
 	if(!ensure(ThemeConfig))
 	{
 		return;
 	}
 
 	GenerateContent(ThemeConfig);
+
+	const double T3 = FPlatformTime::Seconds();
+
+	COMMON_LOG(LogGameplay, Warning, TEXT("[GenProfile] Terrain=%.2fms  NavProxy=%.2fms  Content(sync)=%.2fms  TOTAL=%.2fms"),
+		(T1 - T0) * 1000.0, (T2 - T1) * 1000.0, (T3 - T2) * 1000.0, (T3 - T0) * 1000.0);
 }
 
 void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
@@ -100,6 +107,8 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 	CityCenter = GetActorLocation() + FVector(HalfWidth, HalfHeight, 0.0f);
 	CityRadius = Config->CityRadius * Config->GridSpacing;
 	CityHeight = Config->CityHeight;
+
+	const double TA = FPlatformTime::Seconds();
 
 	for (int32 Y = 0; Y <= Config->YSize; Y++)
 	{
@@ -159,7 +168,7 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 			Triangles.Add(VertexIndex + Config->XSize + 2);
 		}
 	}
-
+	const double TB = FPlatformTime::Seconds();
 	// 3. 실제 메쉬 섹션 생성
 	ProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UV0, VertexColors, Tangents, true);
 
@@ -167,10 +176,15 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 	ProceduralMeshComponent->ContainsPhysicsTriMeshData(true);
 	ProceduralMeshComponent->bUseComplexAsSimpleCollision = true;
 	ProceduralMeshComponent->UpdateBounds();
+
+	const double TC = FPlatformTime::Seconds();
+	UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile]  Terrain: Compute=%.2fms  MeshCook=%.2fms"),
+		(TB - TA) * 1000.0, (TC - TB) * 1000.0);
 }
 
 void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 {
+	const double TG0 = FPlatformTime::Seconds();
 	FRoadBuildParams RoadBuildParams;
 	RoadBuildParams.Seed = MasterSeed;
 	RoadBuildParams.CityCenterXY = FVector2D(CityCenter.X, CityCenter.Y);
@@ -181,7 +195,7 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 	RoadBuildParams.RoadWidth = Config->RoadWidth;
 
 	RoadGraph = FRoadGraphBuilder::BuildGraph2D(GetWorld(), RoadBuildParams);
-
+	const double TG1 = FPlatformTime::Seconds();
 	FGridBuildParams GridBuildParams;
 	GridBuildParams.CellSize = Config->CellSize;
 	GridBuildParams.CityCenter = CityCenter;
@@ -191,7 +205,9 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 	CityGrid = FCityGridBuilder::BuildGrid2D(GridBuildParams);
 	CityBlocks = FCityGridBuilder::BuildBlocks(CityGrid);
 	FCityGridBuilder::ExtractLotsFromBlock(CityGrid, CityBlocks);
-
+	const double TG2 = FPlatformTime::Seconds();
+	UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile]  Content: RoadGraph=%.2fms  Grid=%.2fms"),
+		(TG1 - TG0) * 1000.0, (TG2 - TG1) * 1000.0);
 	// DebugSeedResult();
 
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this, Config]()
@@ -434,7 +450,7 @@ void AWorldGenerator::DebugSeedResult()
 void AWorldGenerator::CheckAllComplete()
 {
 	if (!bPCGComplete || !bNavComplete) return;
-	OnWorldGenerationComplete.Broadcast();
+	OnWorldGenerationCompleted.Broadcast();
 
 	if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
 	{

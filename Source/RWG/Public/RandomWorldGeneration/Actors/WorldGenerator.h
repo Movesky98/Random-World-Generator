@@ -12,7 +12,7 @@
 #include "WorldGenerator.generated.h"
 
 RWG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenerator, Log, All);
-DECLARE_MULTICAST_DELEGATE(FOnWorldGenerationComplete);
+DECLARE_MULTICAST_DELEGATE(FOnWorldGenerationCompleted);
 
 /*
 * World Generator Actor.
@@ -83,7 +83,7 @@ private:
 	TArray<FCityBlock> CityBlocks;
 
 public:
-	FOnWorldGenerationComplete OnWorldGenerationComplete;
+	FOnWorldGenerationCompleted OnWorldGenerationCompleted;
 
 private:
 	bool bPCGComplete = false;

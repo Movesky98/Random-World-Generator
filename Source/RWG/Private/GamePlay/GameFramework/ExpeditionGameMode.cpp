@@ -13,8 +13,7 @@
 #include "GamePlay/Characters/Convict/Convict.h"
 #include "CommonLogCategories.h"
 
-
-
+#include "RandomWorldGeneration/GameFramework/WorldGenSubsystem.h"
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
 
 #include "Kismet/GameplayStatics.h"
@@ -30,15 +29,26 @@ AExpeditionGameMode::AExpeditionGameMode()
     TimeManagementComponent = CreateDefaultSubobject<UTimeManagementComponent>(TEXT("TimeManagementComponent"));
 
     bUseSeamlessTravel = true;
+    bStartPlayersAsSpectators = true;
 }
 
 void AExpeditionGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-    if (AWorldGenerator* Generator = Cast<AWorldGenerator>(UGameplayStatics::GetActorOfClass(GetWorld(), AWorldGenerator::StaticClass())))
+    if (UWorldGenSubsystem* WorldGenSubsys = GetWorld()->GetSubsystem<UWorldGenSubsystem>())
     {
-        Generator->OnWorldGenerationComplete.AddLambda([this]()
+        if (!WorldGenSubsys->IsWorldReady())
+        {
+            WorldGenSubsys->OnWorldReady.AddUObject(this, &ThisClass::OnWorldReady);
+        }
+        else
+            OnWorldReady();
+    }
+
+   /* if (AWorldGenerator* Generator = Cast<AWorldGenerator>(UGameplayStatics::GetActorOfClass(GetWorld(), AWorldGenerator::StaticClass())))
+    {
+        Generator->OnWorldGenerationCompleted.AddLambda([this]()
             {
                 COMMON_LOG(LogGameplay, Log, TEXT("World generation is completed."));
                 SpawnDirectorComponent->InitializeSpawnData();
@@ -48,8 +58,16 @@ void AExpeditionGameMode::BeginPlay()
                 {
                     GS->OnGameOver.AddUObject(this, &ThisClass::GameOver);
                 }
+
+                if (UWorld* World = GetWorld())
+                {
+                    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+                    {
+                        RestartPlayer(It->Get());
+                    }
+                }
             });
-    }
+    }*/
 }
 
 void AExpeditionGameMode::RestartPlayer(AController* NewPlayer)
@@ -71,6 +89,20 @@ void AExpeditionGameMode::RestartPlayer(AController* NewPlayer)
     }
 }
 
+void AExpeditionGameMode::PostLogin(APlayerController* NewPlayer)
+{
+    Super::PostLogin(NewPlayer);
+
+
+    if (UWorldGenSubsystem* WorldGenSubsys = GetWorld()->GetSubsystem<UWorldGenSubsystem>())
+    {
+        if (WorldGenSubsys->IsWorldReady())
+        {
+            RestartPlayer(NewPlayer);
+        }
+    }
+}
+
 void AExpeditionGameMode::Logout(AController* Exiting)
 {
     SpawnDirectorComponent->UnregisterPlayer(Exiting->GetPawn());
@@ -81,6 +113,27 @@ void AExpeditionGameMode::Logout(AController* Exiting)
     }
     
     Super::Logout(Exiting);
+}
+
+void AExpeditionGameMode::OnWorldReady()
+{
+    COMMON_LOG(LogGameplay, Log, TEXT("World generation is completed."));
+    SpawnDirectorComponent->InitializeSpawnData();
+    InitializeExtractionConditions();
+
+    if (AExpeditionGameState* GS = GetGameState<AExpeditionGameState>())
+    {
+        GS->OnGameOver.AddUObject(this, &ThisClass::GameOver);
+    }
+
+    if (UWorld* World = GetWorld())
+    {
+        for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+        {
+            if(It->Get())
+                RestartPlayer(It->Get());
+        }
+    }
 }
 
 void AExpeditionGameMode::InitializeExtractionConditions()
