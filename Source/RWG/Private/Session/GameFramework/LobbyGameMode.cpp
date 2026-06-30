@@ -14,6 +14,8 @@ ALobbyGameMode::ALobbyGameMode()
 	PlayerControllerClass = APlayerControllerBase::StaticClass();
 	GameStateClass = ALobbyGameState::StaticClass();
 	PlayerStateClass = ALobbyPlayerState::StaticClass();
+
+	bUseSeamlessTravel = true;
 }
 
 void ALobbyGameMode::BeginPlay()
