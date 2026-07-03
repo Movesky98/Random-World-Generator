@@ -10,6 +10,8 @@ RWG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenSubsystem, Log, All);
 
 DECLARE_MULTICAST_DELEGATE(FOnWorldReady);
 
+class UGlobalUISubsystem;
+
 /**
  * World Generation Management Subsystem.
  * 
@@ -45,6 +47,8 @@ protected:
 	TMap<FPrimaryAssetType, TObjectPtr<UObject>> LoadedConfigs;
 
 	int32 ExpectedCount = 2;
+
+	UGlobalUISubsystem* GetGlobalUISubsystem() const;
 
 private:
 	UPROPERTY()

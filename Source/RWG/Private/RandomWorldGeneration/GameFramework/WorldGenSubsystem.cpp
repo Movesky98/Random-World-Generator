@@ -1,14 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "RandomWorldGeneration/GameFramework/WorldGenSubsystem.h"
-
-#include "Engine/AssetManager.h"
-
 #include "RandomWorldGeneration/Core/WorldGenTypes.h"
 #include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
+#include "Common/GameFramework/GlobalUISubsystem.h"
 
+#include "Engine/AssetManager.h"
 DEFINE_LOG_CATEGORY(LogWorldGenSubsystem);
 
 void UWorldGenSubsystem::InitiateWorldGeneration()
@@ -96,11 +95,33 @@ void UWorldGenSubsystem::OnWorldBeginPlay(UWorld& World)
 	LevelName.RemoveFromStart(World.StreamingLevelsPrefix);
 
 	if (LevelName.Contains("LandscapeGeneration"))
+	{
+		if (UGlobalUISubsystem* UISubsystem = GetGlobalUISubsystem())
+		{
+			UISubsystem->ShowLoadingScreen();
+		}
+
 		InitializeWorldConfig();
+	}
 }
 
 void UWorldGenSubsystem::OnWorldGenerationCompleted()
 {
 	bWorldReady = true;
 	OnWorldReady.Broadcast();
+
+	if (UGlobalUISubsystem* UISubsystem = GetGlobalUISubsystem())
+	{
+		UISubsystem->HideLoadingScreen();
+	}
+}
+
+UGlobalUISubsystem* UWorldGenSubsystem::GetGlobalUISubsystem() const
+{
+	if (UGameInstance* GI = GetWorld()->GetGameInstance())
+	{
+		return GI->GetSubsystem<UGlobalUISubsystem>();
+	}
+
+	return nullptr;
 }
