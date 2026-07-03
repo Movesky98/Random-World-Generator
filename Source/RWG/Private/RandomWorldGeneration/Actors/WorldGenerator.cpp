@@ -221,7 +221,7 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 				// Set Static Meshs by Theme
 				TSoftObjectPtr<UObject> ThemePtr(Config);
 				RoadPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
-
+				RoadPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
 				RoadPCGComponent->Generate();
 
 				// DrawDebugGrid();
@@ -239,13 +239,14 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 					TSoftObjectPtr<UObject> ThemePtr(Config);
 					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
 
-					BuildingPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnBuildingPCGGenerated);
+					BuildingPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
 					BuildingPCGComponent->Generate();
 				}
 			}
 			else
 			{
 				UE_LOG(LogWorldGenerator, Warning, TEXT("CLIENT: Building PCG skipped"));
+				bBuildingPCGCompleted = true;
 			}
 		});
 }
@@ -262,17 +263,23 @@ void AWorldGenerator::BeginPlay()
 	}
 }
 
-void AWorldGenerator::OnBuildingPCGGenerated(UPCGComponent* InComponent)
+void AWorldGenerator::OnPCGGraphGenerated(UPCGComponent* InComponent)
 {
+	if (InComponent == RoadPCGComponent)			bRoadPCGCompleted = true;
+	else if (InComponent == BuildingPCGComponent)	bBuildingPCGCompleted = true;
+
+	if (!bRoadPCGCompleted || !bBuildingPCGCompleted) return;
+
 	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	if (NavSys)
 	{
-		UE_LOG(LogWorldGenerator, Warning, TEXT("Build NavSystem."));
 		NavSys->Build();
 	}
-
-	bPCGComplete = true;
-	CheckAllComplete();
+	else
+	{
+		bNavBuildCompleted = true;
+		CheckAllComplete();
+	}
 }
 
 void AWorldGenerator::GenerateNavProxyMesh(UWorldGenConfig* Config)
@@ -444,12 +451,11 @@ void AWorldGenerator::DebugSeedResult()
 	UE_LOG(LogWorldGenerator, Warning, TEXT("RoadCells : %d"), RoadCellCount);
 	UE_LOG(LogWorldGenerator, Warning, TEXT("Lots : %d"), CityGrid.GetLots().Num());
 	UE_LOG(LogWorldGenerator, Warning, TEXT("Blocks : %d"), CityBlocks.Num());
-
 }
 
 void AWorldGenerator::CheckAllComplete()
 {
-	if (!bPCGComplete || !bNavComplete) return;
+	if (!bRoadPCGCompleted || !bBuildingPCGCompleted || !bNavBuildCompleted) return;
 	OnWorldGenerationCompleted.Broadcast();
 
 	if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
@@ -460,6 +466,6 @@ void AWorldGenerator::CheckAllComplete()
 
 void AWorldGenerator::OnNavMeshBuilt(ANavigationData* NavData)
 {
-	bNavComplete = true;
+	bNavBuildCompleted = true;
 	CheckAllComplete();
 }

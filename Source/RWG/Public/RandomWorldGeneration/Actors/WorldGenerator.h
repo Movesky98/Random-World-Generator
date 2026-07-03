@@ -43,7 +43,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void OnBuildingPCGGenerated(UPCGComponent* InComponent);
+	void OnPCGGraphGenerated(UPCGComponent* InComponent);
 
 	void GenerateNavProxyMesh(class UWorldGenConfig* Config);
 
@@ -86,8 +86,9 @@ public:
 	FOnWorldGenerationCompleted OnWorldGenerationCompleted;
 
 private:
-	bool bPCGComplete = false;
-	bool bNavComplete = false;
+	bool bRoadPCGCompleted = false;
+	bool bBuildingPCGCompleted = false;
+	bool bNavBuildCompleted = false;
 
 	void CheckAllComplete();
 	UFUNCTION()
