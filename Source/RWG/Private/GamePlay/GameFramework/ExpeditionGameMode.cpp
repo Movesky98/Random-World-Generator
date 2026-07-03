@@ -45,29 +45,6 @@ void AExpeditionGameMode::BeginPlay()
         else
             OnWorldReady();
     }
-
-   /* if (AWorldGenerator* Generator = Cast<AWorldGenerator>(UGameplayStatics::GetActorOfClass(GetWorld(), AWorldGenerator::StaticClass())))
-    {
-        Generator->OnWorldGenerationCompleted.AddLambda([this]()
-            {
-                COMMON_LOG(LogGameplay, Log, TEXT("World generation is completed."));
-                SpawnDirectorComponent->InitializeSpawnData();
-                InitializeExtractionConditions();
-
-                if (AExpeditionGameState* GS = GetGameState<AExpeditionGameState>())
-                {
-                    GS->OnGameOver.AddUObject(this, &ThisClass::GameOver);
-                }
-
-                if (UWorld* World = GetWorld())
-                {
-                    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
-                    {
-                        RestartPlayer(It->Get());
-                    }
-                }
-            });
-    }*/
 }
 
 void AExpeditionGameMode::RestartPlayer(AController* NewPlayer)
@@ -83,6 +60,8 @@ void AExpeditionGameMode::RestartPlayer(AController* NewPlayer)
 
     SpawnDirectorComponent->RegisterPlayer(NewPlayer->GetPawn());
 
+    // 탈출 조건에 해당하는 아이템을 등록하는 오브젝트가 구현이 안되어있어.
+    // 당장은 플레이어가 아이템을 획득했을 때 체크하는 걸로 대체함
     if (AConvict* Player = Cast<AConvict>(NewPlayer->GetPawn()))
     {
         SubscribeInventoryComponent(Player);
@@ -92,7 +71,6 @@ void AExpeditionGameMode::RestartPlayer(AController* NewPlayer)
 void AExpeditionGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
-
 
     if (UWorldGenSubsystem* WorldGenSubsys = GetWorld()->GetSubsystem<UWorldGenSubsystem>())
     {
