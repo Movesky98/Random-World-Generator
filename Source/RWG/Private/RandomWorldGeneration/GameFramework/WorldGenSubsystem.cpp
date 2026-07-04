@@ -6,8 +6,11 @@
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
 #include "Common/GameFramework/GlobalUISubsystem.h"
+#include "CommonLogCategories.h"
 
 #include "Engine/AssetManager.h"
+#include "HAL/IConsoleManager.h"
+
 DEFINE_LOG_CATEGORY(LogWorldGenSubsystem);
 
 void UWorldGenSubsystem::InitiateWorldGeneration()
@@ -31,6 +34,25 @@ void UWorldGenSubsystem::InitiateWorldGeneration()
 	}
 	else
 		UE_LOG(LogWorldGenSubsystem, Error, TEXT("WorldGenerator is not found."));
+}
+
+void UWorldGenSubsystem::Deinitialize()
+{
+	if (!IsWorldReady())
+	{
+		const TCHAR* CVarStr = TEXT("pcg.FrameTime");
+		if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(CVarStr))
+		{
+			FString DefaultValueStr = CVar->GetDefaultValue();
+			int32 DefaultValue = FCString::Atoi(*DefaultValueStr);
+			CVar->Set(DefaultValue);
+
+			COMMON_LOG(LogRandomWorldGen, Log, TEXT("Set CVar '%s' to %d"), CVarStr, DefaultValue);
+		}
+		else COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Failed to find CVar '%s'"), CVarStr);
+	}
+
+	Super::Deinitialize();
 }
 
 void UWorldGenSubsystem::InitializeWorldConfig()
@@ -101,6 +123,18 @@ void UWorldGenSubsystem::OnWorldBeginPlay(UWorld& World)
 			UISubsystem->ShowLoadingScreen();
 		}
 
+		// Set pcg.Frametime
+		const TCHAR* CVarStr = TEXT("pcg.FrameTime");
+		if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(CVarStr))
+		{
+			int SetValue = 100;
+			CVar->Set(SetValue);
+
+			COMMON_LOG(LogRandomWorldGen, Log, TEXT("Set CVar '%s' to %d"), CVarStr, SetValue);
+		}
+		else COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Failed to find CVar '%s'"), CVarStr);
+
+		// Start GenerateWorld
 		InitializeWorldConfig();
 	}
 }
@@ -114,6 +148,17 @@ void UWorldGenSubsystem::OnWorldGenerationCompleted()
 	{
 		UISubsystem->HideLoadingScreen();
 	}
+
+	const TCHAR* CVarStr = TEXT("pcg.FrameTime");
+	if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(CVarStr))
+	{
+		FString DefaultValueStr = CVar->GetDefaultValue();
+		int32 DefaultValue = FCString::Atoi(*DefaultValueStr);
+		CVar->Set(DefaultValue);
+
+		COMMON_LOG(LogRandomWorldGen, Log, TEXT("Set CVar '%s' to %d"), CVarStr, DefaultValue);
+	}
+	else COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Failed to find CVar '%s'"), CVarStr);
 }
 
 UGlobalUISubsystem* UWorldGenSubsystem::GetGlobalUISubsystem() const

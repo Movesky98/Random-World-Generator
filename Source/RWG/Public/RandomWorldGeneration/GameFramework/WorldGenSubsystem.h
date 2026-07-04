@@ -33,6 +33,8 @@ public:
 	}
 
 protected:
+	virtual void Deinitialize() override;
+
 	void InitializeWorldConfig();
 
 	void LoadConfigByType(FPrimaryAssetType AssetType);
