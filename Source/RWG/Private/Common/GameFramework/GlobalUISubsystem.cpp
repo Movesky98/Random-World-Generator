@@ -21,23 +21,22 @@ void UGlobalUISubsystem::ShowLoadingScreen()
 {
 	COMMON_LOG(LogGameplay, Log, TEXT("ShowLoadingScreen called."));
 
-	UClass* LoadingScreenClass = LoadClass<UUserWidget>(nullptr, TEXT("/Game/Features/GamePlay/BP/UI/WBP_LoadingScreen.WBP_LoadingScreen_C"));
+	bWorldGenReady = false;
+	bHUDReady = false;
 
-	if (!LoadingScreenClass) 
+	UClass* LoadingScreenClass = LoadClass<UUserWidget>(nullptr, TEXT("/Game/Features/GamePlay/BP/UI/WBP_LoadingScreen.WBP_LoadingScreen_C"));
+	if (!LoadingScreenClass)
 	{
 		COMMON_LOG(LogGameplay, Warning, TEXT("Load LoadingScreen failed."));
 		return;
 	}
-	
-	LoadingScreen = CreateWidget<UUserWidget>(GetGameInstance(), LoadingScreenClass);
-	if (LoadingScreen)
+
+	if (LoadingScreen = CreateWidget<UUserWidget>(GetGameInstance(), LoadingScreenClass))
 	{
 		LoadingScreen->AddToViewport(1000);
 	}
 	else
-	{
 		COMMON_LOG(LogGameplay, Warning, TEXT("Create LoadingScreen Widget failed."));
-	}
 }
 
 void UGlobalUISubsystem::HideLoadingScreen()
@@ -49,4 +48,26 @@ void UGlobalUISubsystem::HideLoadingScreen()
 		LoadingScreen->RemoveFromParent();
 		LoadingScreen = nullptr;
 	}
+}
+
+void UGlobalUISubsystem::TryHideLoadingScreen()
+{
+	if (bWorldGenReady && bHUDReady)
+	{
+		HideLoadingScreen();
+	}
+}
+
+void UGlobalUISubsystem::NotifyWorldGenReady()
+{
+	bWorldGenReady = true;
+
+	TryHideLoadingScreen();
+}
+
+void UGlobalUISubsystem::NotifyHUDReady()
+{
+	bHUDReady = true;
+
+	TryHideLoadingScreen();
 }

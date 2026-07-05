@@ -146,7 +146,7 @@ void UWorldGenSubsystem::OnWorldGenerationCompleted()
 
 	if (UGlobalUISubsystem* UISubsystem = GetGlobalUISubsystem())
 	{
-		UISubsystem->HideLoadingScreen();
+		UISubsystem->NotifyWorldGenReady();
 	}
 
 	const TCHAR* CVarStr = TEXT("pcg.FrameTime");

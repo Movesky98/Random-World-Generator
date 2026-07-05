@@ -8,6 +8,7 @@
 #include "GamePlay/UI/InventoryWidget.h"
 #include "GamePlay/UI/PlayerHUD.h"
 #include "GamePlay/Interfaces/WidgetBindable.h"
+#include "Common/GameFramework/GlobalUISubsystem.h"
 #include "CommonLogCategories.h"
 
 #include "Kismet/GameplayStatics.h"
@@ -47,6 +48,17 @@ void UUIManagerComponent::InitializePawnWidgets(APawn* aPawn)
 	}
 
 	DisplayWidgetsForPhase();
+
+	if (UGameInstance* GI = GetWorld()->GetGameInstance())
+	{
+		if (UGlobalUISubsystem* UISubsystem = GI->GetSubsystem<UGlobalUISubsystem>())
+		{
+			UISubsystem->NotifyHUDReady();
+			return;
+		}
+	}
+
+	COMMON_LOG(LogGameplay, Warning, TEXT("Failed to find GameInstance or GlobalUISubsystem."));
 }
 
 void UUIManagerComponent::BindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents)

@@ -18,11 +18,19 @@ class RWG_API UGlobalUISubsystem : public UGameInstanceSubsystem
 public:
 	void ShowLoadingScreen();
 	void HideLoadingScreen();
+
+	void NotifyWorldGenReady();
+	void NotifyHUDReady();
 	
 protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
+	void TryHideLoadingScreen();
+
 	UPROPERTY()
 	TObjectPtr<UUserWidget> LoadingScreen = nullptr;
+
+	bool bWorldGenReady = false;
+	bool bHUDReady = false;
 };
