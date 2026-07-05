@@ -5,8 +5,6 @@
 
 #include "Containers/Queue.h"
 
-TArray<bool> FCityGridBuilder::BaseBuildableCell;
-
 FCityGrid FCityGridBuilder::BuildGrid2D(const FGridBuildParams& InParams)
 {
 	FCityGrid NewGrid;
@@ -151,10 +149,10 @@ FCityBlock FCityGridBuilder::BlockFloodFill(FCityGrid& Grid, const int32 StartX,
 
 void FCityGridBuilder::ExtractLotsFromBlock(FCityGrid& Grid, const TArray<FCityBlock>& Blocks)
 {
-	BuildBaseBuildableMask(Grid);
-
+	TArray<bool> BaseBuildableCell = BuildBaseBuildableMask(Grid);
 	TArray<bool> Used;
 	Used.Init(false, Grid.GetWidth() * Grid.GetHeight());
+	
 	TArray<FCityLot> Lots;
 
 	// 블록 단위로 필지(Lot) 추출
@@ -170,7 +168,7 @@ void FCityGridBuilder::ExtractLotsFromBlock(FCityGrid& Grid, const TArray<FCityB
 			int32 Width = 0;
 			int32 Height = 0;
 
-			if (FindBestRectangle(Grid, Used, X, Y, Block.BlockId, Width, Height))
+			if (FindBestRectangle(Grid, Used, BaseBuildableCell, X, Y, Block.BlockId, Width, Height))
 			{	
 				Lot = MarkLotFromRectangle(Grid, Used, Block.BlockId, Lots.Num(), X, Y, Width, Height);
 				Lots.Add(Lot);
@@ -181,36 +179,38 @@ void FCityGridBuilder::ExtractLotsFromBlock(FCityGrid& Grid, const TArray<FCityB
 	Grid.SetLots(Lots);
 }
 
-void FCityGridBuilder::BuildBaseBuildableMask(FCityGrid& Grid)
+TArray<bool> FCityGridBuilder::BuildBaseBuildableMask(FCityGrid& Grid)
 {
-	BaseBuildableCell.Init(true, Grid.GetWidth() * Grid.GetHeight());
+	TArray<bool> TempBuildableCell;
+
+	TempBuildableCell.Init(true, Grid.GetWidth() * Grid.GetHeight());
 
 	for (const FCityCell& Cell : Grid.GetCityCells())
 	{
 		// CellType == Road or CellType == Blocked
 		if (Cell.Type != ECellType::Empty)
 		{
-			BaseBuildableCell[Grid.Index(Cell.X, Cell.Y)] = false;
+			TempBuildableCell[Grid.Index(Cell.X, Cell.Y)] = false;
+			continue;
 		}
 
-		else
+		for (int i = -1; i <= 1; i++)
 		{
-			for (int i = -1; i <= 1; i++)
+			for (int j = -1; j <= 1; j++)
 			{
-				for (int j = -1; j <= 1; j++)
+				if (Grid.IsValid(Cell.X + i, Cell.Y + j))
 				{
-					if (Grid.IsValid(Cell.X + i, Cell.Y + j))
-					{
-						if (Grid.GetCityCells()[Grid.Index(Cell.X + i, Cell.Y + j)].Type == ECellType::Road)
-							BaseBuildableCell[Grid.Index(Cell.X, Cell.Y)] = false;
-					}
+					if (Grid.GetCityCells()[Grid.Index(Cell.X + i, Cell.Y + j)].Type == ECellType::Road)
+						TempBuildableCell[Grid.Index(Cell.X, Cell.Y)] = false;
 				}
 			}
 		}
 	}
+
+	return TempBuildableCell;
 }
 
-bool FCityGridBuilder::IsBuildableCell(const FCityGrid& Grid, int32 X, int32 Y, int32 BlockId, const TArray<bool>& Used)
+bool FCityGridBuilder::IsBuildableCell(const FCityGrid& Grid, int32 X, int32 Y, int32 BlockId, const TArray<bool>& Used, const TArray<bool>& Base)
 {
 	if (!Grid.IsValid(X, Y)) 
 		return false;
@@ -218,19 +218,19 @@ bool FCityGridBuilder::IsBuildableCell(const FCityGrid& Grid, int32 X, int32 Y, 
 	const int32 Index = Grid.Index(X, Y);
 	const FCityCell& Cell = Grid.GetCityCells()[Index];
 
-	if (Used[Index] || Cell.BlockId != BlockId || !BaseBuildableCell[Index])
+	if (Used[Index] || Cell.BlockId != BlockId || !Base[Index])
 		return false;
 
 	return Cell.Type == ECellType::Empty;
 }
 
-bool FCityGridBuilder::IsRectangleValid(const FCityGrid& Grid, int32 StartX, int32 StartY, int32 Width, int32 Height, int32 BlockId, const TArray<bool>& Used)
+bool FCityGridBuilder::IsRectangleValid(const FCityGrid& Grid, int32 StartX, int32 StartY, int32 Width, int32 Height, int32 BlockId, const TArray<bool>& Used, const TArray<bool>& Base)
 {
 	int32 Y = StartY + Height - 1;
 
 	for (int32 X = StartX; X < StartX + Width; ++X)
 	{
-		if (!IsBuildableCell(Grid, X, Y, BlockId, Used))
+		if (!IsBuildableCell(Grid, X, Y, BlockId, Used, Base))
 		{
 			return false;
 		}
@@ -239,7 +239,7 @@ bool FCityGridBuilder::IsRectangleValid(const FCityGrid& Grid, int32 StartX, int
 	return true;
 }
 
-bool FCityGridBuilder::FindBestRectangle(const FCityGrid& Grid, const TArray<bool>& Used, int32 StartX, int32 StartY, int32 BlockId, int32& OutWidth, int32& OutHeight)
+bool FCityGridBuilder::FindBestRectangle(const FCityGrid& Grid, const TArray<bool>& Used, const TArray<bool>& Base, int32 StartX, int32 StartY, int32 BlockId, int32& OutWidth, int32& OutHeight)
 {
 	OutWidth = 0;
 	OutHeight = 0;
@@ -247,7 +247,7 @@ bool FCityGridBuilder::FindBestRectangle(const FCityGrid& Grid, const TArray<boo
 	int32 MaxWidth = 0;
 
 	// 직사각형이 될 수 있는 최대 가로 길이 계산
-	while (IsBuildableCell(Grid, StartX + MaxWidth, StartY, BlockId, Used))
+	while (IsBuildableCell(Grid, StartX + MaxWidth, StartY, BlockId, Used, Base))
 	{
 		MaxWidth++;
 	}
@@ -259,7 +259,7 @@ bool FCityGridBuilder::FindBestRectangle(const FCityGrid& Grid, const TArray<boo
 		int32 Height = 0;
 
 		// 직사각형이 될 수 있는 최대 세로 길이 계산
-		while (IsRectangleValid(Grid, StartX, StartY, Width, Height + 1, BlockId, Used))
+		while (IsRectangleValid(Grid, StartX, StartY, Width, Height + 1, BlockId, Used, Base))
 		{
 			++Height;
 		}
