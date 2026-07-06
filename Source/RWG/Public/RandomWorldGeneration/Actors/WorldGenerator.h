@@ -64,6 +64,8 @@ protected:
 	void DebugSeedResult();
 
 private:
+	void StartGeneratePCG(UWorldThemeConfig* ThemeConfig);
+
 	UPROPERTY(VisibleAnywhere, Category = "PMC")
 	UProceduralMeshComponent* ProceduralMeshComponent;
 

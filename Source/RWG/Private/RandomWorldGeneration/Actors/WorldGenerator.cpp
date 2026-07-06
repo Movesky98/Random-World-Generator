@@ -11,6 +11,7 @@
 
 #include "PCGGraph.h"
 #include "NavigationSystem.h"
+#include "Async/Async.h"
 
 #include "RandomWorldGeneration/Actors/BuildingActor.h"
 #include "Kismet/GameplayStatics.h"
@@ -202,53 +203,44 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 	GridBuildParams.CityRadius = CityRadius;
 	GridBuildParams.RoadGraph = RoadGraph;
 
-	CityGrid = FCityGridBuilder::BuildGrid2D(GridBuildParams);
-	CityBlocks = FCityGridBuilder::BuildBlocks(CityGrid);
-	FCityGridBuilder::ExtractLotsFromBlock(CityGrid, CityBlocks);
+	TWeakObjectPtr<AWorldGenerator> WeakThis(this);
+	TWeakObjectPtr<UWorldThemeConfig> WeakConfig(Config);
+
+	Async(EAsyncExecution::Thread, [GridBuildParams, WeakThis, WeakConfig]()
+		{
+			const double W0 = FPlatformTime::Seconds();
+
+			FCityGrid LocalGrid = FCityGridBuilder::BuildGrid2D(GridBuildParams);
+			TArray<FCityBlock> LocalBlocks = FCityGridBuilder::BuildBlocks(LocalGrid);
+			FCityGridBuilder::ExtractLotsFromBlock(LocalGrid, LocalBlocks);
+
+			const double W1 = FPlatformTime::Seconds();
+			// 워커에서 걸린 시간 측정
+			UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile] Grid(worker)=%.2fms"), (W1 - W0) * 1000.0);
+
+			AsyncTask(ENamedThreads::GameThread, [WeakThis, WeakConfig, LocalGrid = MoveTemp(LocalGrid), LocalBlocks = MoveTemp(LocalBlocks)]() mutable
+				{
+					AWorldGenerator* Self = WeakThis.Get();
+					if (!Self) return;
+
+					UWorldThemeConfig* Config = WeakConfig.Get();
+					if (!Config)
+					{
+						COMMON_LOG(LogRandomWorldGen, Error, TEXT("Failed to find Config"));
+						return;
+					}
+
+					Self->CityGrid = MoveTemp(LocalGrid);
+					Self->CityBlocks = MoveTemp(LocalBlocks);
+					Self->StartGeneratePCG(Config);
+				});
+		});
+
 	const double TG2 = FPlatformTime::Seconds();
 	UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile]  Content: RoadGraph=%.2fms  Grid=%.2fms"),
 		(TG1 - TG0) * 1000.0, (TG2 - TG1) * 1000.0);
+	
 	// DebugSeedResult();
-
-	GetWorld()->GetTimerManager().SetTimerForNextTick([this, Config]()
-		{
-			if (RoadPCGComponent && RoadPCGComponent->GetGraph())
-			{
-				RoadPCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
-				RoadPCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
-				RoadPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
-
-				// Set Static Meshs by Theme
-				TSoftObjectPtr<UObject> ThemePtr(Config);
-				RoadPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
-				RoadPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
-				RoadPCGComponent->Generate();
-
-				// DrawDebugGrid();
-			}
-
-			if (GetWorld()->GetNetMode() != NM_Client)
-			{
-				UE_LOG(LogWorldGenerator, Warning, TEXT("SERVER: Building PCG Generate"));
-				if (BuildingPCGComponent && BuildingPCGComponent->GetGraph())
-				{
-					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
-					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
-					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
-
-					TSoftObjectPtr<UObject> ThemePtr(Config);
-					BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
-
-					BuildingPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
-					BuildingPCGComponent->Generate();
-				}
-			}
-			else
-			{
-				UE_LOG(LogWorldGenerator, Warning, TEXT("CLIENT: Building PCG skipped"));
-				bBuildingPCGCompleted = true;
-			}
-		});
 }
 
 // Called when the game starts or when spawned
@@ -337,6 +329,46 @@ void AWorldGenerator::GenerateNavProxyMesh(UWorldGenConfig* Config)
 
 	TerrainNavProxyPMC->UpdateBounds();
 	FNavigationSystem::UpdateComponentData(*TerrainNavProxyPMC);
+}
+
+void AWorldGenerator::StartGeneratePCG(UWorldThemeConfig* ThemeConfig)
+{
+	if (RoadPCGComponent && RoadPCGComponent->GetGraph())
+	{
+		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
+		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
+		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
+
+		// Set Static Meshs by Theme
+		TSoftObjectPtr<UObject> ThemePtr(ThemeConfig);
+		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
+		RoadPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
+		RoadPCGComponent->Generate();
+
+		// DrawDebugGrid();
+	}
+
+	if (GetWorld()->GetNetMode() != NM_Client)
+	{
+		UE_LOG(LogWorldGenerator, Warning, TEXT("SERVER: Building PCG Generate"));
+		if (BuildingPCGComponent && BuildingPCGComponent->GetGraph())
+		{
+			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
+			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
+			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
+
+			TSoftObjectPtr<UObject> ThemePtr(ThemeConfig);
+			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
+
+			BuildingPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
+			BuildingPCGComponent->Generate();
+		}
+	}
+	else
+	{
+		UE_LOG(LogWorldGenerator, Warning, TEXT("CLIENT: Building PCG skipped"));
+		bBuildingPCGCompleted = true;
+	}
 }
 
 void AWorldGenerator::DrawDebugGrid()
