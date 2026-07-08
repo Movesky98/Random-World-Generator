@@ -12,6 +12,7 @@
 #include "PCGGraph.h"
 #include "NavigationSystem.h"
 #include "Async/Async.h"
+#include "PhysicsEngine/BodySetup.h"
 
 #include "RandomWorldGeneration/Actors/BuildingActor.h"
 #include "Kismet/GameplayStatics.h"
@@ -33,6 +34,7 @@ AWorldGenerator::AWorldGenerator()
 
 	ProceduralMeshComponent->bFillCollisionUnderneathForNavmesh = false;
 	ProceduralMeshComponent->SetCanEverAffectNavigation(false);
+	ProceduralMeshComponent->bUseAsyncCooking = true;
 
 	TerrainNavProxyPMC = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("TerrainNavProxyPMC"));
 	TerrainNavProxyPMC->SetupAttachment(RootComponent);
@@ -50,7 +52,6 @@ void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>>
 	}
 
 	UWorldGenConfig* GenConfig = nullptr;
-	UWorldThemeConfig* ThemeConfig = nullptr;
 
 	for (auto& Config : Configs)
 	{
@@ -64,28 +65,19 @@ void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>>
 		}
 	}
 
-	if (!ensure(GenConfig))
+	if (!ensure(GenConfig) || !ensure(ThemeConfig))
 	{
 		return;
 	}
-	const double T0 = FPlatformTime::Seconds();
+	T0 = FPlatformTime::Seconds();
+	ProceduralMeshComponent->OnComponentPhysicsStateChanged.AddDynamic(this, &ThisClass::OnComponentPhysicsStateChanged);
 	GenerateTerrain(GenConfig);
 
-	const double T1 = FPlatformTime::Seconds();
+	T1 = FPlatformTime::Seconds();
 	GenerateNavProxyMesh(GenConfig);
-
-	const double T2 = FPlatformTime::Seconds();
-	if(!ensure(ThemeConfig))
-	{
-		return;
-	}
-
-	GenerateContent(ThemeConfig);
-
-	const double T3 = FPlatformTime::Seconds();
-
-	COMMON_LOG(LogGameplay, Warning, TEXT("[GenProfile] Terrain=%.2fms  NavProxy=%.2fms  Content(sync)=%.2fms  TOTAL=%.2fms"),
-		(T1 - T0) * 1000.0, (T2 - T1) * 1000.0, (T3 - T2) * 1000.0, (T3 - T0) * 1000.0);
+	T2 = FPlatformTime::Seconds();
+	UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile] Sync: Terrain=%.2fms  NavProxy=%.2fms  SyncTotal=%.2fms"),
+		(T1 - T0) * 1000.0, (T2 - T1) * 1000.0, (T2 - T0) * 1000.0);
 }
 
 void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
@@ -109,7 +101,7 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 	CityRadius = Config->CityRadius * Config->GridSpacing;
 	CityHeight = Config->CityHeight;
 
-	const double TA = FPlatformTime::Seconds();
+	TA = FPlatformTime::Seconds();
 
 	for (int32 Y = 0; Y <= Config->YSize; Y++)
 	{
@@ -169,7 +161,7 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 			Triangles.Add(VertexIndex + Config->XSize + 2);
 		}
 	}
-	const double TB = FPlatformTime::Seconds();
+	TB = FPlatformTime::Seconds();
 	// 3. 실제 메쉬 섹션 생성
 	ProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UV0, VertexColors, Tangents, true);
 
@@ -177,10 +169,6 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 	ProceduralMeshComponent->ContainsPhysicsTriMeshData(true);
 	ProceduralMeshComponent->bUseComplexAsSimpleCollision = true;
 	ProceduralMeshComponent->UpdateBounds();
-
-	const double TC = FPlatformTime::Seconds();
-	UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile]  Terrain: Compute=%.2fms  MeshCook=%.2fms"),
-		(TB - TA) * 1000.0, (TC - TB) * 1000.0);
 }
 
 void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
@@ -239,7 +227,6 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 	const double TG2 = FPlatformTime::Seconds();
 	UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile]  Content: RoadGraph=%.2fms  Grid=%.2fms"),
 		(TG1 - TG0) * 1000.0, (TG2 - TG1) * 1000.0);
-	
 	// DebugSeedResult();
 }
 
@@ -331,7 +318,7 @@ void AWorldGenerator::GenerateNavProxyMesh(UWorldGenConfig* Config)
 	FNavigationSystem::UpdateComponentData(*TerrainNavProxyPMC);
 }
 
-void AWorldGenerator::StartGeneratePCG(UWorldThemeConfig* ThemeConfig)
+void AWorldGenerator::StartGeneratePCG(UWorldThemeConfig* Config)
 {
 	if (RoadPCGComponent && RoadPCGComponent->GetGraph())
 	{
@@ -340,7 +327,7 @@ void AWorldGenerator::StartGeneratePCG(UWorldThemeConfig* ThemeConfig)
 		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
 
 		// Set Static Meshs by Theme
-		TSoftObjectPtr<UObject> ThemePtr(ThemeConfig);
+		TSoftObjectPtr<UObject> ThemePtr(Config);
 		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
 		RoadPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
 		RoadPCGComponent->Generate();
@@ -357,7 +344,7 @@ void AWorldGenerator::StartGeneratePCG(UWorldThemeConfig* ThemeConfig)
 			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
 			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
 
-			TSoftObjectPtr<UObject> ThemePtr(ThemeConfig);
+			TSoftObjectPtr<UObject> ThemePtr(Config);
 			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
 
 			BuildingPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
@@ -500,4 +487,29 @@ void AWorldGenerator::OnNavMeshBuilt(ANavigationData* NavData)
 {
 	bNavBuildCompleted = true;
 	CheckAllComplete();
+}
+
+void AWorldGenerator::OnComponentPhysicsStateChanged(UPrimitiveComponent* ChangedComponent, EComponentPhysicsStateChange StateChange)
+{
+	uint8 bCreatedPhysicsMeshes = ProceduralMeshComponent->GetBodySetup()->bCreatedPhysicsMeshes;
+
+	if (StateChange == EComponentPhysicsStateChange::Created && bCreatedPhysicsMeshes)
+	{
+		ProceduralMeshComponent->OnComponentPhysicsStateChanged.RemoveAll(this);
+
+		if (ThemeConfig)
+		{
+			TC = FPlatformTime::Seconds();
+			UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile] Terrain Compute=%.2fms  CookWait=%.2fms"),
+				(TB - TA) * 1000.0, (TC - TB) * 1000.0);
+
+			GenerateContent(ThemeConfig);
+
+			T3 = FPlatformTime::Seconds();
+			COMMON_LOG(LogGameplay, Warning, TEXT("[GenProfile] Content=%.2fms  Blocking=%.2fms  Wall=%.2fms"),
+				(T3 - TC) * 1000.0, ((T2 - T0) + (T3 - TC)) * 1000.0, (T3 - T0) * 1000.0);
+		}
+		else
+			COMMON_LOG(LogRandomWorldGen, Warning, TEXT("ThemeConfig is nullptr."));
+	}
 }

@@ -64,7 +64,7 @@ protected:
 	void DebugSeedResult();
 
 private:
-	void StartGeneratePCG(UWorldThemeConfig* ThemeConfig);
+	void StartGeneratePCG(UWorldThemeConfig* Config);
 
 	UPROPERTY(VisibleAnywhere, Category = "PMC")
 	UProceduralMeshComponent* ProceduralMeshComponent;
@@ -93,7 +93,23 @@ private:
 	bool bNavBuildCompleted = false;
 
 	void CheckAllComplete();
+
 	UFUNCTION()
 	void OnNavMeshBuilt(ANavigationData* NavData);
+
+	UFUNCTION()
+	void OnComponentPhysicsStateChanged(UPrimitiveComponent* ChangedComponent, EComponentPhysicsStateChange StateChange);
+
+	UPROPERTY()
+	TObjectPtr<class UWorldThemeConfig> ThemeConfig = nullptr;
+
+	double T0 = 0.0;
+	double T1 = 0.0;
+	double T2 = 0.0;
+	double T3 = 0.0;
+	
+	double TA = 0.0;
+	double TB = 0.0;
+	double TC = 0.0;
 };
 
