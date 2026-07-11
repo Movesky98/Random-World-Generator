@@ -4,6 +4,7 @@
 #include "Session/UI/Menu/SessionMenu.h"
 #include "Session/UI/SessionSlot.h"
 #include "Session/GameFramework/SessionSubsystem.h"
+#include "CommonLogCategories.h"
 
 #include "Components/Slider.h"
 #include "Components/EditableTextBox.h"
@@ -207,17 +208,14 @@ void USessionMenu::OnJoinButtonClicked(int32 SessionIndex)
 {
 	if (SessionState != ESessionState::Idle || !FindSessionsResults.IsValidIndex(SessionIndex))
 	{
-		UE_LOG(LogSessionMenu, Error, TEXT("OnJoinButtonClicked() :: Invalid Input: State=[%s], Index=[%d]"), *UEnum::GetValueAsString(SessionState), SessionIndex);
+		COMMON_LOG(LogSession, Error, TEXT("Invalid Input: State=[%s], Index=[%d]"), *UEnum::GetValueAsString(SessionState), SessionIndex);
 		return;
 	}
 
 	if (USessionSubsystem* SessionSubsystem = GetSessionSubsystem())
 	{
 		SessionState = ESessionState::Joining;
-		FString SessionName;
-		FindSessionsResults[SessionIndex].Session.SessionSettings.Get(FName("SESSION_NAME"), SessionName);
-
-		SessionSubsystem->JoinSession(FindSessionsResults[SessionIndex], FName(SessionName));
+		SessionSubsystem->JoinSession(FindSessionsResults[SessionIndex]);
 	}
 }
 

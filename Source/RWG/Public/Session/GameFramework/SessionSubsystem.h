@@ -47,7 +47,7 @@ public:
 
 	void FindSessions(int32 MaxSearchResult, bool bIsLANQuery);
 
-	void JoinSession(const FOnlineSessionSearchResult& SessionResult, FName SessionName);
+	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
 
 	void DestroySession();
 

@@ -6,6 +6,7 @@
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystemUtils.h"
 #include "Online/OnlineSessionNames.h"
+#include "CommonLogCategories.h"
 
 DEFINE_LOG_CATEGORY(LogSessionSubsystem);
 
@@ -13,7 +14,6 @@ USessionSubsystem::USessionSubsystem() :
 	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionCompleted)),
 	FindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionsCompleted)),
 	JoinSessionCompleteDelegate(FOnJoinSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnJoinSessionCompleted))
-
 {
 
 }
@@ -23,11 +23,13 @@ void USessionSubsystem::CreateSession(int32 NumPublicConnections, FName SessionN
 	IOnlineSubsystem* OSS = Online::GetSubsystem(GetWorld());
 	if (!OSS)
 	{
-		UE_LOG(LogSessionSubsystem, Warning, TEXT("OSS is nullptr."));
+		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("OSS is nullptr."));
+		OnCreateSessionCompletedEvent.Broadcast(false);
+		return;
 	}
 	
 	FName OSSName = OSS->GetSubsystemName();
-	UE_LOG(LogSessionSubsystem, Warning, TEXT("OSS Name : %s"), *OSSName.ToString());
+	UE_LOG(LogSessionSubsystem, Log, TEXT("OSS Name : %s"), *OSSName.ToString());
 
 	const IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface)
@@ -59,7 +61,7 @@ void USessionSubsystem::CreateSession(int32 NumPublicConnections, FName SessionN
 	CreateSessionCompleteDelegateHandle = SessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 
-	if (!SessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), SessionName, *LastSessionSettings))
+	if (!SessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *LastSessionSettings))
 	{
 		UE_LOG(LogSessionSubsystem, Warning, TEXT("CreateSession() :: Failed to create session."));
 		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
@@ -95,7 +97,7 @@ void USessionSubsystem::FindSessions(int32 MaxSearchResult, bool bIsLANQuery)
 
 }
 
-void USessionSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionResult, FName SessionName)
+void USessionSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionResult)
 {
 	const IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface)
@@ -108,7 +110,7 @@ void USessionSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionRes
 	JoinSessionCompleteDelegateHandle = SessionInterface->AddOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegate);
 
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-	if (!SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), SessionName, SessionResult))
+	if (!SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, SessionResult))
 	{
 		UE_LOG(LogSessionSubsystem, Warning, TEXT("JoinSession() :: Failed to join session."));
 		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
@@ -128,25 +130,42 @@ const FLobbySessionInfo USessionSubsystem::GetLobbySessionInfo() const
 void USessionSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSuccessful)
 {
 	const IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-	if (SessionInterface)
+	if (!SessionInterface)
 	{
-		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
-	}
-
-	if (!bWasSuccessful)
-	{
-		UE_LOG(LogSessionSubsystem, Warning, TEXT("OnCreateSessionCompleted() :: Failed to create session."));
+		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("SessionInterface is not found."));
 		OnCreateSessionCompletedEvent.Broadcast(false);
 		return;
 	}
 
-	UE_LOG(LogSessionSubsystem, Warning, TEXT("OnCreateSessionCompleted() :: Session created successfully."));
-	LastSessionName = SessionName;
-	OnCreateSessionCompletedEvent.Broadcast(true);
+	SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
+	
+	if (!bWasSuccessful)
+	{
+		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("Failed to create session."));
+		OnCreateSessionCompletedEvent.Broadcast(false);
+		return;
+	}
 
-	LobbySessionInfo.SessionName = SessionName;
-	LobbySessionInfo.MaxPlayers = LastSessionSettings->NumPublicConnections;
-	LobbySessionInfo.bIsLAN = LastSessionSettings->bIsLANMatch;
+	FOnlineSessionSettings* SessionSettings = SessionInterface->GetSessionSettings(SessionName);
+	if (!SessionSettings)
+	{
+		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("SessionSettings is not found."));
+		OnCreateSessionCompletedEvent.Broadcast(false);
+		return;
+	}
+
+	FString SessionNameStr = TEXT("");
+	SessionSettings->Get(FName("SESSION_NAME"), SessionNameStr);
+
+	LastSessionName = SessionName;
+
+	// 나중에 삭제 필요.
+	LobbySessionInfo.SessionName = FName(SessionNameStr);
+	LobbySessionInfo.MaxPlayers = SessionSettings->NumPublicConnections;
+	LobbySessionInfo.bIsLAN = SessionSettings->bIsLANMatch;
+
+	OnCreateSessionCompletedEvent.Broadcast(true);
+	UE_LOG(LogSessionSubsystem, Log, TEXT("Session created successfully."));
 
 	UWorld* World = GetWorld();
 	if (World)
@@ -177,20 +196,23 @@ void USessionSubsystem::OnFindSessionsCompleted(bool bWasSuccessful)
 void USessionSubsystem::OnJoinSessionCompleted(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
 	const IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-	if (SessionInterface)
+	if (!SessionInterface)
 	{
-		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
+		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("SessionInterface is not found."));
+		OnJoinSessionsCompletedEvent.Broadcast(Result);
+		return;
 	}
+
+	SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
 
 	if (Result == EOnJoinSessionCompleteResult::UnknownError)
 	{
-		UE_LOG(LogSessionSubsystem, Warning, TEXT("OnJoinSessionCompleted() :: Failed to join session."));
+		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("Failed to join session."));
 		OnJoinSessionsCompletedEvent.Broadcast(Result);
 		return;
 	}
 
 	LastSessionName = SessionName;
-	LastSessionSettings = MakeShareable(SessionInterface->GetSessionSettings(LastSessionName));
 
 	OnJoinSessionsCompletedEvent.Broadcast(Result);
 
