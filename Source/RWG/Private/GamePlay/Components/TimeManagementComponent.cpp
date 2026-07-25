@@ -13,6 +13,7 @@
 UTimeManagementComponent::UTimeManagementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 
 	bWantsInitializeComponent = true;
 }
@@ -31,11 +32,8 @@ void UTimeManagementComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (GameState = Cast<AExpeditionGameState>(GetWorld()->GetGameState()))
-	{
-		COMMON_LOG(LogGameplay, Log, TEXT(""));
-	}
-	else
+	GameState = Cast<AExpeditionGameState>(GetWorld()->GetGameState());
+	if (!GameState)
 	{
 		COMMON_LOG(LogGameplay, Warning, TEXT("Can't find ExpeditionGameState"));
 	}
@@ -67,6 +65,8 @@ void UTimeManagementComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	{
 		if (GameState)
 			GameState->SetTimeOfDay(TimeOfDay);
+
+		ElapsedTimeUpdate = 0.f;
 	}
 }
 

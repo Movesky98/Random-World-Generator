@@ -26,9 +26,7 @@ protected:
 
 	/* Pawn을 스폰하고 PlayerController에 Possess시키는 함수 */
 	virtual void RestartPlayer(AController* NewPlayer) override;
-
 	virtual void PostLogin(APlayerController* NewPlayer) override;
-
 	virtual void Logout(AController* Exiting) override;
 
 	void OnWorldReady();
@@ -39,8 +37,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<UTimeManagementComponent> TimeManagementComponent;
 
+	TSet<TWeakObjectPtr<APlayerState>> ReportedPlayers;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay")
+	float PrepareGameTime = 5.0f;
+
 public:
 	void InitializeExtractionConditions();
+
+	void ReportWorldGenerationCompleted(APlayerController* Player);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Extraction")
@@ -53,6 +58,9 @@ protected:
 
 	void ReturnToLobby();
 	void GameOver();
+	void TryGameStart(APlayerState* IgnorePS = nullptr);
+	void PrepareGameStart();
+	void GameStart();
 
 	FTimerHandle ReturnToLobbyTimerHandle;
 };

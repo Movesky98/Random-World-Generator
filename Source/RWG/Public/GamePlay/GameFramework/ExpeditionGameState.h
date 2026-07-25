@@ -11,7 +11,18 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimeOfDayUpdated, float /* TimeOfDay */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDayCycleChanged, EDayCycle /* DayCycle */);
 DECLARE_MULTICAST_DELEGATE(FOnExtractionConditionsUpdated);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameplayStateChanged, EGameplayState /* GameplayState */);
 DECLARE_MULTICAST_DELEGATE(FOnGameOver);
+
+UENUM(BlueprintType)
+enum class EGameplayState : uint8
+{
+	GeneratingWorld,		   // 월드 생성 중
+	WaitingForPlayers,		   // 플레이어 입장 대기 중
+	Preparing,				   // 게임 시작 준비 중
+	Playing,				   // 게임 시작
+	GameOver,				   // 게임 종료
+};
 
 /**
  * 
@@ -26,6 +37,8 @@ public:
 	FOnDayCycleChanged OnDayCycleChanged;
 
 	FOnExtractionConditionsUpdated OnExtractionConditionsUpdated;
+
+	FOnGameplayStateChanged OnGameplayStateChanged;
 
 	FOnGameOver OnGameOver;
 
@@ -53,10 +66,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Time")
 	float NightDuration = 0.0f;
 
-	bool bAllExtractionConditionsSatisfied = false;
+	// 게임이 시작되는 서버 시간, GS->GetServerWorldTimeSeconds()로 비교할 것.
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Gameplay")
+	float GameStartTime = 0.f;
 
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_GameOver, Category = "Gameplay")
-	bool bGameOver = false;
+	bool bAllExtractionConditionsSatisfied = false;
 
 	UFUNCTION()
 	void OnRep_TimeOfDay();
@@ -67,9 +81,44 @@ protected:
 	UFUNCTION()
 	void OnRep_ExtractionConditions();
 
-	UFUNCTION()
-	void OnRep_GameOver();
-
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_ExtractionConditions, Category = "Extraction|Conditions")
 	TArray<FExtractionCondition> ExtractionConditions;
+
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_GameplayState, Category = "Gameplay")
+	EGameplayState GameplayState;
+
+	UFUNCTION()
+	void OnRep_GameplayState(EGameplayState OldState);
+
+public:
+	void SetGameplayState(const EGameplayState State)
+	{
+		if (!HasAuthority()) return;
+
+		EGameplayState OldState = GameplayState;
+		GameplayState = State;
+		OnRep_GameplayState(OldState);
+	}
+	
+	EGameplayState GetGameplayState() const
+	{
+		return GameplayState;
+	}
+
+	void SetGameStartTime(float Time)
+	{
+		if (!HasAuthority()) return;
+		GameStartTime = Time;
+	}
+
+	bool IsGameStart() const
+	{
+		return GameplayState >= EGameplayState::Playing;
+	}
+
+	bool IsGameOver() const
+	{
+		return GameplayState == EGameplayState::GameOver;
+	}
+
 };

@@ -72,25 +72,27 @@ void AExpeditionGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-    if (UWorldGenSubsystem* WorldGenSubsys = GetWorld()->GetSubsystem<UWorldGenSubsystem>())
-    {
-        if (WorldGenSubsys->IsWorldReady())
-        {
-            RestartPlayer(NewPlayer);
-        }
-    }
+
 }
 
 void AExpeditionGameMode::Logout(AController* Exiting)
 {
+    Super::Logout(Exiting);
+
     SpawnDirectorComponent->UnregisterPlayer(Exiting->GetPawn());
 
     if (AConvict* Player = Cast<AConvict>(Exiting->GetPawn()))
     {
         UnsubscribeInventoryComponent(Player);
     }
-    
-    Super::Logout(Exiting);
+
+    APlayerState* PS = Exiting->PlayerState;
+    if (PS && ReportedPlayers.Contains(PS))
+    {
+        ReportedPlayers.Remove(PS);
+    }
+
+    TryGameStart(PS);
 }
 
 void AExpeditionGameMode::OnWorldReady()
@@ -99,19 +101,24 @@ void AExpeditionGameMode::OnWorldReady()
     SpawnDirectorComponent->InitializeSpawnData();
     InitializeExtractionConditions();
 
-    if (AExpeditionGameState* GS = GetGameState<AExpeditionGameState>())
+    if (AExpeditionGameState* ExpeditionGS = GetGameState<AExpeditionGameState>())
     {
-        GS->OnGameOver.AddUObject(this, &ThisClass::GameOver);
+        ExpeditionGS->OnGameOver.AddUObject(this, &ThisClass::GameOver);
+        ExpeditionGS->SetGameplayState(EGameplayState::WaitingForPlayers);
     }
 
-    if (UWorld* World = GetWorld())
+    for (auto& PS : ReportedPlayers)
     {
-        for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+        if (!PS.IsValid()) continue;
+
+        APlayerController* PC = PS->GetPlayerController();
+        if (PC)
         {
-            if(It->Get())
-                RestartPlayer(It->Get());
+            RestartPlayer(PC);
         }
     }
+
+    TryGameStart();
 }
 
 void AExpeditionGameMode::InitializeExtractionConditions()
@@ -159,6 +166,38 @@ void AExpeditionGameMode::InitializeExtractionConditions()
     }
 }
 
+void AExpeditionGameMode::ReportWorldGenerationCompleted(APlayerController* Player)
+{
+    // TODO : 
+    // 1. 랜덤 월드 생성 완료 신고한 플레이어 저장
+    // 2. 호스트의 월드 생성 여부에 따라 RestartPlayer() 실행. 
+    // 3. TryStartGame()
+
+    if (!Player)
+    {
+        COMMON_LOG(LogGameplay, Warning, TEXT("Player is nullptr."));
+        return;
+    }
+
+    APlayerState* PS = Player->GetPlayerState<APlayerState>();
+    if (!PS) return;
+    
+    // ReportPlayers에 추가할 때 이미 보고한 플레이어면 게임 시작하지 않음.
+    bool bIsAlready = false;
+    ReportedPlayers.Add(PS, &bIsAlready);
+    if (bIsAlready) return;
+
+    UWorldGenSubsystem* WorldGenSubsystem = GetWorld()->GetSubsystem<UWorldGenSubsystem>();
+    if (!WorldGenSubsystem) return;
+
+    if (WorldGenSubsystem->IsWorldReady())
+    {
+        RestartPlayer(Player);
+
+        TryGameStart();
+    }
+}
+
 void AExpeditionGameMode::ReturnToLobby()
 {
     if (UWorld* World = GetWorld())
@@ -175,6 +214,66 @@ void AExpeditionGameMode::GameOver()
 
     GetWorldTimerManager().SetTimer(ReturnToLobbyTimerHandle, this, &ThisClass::ReturnToLobby, 10.0f, false);
     COMMON_LOG(LogGameplay, Warning, TEXT("GameOver."));
+}
+
+void AExpeditionGameMode::TryGameStart(APlayerState* IgnorePS)
+{
+    // TODO:
+    // 1. GameState::PlayerArray가 ReportedPlayers에 전부 존재하는지 확인(bIsAllReported)
+    // 2. bIsAllReported == true → 게임 시작
+
+    AExpeditionGameState* ExpeditionGS = Cast<AExpeditionGameState>(GameState);
+    if (!ExpeditionGS || ExpeditionGS->GetGameplayState() >= EGameplayState::Preparing) return;
+    
+    bool bIsAllReported = true;
+
+    for (auto& PlayerState : ExpeditionGS->PlayerArray)
+    {
+        if (PlayerState == IgnorePS) continue;
+
+        if (!ReportedPlayers.Contains(PlayerState))
+        {
+            bIsAllReported = false;
+            break;
+        }
+    }
+
+    if (bIsAllReported)
+        PrepareGameStart();
+}
+
+void AExpeditionGameMode::PrepareGameStart()
+{
+    // TODO :
+    // 1. 게임플레이 상태 : Preparing
+    // 2. 게임 시작 타이머 표시
+    // 3. 플레이어 스폰 위치 지정 (아직 없음)
+    if (AExpeditionGameState* ExpeditionGS = Cast<AExpeditionGameState>(GameState))
+    {
+        float StartGameTime = (float)ExpeditionGS->GetServerWorldTimeSeconds() + PrepareGameTime;
+        COMMON_LOG(LogGameplay, Warning, TEXT("[Prepare] Now=%.2f, PrepareTime=%.2f, GameStartTime=%.2f"),
+            ExpeditionGS->GetServerWorldTimeSeconds(), PrepareGameTime, StartGameTime);
+        ExpeditionGS->SetGameStartTime(StartGameTime);
+
+        ExpeditionGS->SetGameplayState(EGameplayState::Preparing);
+        // 게임 시작 타이머 설정
+        FTimerHandle GameStartTimerHandle;
+        GetWorldTimerManager().SetTimer(GameStartTimerHandle, this, &ThisClass::GameStart, PrepareGameTime, false);
+    }
+}
+
+void AExpeditionGameMode::GameStart()
+{
+    // TODO: 게임 시작 알림
+    // 1. 게임플레이 상태 : Playing
+    // 2. TimeManagementComponent 시간 재생 시작
+    if (AExpeditionGameState* ExpeditionGS = Cast<AExpeditionGameState>(GameState))
+    {
+        COMMON_LOG(LogGameplay, Warning, TEXT("[GameStart] Now=%.2f"), ExpeditionGS->GetServerWorldTimeSeconds());
+        ExpeditionGS->SetGameplayState(EGameplayState::Playing);
+    }
+
+    TimeManagementComponent->SetComponentTickEnabled(true);
 }
 
 void AExpeditionGameMode::SubscribeInventoryComponent(AConvict* Player)

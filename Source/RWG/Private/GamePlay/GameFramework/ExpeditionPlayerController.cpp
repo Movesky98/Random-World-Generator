@@ -13,6 +13,7 @@
 
 #include "CommonLogCategories.h"
 
+#include "RandomWorldGeneration/GameFramework/WorldGenSubsystem.h"
 #include "EnhancedInputComponent.h"
 
 AExpeditionPlayerController::AExpeditionPlayerController()
@@ -25,6 +26,21 @@ AExpeditionPlayerController::AExpeditionPlayerController()
 void AExpeditionPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!IsLocalPlayerController()) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	UWorldGenSubsystem* WorldGenSubsystem = World->GetSubsystem<UWorldGenSubsystem>();
+	if (!WorldGenSubsystem) return;
+
+	if (WorldGenSubsystem->IsWorldReady())
+	{
+		Server_ReportWorldGenerationCompleted();
+	}
+	else
+		WorldGenSubsystem->OnWorldReady.AddUObject(this, &ThisClass::Server_ReportWorldGenerationCompleted);
 
 }
 
@@ -97,6 +113,19 @@ void AExpeditionPlayerController::AcknowledgePossession(APawn* aPawn)
 void AExpeditionPlayerController::RequestReturnToLobby()
 {
 	Server_RequestReturnToLobby();
+}
+
+void AExpeditionPlayerController::Server_ReportWorldGenerationCompleted_Implementation()
+{
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		AExpeditionGameMode* GameMode = World->GetAuthGameMode<AExpeditionGameMode>();
+		if (GameMode)
+		{
+			GameMode->ReportWorldGenerationCompleted(this);
+		}
+	}
 }
 
 void AExpeditionPlayerController::HandleGameOver()

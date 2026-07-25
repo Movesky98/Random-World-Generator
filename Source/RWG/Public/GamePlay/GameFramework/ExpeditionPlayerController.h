@@ -30,13 +30,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UInputHandlerComponent* InputHandlerComponent;
 
-	////////////////////////////// Game Over 관련 //////////////////////////////
+	////////////////////////////// GameplayState 관련 //////////////////////////////
 public:
 	void RequestReturnToLobby();
 
 protected:
 	UFUNCTION(Server, Reliable)
 	void Server_RequestReturnToLobby();
+
+	UFUNCTION(Server, Reliable)
+	void Server_ReportWorldGenerationCompleted();
 
 	void HandleGameOver();
 };

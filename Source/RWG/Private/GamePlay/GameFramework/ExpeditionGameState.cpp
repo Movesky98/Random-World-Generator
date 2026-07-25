@@ -74,8 +74,7 @@ void AExpeditionGameState::UpdateExtractionProgress(FName ItemID, int32 Quantity
 	// 일단 바로 GameOver
 	if (bAllExtractionConditionsSatisfied)
 	{
-		bGameOver = true;
-		OnGameOver.Broadcast();
+		SetGameplayState(EGameplayState::GameOver);
 	}
 }
 
@@ -88,7 +87,8 @@ void AExpeditionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(AExpeditionGameState, DayDuration);
 	DOREPLIFETIME(AExpeditionGameState, NightDuration);
 	DOREPLIFETIME(AExpeditionGameState, ExtractionConditions);
-	DOREPLIFETIME(AExpeditionGameState, bGameOver);
+	DOREPLIFETIME(AExpeditionGameState, GameplayState);
+	DOREPLIFETIME(AExpeditionGameState, GameStartTime);
 }
 
 void AExpeditionGameState::OnRep_TimeOfDay()
@@ -106,7 +106,24 @@ void AExpeditionGameState::OnRep_ExtractionConditions()
 	OnExtractionConditionsUpdated.Broadcast();
 }
 
-void AExpeditionGameState::OnRep_GameOver()
+void AExpeditionGameState::OnRep_GameplayState(EGameplayState OldState)
 {
-	OnGameOver.Broadcast();
+	if (OldState == GameplayState) return;
+
+	OnGameplayStateChanged.Broadcast(GameplayState);
+	
+	COMMON_LOG(LogGameplay, Warning, TEXT("[OnRep] %s -> %s, GameStartTime=%.2f, Now=%.2f"),
+		*UEnum::GetValueAsString(OldState), *UEnum::GetValueAsString(GameplayState),
+		GameStartTime, GetServerWorldTimeSeconds());
+
+	if (OldState == EGameplayState::WaitingForPlayers && GameplayState == EGameplayState::Preparing)
+	{
+		// 이 시점이 클라 입장에서 게임이 시작되기 위한 타이머가 시작되는 순간
+
+	}
+
+	if (OldState == EGameplayState::Playing && GameplayState == EGameplayState::GameOver)
+	{
+		OnGameOver.Broadcast();
+	}
 }
