@@ -8,8 +8,6 @@
 #include "GamePlay/Components/InputHandlerComponent.h"
 #include "GamePlay/Interfaces/InputBindable.h"
 #include "GamePlay/Interfaces/WidgetBindable.h"
-#include "GamePlay/Components/InventoryComponent.h"
-#include "GamePlay/UI/InventoryWidget.h"
 
 #include "Common/GameFramework/GlobalUISubsystem.h"
 #include "Common/CommonDelegates.h"
@@ -28,7 +26,7 @@ AExpeditionPlayerController::AExpeditionPlayerController()
 void AExpeditionPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	if (!IsLocalPlayerController()) return;
 
 	UWorld* World = GetWorld();
@@ -43,7 +41,7 @@ void AExpeditionPlayerController::BeginPlay()
 	}
 	else
 		WorldGenSubsystem->OnWorldReady.AddUObject(this, &ThisClass::Server_ReportWorldGenerationCompleted);
-
+	
 	AExpeditionGameState* ExpeditionGS = World->GetGameState<AExpeditionGameState>();
 	if (!ExpeditionGS) return;
 
@@ -59,15 +57,6 @@ void AExpeditionPlayerController::OnPossess(APawn* aPawn)
 
 void AExpeditionPlayerController::OnUnPossess()
 {
-	APawn* UnPossessPawn = GetPawn();
-	if (UnPossessPawn)
-	{
-		if (UInventoryComponent* InventoryComp = UnPossessPawn->FindComponentByClass<UInventoryComponent>())
-		{
-			InventoryComp->OnInventoryToggled.RemoveAll(this);
-		}
-	}
-
 	Super::OnUnPossess();
 }
 
@@ -117,6 +106,15 @@ void AExpeditionPlayerController::AcknowledgePossession(APawn* aPawn)
 	}
 }
 
+void AExpeditionPlayerController::Server_RequestReturnToLobby_Implementation()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	COMMON_LOG(LogGameplay, Log, TEXT("PC reqeust return to lobby."));
+}
+
+
 void AExpeditionPlayerController::RequestReturnToLobby()
 {
 	Server_RequestReturnToLobby();
@@ -139,21 +137,10 @@ void AExpeditionPlayerController::HandleGameOver()
 {
 	// TODO: UIManagerComponent에게 알림
 
-	if (IsLocalController() && UIManagerComponent)
+	if (IsLocalPlayerController() && UIManagerComponent)
 	{
 		UIManagerComponent->ShowGameOverWidget();
 	}
-}
-
-void AExpeditionPlayerController::Server_RequestReturnToLobby_Implementation()
-{
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		return;
-	}
-
-	COMMON_LOG(LogGameplay, Log, TEXT("PC reqeust return to lobby."));
 }
 
 void AExpeditionPlayerController::OnGameplayStateChanged(EGameplayState GameplayState)
@@ -168,7 +155,7 @@ void AExpeditionPlayerController::OnGameplayStateChanged(EGameplayState Gameplay
 			FText TitleText = FText::FromString(TEXT("게임 시작까지"));
 			FGetRemainingSecondsDelegate GetRemainingSecondsDelegate;
 			GetRemainingSecondsDelegate.BindUObject(ExpeditionGS, &AExpeditionGameState::GetPrepareRemainingSeconds);
-
+			
 			GlobalUISubsystem->ShowCountdownWidget(TitleText, GetRemainingSecondsDelegate);
 		}
 	}
