@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Common/CommonDelegates.h"
+
 #include "GlobalUISubsystem.generated.h"
 
 class UUserWidget;
@@ -19,6 +21,9 @@ public:
 	void ShowLoadingScreen();
 	void HideLoadingScreen();
 
+	void ShowCountdownWidget(const FText& InTitle, const FGetRemainingSecondsDelegate& InDelegate);
+	void HideCountdownWidget();
+
 	void NotifyWorldGenReady();
 	void NotifyHUDReady();
 	
@@ -30,6 +35,9 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UUserWidget> LoadingScreen = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<class UCountdownWidget> CountdownWidget = nullptr;
 
 	bool bWorldGenReady = false;
 	bool bHUDReady = false;

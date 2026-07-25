@@ -11,6 +11,8 @@
 #include "GamePlay/Components/InventoryComponent.h"
 #include "GamePlay/UI/InventoryWidget.h"
 
+#include "Common/GameFramework/GlobalUISubsystem.h"
+#include "Common/CommonDelegates.h"
 #include "CommonLogCategories.h"
 
 #include "RandomWorldGeneration/GameFramework/WorldGenSubsystem.h"
@@ -41,6 +43,11 @@ void AExpeditionPlayerController::BeginPlay()
 	}
 	else
 		WorldGenSubsystem->OnWorldReady.AddUObject(this, &ThisClass::Server_ReportWorldGenerationCompleted);
+
+	AExpeditionGameState* ExpeditionGS = World->GetGameState<AExpeditionGameState>();
+	if (!ExpeditionGS) return;
+
+	ExpeditionGS->OnGameplayStateChanged.AddUObject(this, &ThisClass::OnGameplayStateChanged);
 
 }
 
@@ -147,4 +154,30 @@ void AExpeditionPlayerController::Server_RequestReturnToLobby_Implementation()
 	}
 
 	COMMON_LOG(LogGameplay, Log, TEXT("PC reqeust return to lobby."));
+}
+
+void AExpeditionPlayerController::OnGameplayStateChanged(EGameplayState GameplayState)
+{
+	if (GameplayState == EGameplayState::Preparing)
+	{
+		UGlobalUISubsystem* GlobalUISubsystem = GetGameInstance()->GetSubsystem<UGlobalUISubsystem>();
+		AExpeditionGameState* ExpeditionGS = GetWorld()->GetGameState<AExpeditionGameState>();
+
+		if (GlobalUISubsystem && ExpeditionGS)
+		{
+			FText TitleText = FText::FromString(TEXT("게임 시작까지"));
+			FGetRemainingSecondsDelegate GetRemainingSecondsDelegate;
+			GetRemainingSecondsDelegate.BindUObject(ExpeditionGS, &AExpeditionGameState::GetPrepareRemainingSeconds);
+
+			GlobalUISubsystem->ShowCountdownWidget(TitleText, GetRemainingSecondsDelegate);
+		}
+	}
+
+	if (GameplayState == EGameplayState::Playing)
+	{
+		if (UGlobalUISubsystem* GlobalUISubsystem = GetGameInstance()->GetSubsystem<UGlobalUISubsystem>())
+		{
+			GlobalUISubsystem->HideCountdownWidget();
+		}
+	}
 }

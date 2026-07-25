@@ -3,6 +3,7 @@
 
 #include "Common/GameFramework/GlobalUISubsystem.h"
 #include "Blueprint/UserWidget.h"
+#include "Common/UI/CountdownWidget.h"
 #include "CommonLogCategories.h"
 
 void UGlobalUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -47,6 +48,43 @@ void UGlobalUISubsystem::HideLoadingScreen()
 	{
 		LoadingScreen->RemoveFromParent();
 		LoadingScreen = nullptr;
+	}
+}
+
+void UGlobalUISubsystem::ShowCountdownWidget(const FText& InTitle, const FGetRemainingSecondsDelegate& InDelegate)
+{
+	COMMON_LOG(LogGameplay, Log, TEXT("Show Countdown Widget."));
+
+	if (CountdownWidget)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Countdown Widget already created."));
+		return;
+	}
+
+	UClass* CountdownWidgetClass = LoadClass<UUserWidget>(nullptr, TEXT("/Game/Features/Common/BP/UI/WBP_Countdown.WBP_Countdown_C"));
+	if (!CountdownWidgetClass)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Load Countdown Widget failed."));
+		return;
+	}
+
+	if (CountdownWidget = CreateWidget<UCountdownWidget>(GetGameInstance(), CountdownWidgetClass))
+	{
+		CountdownWidget->InitializeCountdown(InTitle, InDelegate);
+		CountdownWidget->AddToViewport(100);
+	}
+	else
+		COMMON_LOG(LogGameplay, Warning, TEXT("Create Countdown Widget Widget failed."));
+}
+
+void UGlobalUISubsystem::HideCountdownWidget()
+{
+	COMMON_LOG(LogGameplay, Log, TEXT("Hide Countdown Widget."));
+
+	if (CountdownWidget)
+	{
+		CountdownWidget->RemoveFromParent();
+		CountdownWidget = nullptr;
 	}
 }
 

@@ -121,4 +121,11 @@ public:
 		return GameplayState == EGameplayState::GameOver;
 	}
 
+	float GetPrepareRemainingSeconds() const
+	{
+		float RemainingTime = GameStartTime - (float)GetServerWorldTimeSeconds();
+
+		return FMath::Max(0.f, RemainingTime);
+	}
+
 };

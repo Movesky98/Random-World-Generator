@@ -6,6 +6,8 @@
 #include "Common/GameFramework/PlayerControllerBase.h"
 #include "ExpeditionPlayerController.generated.h"
 
+enum class EGameplayState : uint8;
+
 class UInventoryWidget;
 
 /**
@@ -42,4 +44,6 @@ protected:
 	void Server_ReportWorldGenerationCompleted();
 
 	void HandleGameOver();
+
+	void OnGameplayStateChanged(EGameplayState GameplayState);
 };
