@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GamePlay/Interfaces/PlayerDetectable.h"
+#include "Gameplay/Interfaces/PlayerDetectable.h"
 #include "BuildingActor.generated.h"
 
 class UBoxComponent;
