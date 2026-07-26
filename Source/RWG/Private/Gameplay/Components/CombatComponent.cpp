@@ -85,7 +85,6 @@ void UCombatComponent::BindInputActions(UEnhancedInputComponent* InputComponent)
 
 void UCombatComponent::RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
 {
-	// ���� ���� ��û
 	if (CurrentWeapon == NewWeapon)
 	{
 		PendingWeapon = nullptr;
@@ -98,7 +97,6 @@ void UCombatComponent::RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
 		return;
 	}
 
-	// �ٸ� ���� ��û
 	PendingWeapon = NewWeapon;
 
 	if (WeaponActionState != EWeaponActionState::None)
@@ -145,7 +143,6 @@ void UCombatComponent::RequestStopAttack()
 
 void UCombatComponent::SetCurrentWeapon(AWeaponBase* NewWeapon)
 {
-	// ���� ���� ���� ���
 	if (AGunBase* Gun = Cast<AGunBase>(CurrentWeapon))
 	{
 		Gun->OnAmmoChangedDelegate.RemoveAll(this);

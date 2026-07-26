@@ -33,13 +33,13 @@ protected:
 
 	void Fire();
 
-	bool CanFire() const;
+	bool CanStartAttack() const;
 
 	FTimerHandle FireTimerHandle;
 
 	bool bIsFiring = false;
 
-	void SpawnBulletProjectile();
+	bool SpawnBulletProjectile();
 
 	/* Ammo */
 public:
@@ -47,6 +47,11 @@ public:
 	FOnAmmoChangedDelegate OnAmmoChangedDelegate;
 
 	int32 GetCurrentAmmo() const { return CurrentAmmo; }
+
+	bool HasAmmo() const
+	{
+		return CurrentAmmo > 0;
+	}
 
 	void SetCurrentAmmo(int32 NewAmmo);
 

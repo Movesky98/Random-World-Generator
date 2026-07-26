@@ -45,16 +45,15 @@ void AGunBase::StartAttack()
 {
 	if (!HasAuthority()) return;
 
-	if (!CanFire()) return;
+	if (!CanStartAttack()) return;
 
 	UGunData* Data = GetItemData<UGunData>();
 	if (!Data) return;
 	
 	bIsFiring = true;
+	GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ThisClass::Fire, Data->FireRate, true);
 
 	Fire();
-	
-	GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ThisClass::Fire, Data->FireRate, true);
 }
 
 void AGunBase::StopAttack()
@@ -70,33 +69,28 @@ void AGunBase::Fire()
 {
 	if (!HasAuthority()) return;
 
-	if (!CanFire())
+	if (!HasAmmo() || !SpawnBulletProjectile())
 	{
 		StopAttack();
 		return;
 	}
 
-	COMMON_LOG(LogGameplay, Log, TEXT("Fire: %s"), *GetName());
-	SpawnBulletProjectile();
 	SetCurrentAmmo(CurrentAmmo - 1);
+	COMMON_LOG(LogGameplay, Log, TEXT("Fire: %s"), *GetName());
 }
 
-bool AGunBase::CanFire() const
+bool AGunBase::CanStartAttack() const
 {
-	if (CurrentAmmo <= 0) return false;
-	if (bIsFiring) return false;
-
-	return true;
+	return HasAmmo() && !bIsFiring;
 }
 
-void AGunBase::SpawnBulletProjectile()
+bool AGunBase::SpawnBulletProjectile()
 {
 	UGunData* Data = GetItemData<UGunData>();
 	if (!Data || !Data->BulletProjectileClass)
 	{
 		COMMON_LOG(LogGameplay, Warning, TEXT("Please check GunData. Weapon : %s"), *GetName());
-		StopAttack();
-		return;
+		return false;
 	}
 
 	UStaticMeshComponent* MeshComp = GetStaticMeshComponent();
@@ -119,14 +113,13 @@ void AGunBase::SpawnBulletProjectile()
 	if (!Bullet)
 	{
 		COMMON_LOG(LogGameplay, Error, TEXT("Spawn bullet failed."));
-		return;
-	}
-	else
-	{
-		COMMON_LOG(LogGameplay, Log, TEXT("SpawnParam : Owner is %s, Instigator is %s"), *GetNameSafe(SpawnParams.Owner), *GetNameSafe(SpawnParams.Instigator));
+		return false;
 	}
 
+
+	COMMON_LOG(LogGameplay, Log, TEXT("SpawnParam : Owner is %s, Instigator is %s"), *GetNameSafe(SpawnParams.Owner), *GetNameSafe(SpawnParams.Instigator));
 	Bullet->InitProjectile(Data->BulletDamage, Data->BulletSpeed, Data->BulletLifeTime);
+	return true;
 }
 
 void AGunBase::SetCurrentAmmo(int32 NewAmmo)
