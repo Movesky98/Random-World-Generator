@@ -116,7 +116,7 @@ void UWorldGenSubsystem::OnWorldBeginPlay(UWorld& World)
 	FString LevelName = World.GetMapName();
 	LevelName.RemoveFromStart(World.StreamingLevelsPrefix);
 
-	if (LevelName.Contains("LandscapeGeneration"))
+	if (LevelName.Contains("LV_ExpeditionWorld"))
 	{
 		if (UGlobalUISubsystem* UISubsystem = GetGlobalUISubsystem())
 		{

@@ -25,7 +25,7 @@ void UGlobalUISubsystem::ShowLoadingScreen()
 	bWorldGenReady = false;
 	bHUDReady = false;
 
-	UClass* LoadingScreenClass = LoadClass<UUserWidget>(nullptr, TEXT("/Game/Features/GamePlay/BP/UI/WBP_LoadingScreen.WBP_LoadingScreen_C"));
+	UClass* LoadingScreenClass = LoadClass<UUserWidget>(nullptr, TEXT("/Game/Features/Gameplay/BP/UI/WBP_LoadingScreen.WBP_LoadingScreen_C"));
 	if (!LoadingScreenClass)
 	{
 		COMMON_LOG(LogGameplay, Warning, TEXT("Load LoadingScreen failed."));

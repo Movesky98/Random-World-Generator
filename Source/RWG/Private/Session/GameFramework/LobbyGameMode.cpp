@@ -68,6 +68,6 @@ void ALobbyGameMode::StartGame()
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		World->ServerTravel("/Game/Features/WorldGenerator/Levels/LandscapeGeneration?listen");
+		World->ServerTravel("/Game/Features/WorldGenerator/Levels/LV_ExpeditionWorld?listen");
 	}
 }
