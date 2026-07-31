@@ -18,7 +18,6 @@ enum class EWeaponActionState : uint8
 	Equip,
 	Unequip,
 	Reload,
-	Attack,
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -46,10 +45,6 @@ protected:
 
 	void SelectWeaponSlot(int32 SlotIndex);
 
-	void RequestStartAttack();
-
-	void RequestStopAttack();
-
 	/* Weapon Flow */
 public:
 	FOnCurrentWeaponChanged OnCurrentWeaponChanged;
@@ -67,9 +62,7 @@ protected:
 
 	void OnUnequipEnded();
 
-	void TryReload();
-
-	void Reload();
+	void Reload(class UAnimMontage* ReloadMontage);
 
 	void OnReloadEnded();
 
@@ -77,10 +70,10 @@ protected:
 
 private:
 	UFUNCTION(Server, Reliable)
-	void RequestEquipWeapon(AWeaponBase* NewWeapon);
+	void Server_RequestEquipWeapon(AWeaponBase* NewWeapon);
 
 	UFUNCTION(Server, Reliable)
-	void RequestReload();
+	void Server_RequestReload();
 
 	UFUNCTION(Server, Reliable)
 	void Server_RequestStartAttack();
@@ -119,7 +112,7 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayMontage(UAnimMontage* Montage, EWeaponActionState ActionState);
 
-	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, EWeaponActionState EndedAction);
 
 	// IWidgetBindable
 protected:

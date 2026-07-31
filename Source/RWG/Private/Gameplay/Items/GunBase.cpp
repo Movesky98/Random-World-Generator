@@ -129,11 +129,41 @@ void AGunBase::SetCurrentAmmo(int32 NewAmmo)
 	OnAmmoChangedDelegate.Broadcast(CurrentAmmo, GetMagazineSize());
 }
 
+int32 AGunBase::GetLoadableAmmo(const int32 AvailableAmmo) const
+{
+	UGunData* GunData = GetItemData<UGunData>();
+	if (!GunData) return 0;
+
+	int32 NeededAmmo = GunData->MagazineSize - CurrentAmmo;
+	return FMath::Min(NeededAmmo, AvailableAmmo);
+}
+
 int32 AGunBase::GetMagazineSize() const
 {
 	UGunData* Data = GetItemData<UGunData>();
 
 	return Data ? Data->MagazineSize : INDEX_NONE;
+}
+
+EReloadCondition AGunBase::CheckReloadCondition(int32 AvailableAmmo, UAnimMontage*& OutReloadMontage) const
+{
+	UGunData* GunData = GetItemData<UGunData>();
+	if (!GunData || !GunData->AmmoType || !GunData->ReloadMontage) return EReloadCondition::InvalidData;
+
+	int32 NeededAmmo = GunData->MagazineSize - CurrentAmmo;
+	if (NeededAmmo <= 0) return EReloadCondition::MagazineFull;
+
+	int32 ToLoad = FMath::Min(NeededAmmo, AvailableAmmo);
+	if (ToLoad <= 0) return EReloadCondition::NoSpareAmmo;
+
+	OutReloadMontage = GunData->ReloadMontage;
+	return EReloadCondition::Ready;
+}
+
+UItemData* AGunBase::GetAmmoType() const
+{
+	UGunData* GunData = GetItemData<UGunData>();
+	return GunData ? GunData->AmmoType : nullptr;
 }
 
 void AGunBase::OnRep_CurrentAmmo()

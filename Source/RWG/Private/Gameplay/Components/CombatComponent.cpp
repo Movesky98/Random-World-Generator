@@ -5,8 +5,8 @@
 #include "Gameplay/Components/InventoryComponent.h"
 #include "Gameplay/DataAssets/CombatInputConfig.h"
 #include "Gameplay/Items/WeaponBase.h"
+#include "Gameplay/Items/WeaponData.h"
 #include "Gameplay/Items/GunBase.h"
-#include "Gameplay/Items/GunData.h"
 #include "Gameplay/UI/PlayerHUD.h"
 #include "CommonLogCategories.h"
 
@@ -77,41 +77,9 @@ void UCombatComponent::BindInputActions(UEnhancedInputComponent* InputComponent)
 		}
 	}
 
-	InputComponent->BindAction(Config->ReloadAction, ETriggerEvent::Started, this, &ThisClass::TryReload);
-
-	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Started, this, &ThisClass::RequestStartAttack);
-	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Completed, this, &ThisClass::RequestStopAttack);
-}
-
-void UCombatComponent::RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
-{
-	if (CurrentWeapon == NewWeapon)
-	{
-		PendingWeapon = nullptr;
-
-		if (WeaponActionState == EWeaponActionState::None)
-		{
-			UnequipWeapon();
-		}
-
-		return;
-	}
-
-	PendingWeapon = NewWeapon;
-
-	if (WeaponActionState != EWeaponActionState::None)
-	{
-		return;
-	}
-
-	if (!CurrentWeapon)
-	{
-		EquipWeapon(PendingWeapon);
-		PendingWeapon = nullptr;
-		return;
-	}
-
-	UnequipWeapon();
+	InputComponent->BindAction(Config->ReloadAction, ETriggerEvent::Started, this, &ThisClass::Server_RequestReload);
+	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Started, this, &ThisClass::Server_RequestStartAttack);
+	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Completed, this, &ThisClass::Server_RequestStopAttack);
 }
 
 void UCombatComponent::SelectWeaponSlot(int32 SlotIndex)
@@ -121,24 +89,7 @@ void UCombatComponent::SelectWeaponSlot(int32 SlotIndex)
 	AWeaponBase* Weapon = InventoryComponent->GetWeaponAtSlot(SlotIndex);
 	if (!Weapon) return;
 
-	RequestEquipWeapon(Weapon);
-}
-
-void UCombatComponent::RequestStartAttack()
-{
-	if (WeaponActionState != EWeaponActionState::None || !CurrentWeapon) return;
-
-	Server_RequestStartAttack();
-}
-
-void UCombatComponent::RequestStopAttack()
-{
-	if (WeaponActionState != EWeaponActionState::Attack)
-	{
-		COMMON_LOG(LogGameplay, Warning, TEXT("Check WeaponActionState. it must be Attack."));
-	}
-
-	Server_RequestStopAttack();
+	Server_RequestEquipWeapon(Weapon);
 }
 
 void UCombatComponent::SetCurrentWeapon(AWeaponBase* NewWeapon)
@@ -191,6 +142,8 @@ void UCombatComponent::UnequipWeapon()
 		return;
 	}
 
+	CurrentWeapon->StopAttack();
+
 	UAnimMontage* Montage = nullptr;
 	if (UWeaponData* Data = CurrentWeapon->GetItemData<UWeaponData>())
 	{
@@ -218,8 +171,15 @@ void UCombatComponent::OnEquipEnded()
 
 	UnequipWeapon();
 }
+
 void UCombatComponent::OnUnequipEnded()
 {
+	if (!CurrentWeapon)
+	{
+		COMMON_LOG(LogGameplay, Error, TEXT("CurrentWeapon is nullptr."));
+		return;
+	}
+
 	CurrentWeapon->AttachToHolster(Cast<ACharacter>(GetOwner()));
 	SetCurrentWeapon(nullptr);
 
@@ -230,40 +190,17 @@ void UCombatComponent::OnUnequipEnded()
 	}
 
 	AWeaponBase* EquipToWeapon = PendingWeapon;
+	
 	PendingWeapon = nullptr;
-
 	EquipWeapon(EquipToWeapon);
 }
 
-void UCombatComponent::TryReload()
+void UCombatComponent::Reload(UAnimMontage* ReloadMontage)
 {
-	if (WeaponActionState != EWeaponActionState::None || !CurrentWeapon) return;
-
-	RequestReload();
-}
-
-void UCombatComponent::RequestReload_Implementation()
-{
-	Reload();
-}
-
-void UCombatComponent::Reload()
-{
-	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
-	if (!Gun) return;
-
-	UGunData* GunData = Gun->GetItemData<UGunData>();
-	if (!GunData || !GunData->AmmoType) return;
-
-	int32 NeededAmmo = GunData->MagazineSize - Gun->GetCurrentAmmo();
-	if (NeededAmmo <= 0) return;
-
-	int32 Available = InventoryComponent->GetAmmoCount(GunData->AmmoType);
-	int32 ToLoad = FMath::Min(NeededAmmo, Available);
-	if (ToLoad <= 0) return;
+	CurrentWeapon->StopAttack();
 
 	WeaponActionState = EWeaponActionState::Reload;
-	Multicast_PlayMontage(GunData->ReloadMontage, EWeaponActionState::Reload);
+	Multicast_PlayMontage(ReloadMontage, EWeaponActionState::Reload);
 }
 
 void UCombatComponent::OnReloadEnded()
@@ -273,15 +210,17 @@ void UCombatComponent::OnReloadEnded()
 	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
 	if (!Gun) return;
 
-	if (UGunData* GunData = Gun->GetItemData<UGunData>())
+	if (!InventoryComponent)
 	{
-		int32 NeededAmmo = GunData->MagazineSize - Gun->GetCurrentAmmo();
-		int32 Available = InventoryComponent->GetAmmoCount(GunData->AmmoType);
-		int32 ToLoad = FMath::Min(NeededAmmo, Available);
-
-		InventoryComponent->RemoveItem(GunData->AmmoType, ToLoad);
-		Gun->SetCurrentAmmo(Gun->GetCurrentAmmo() + ToLoad);
+		COMMON_LOG(LogGameplay, Error, TEXT("InventoryComponent is nullptr."));
+		return;
 	}
+
+	int32 AvailableAmmo = InventoryComponent->GetAmmoCount(Gun->GetAmmoType());
+	int32 ConsumeAmmo = Gun->GetLoadableAmmo(AvailableAmmo);
+
+	InventoryComponent->RemoveItem(Gun->GetAmmoType(), ConsumeAmmo);
+	Gun->SetCurrentAmmo(Gun->GetCurrentAmmo() + ConsumeAmmo);
 }
 
 void UCombatComponent::OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo)
@@ -291,11 +230,68 @@ void UCombatComponent::OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo)
 	OnAmmoChangedDelegate.Broadcast(CurrentAmmo, MaxAmmo);
 }
 
+void UCombatComponent::Server_RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
+{
+	if (CurrentWeapon == NewWeapon)
+	{
+		PendingWeapon = nullptr;
+
+		if (WeaponActionState == EWeaponActionState::None)
+		{
+			UnequipWeapon();
+		}
+
+		return;
+	}
+
+	if (WeaponActionState != EWeaponActionState::None)
+	{
+		return;
+	}
+
+	if (!CurrentWeapon)
+	{
+		EquipWeapon(NewWeapon);
+		return;
+	}
+
+	PendingWeapon = NewWeapon;
+	UnequipWeapon();
+}
+
+void UCombatComponent::Server_RequestReload_Implementation()
+{
+	if (WeaponActionState != EWeaponActionState::None) return;
+
+	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
+	if (!Gun)
+	{
+		COMMON_LOG(LogGameplay, Error, TEXT("Failed to cast CurrentWeapon to GunBase."));
+		return;
+	}
+
+	if (!InventoryComponent)
+	{
+		COMMON_LOG(LogGameplay, Error, TEXT("InventoryComponent is nullptr."));
+		return;
+	}
+
+	// Reload 검사 시작
+	UAnimMontage* ReloadMontage = nullptr;
+
+	int32 AvailableAmmo = InventoryComponent->GetAmmoCount(Gun->GetAmmoType());
+	EReloadCondition ReloadCondition = Gun->CheckReloadCondition(AvailableAmmo, ReloadMontage);
+
+	if (ReloadCondition == EReloadCondition::Ready)
+		Reload(ReloadMontage);
+	else
+		COMMON_LOG(LogGameplay, Warning, TEXT("Reload failed. State : %s"), *UEnum::GetValueAsString(ReloadCondition));
+}
+
 void UCombatComponent::Server_RequestStartAttack_Implementation()
 {
-	if (!CurrentWeapon) return;
+	if (!CurrentWeapon || WeaponActionState != EWeaponActionState::None) return;
 
-	WeaponActionState = EWeaponActionState::Attack;
 	CurrentWeapon->StartAttack();
 }
 
@@ -304,7 +300,6 @@ void UCombatComponent::Server_RequestStopAttack_Implementation()
 	if (!CurrentWeapon) return;
 
 	CurrentWeapon->StopAttack();
-	WeaponActionState = EWeaponActionState::None;
 }
 
 void UCombatComponent::OnRep_CurrentWeapon(AWeaponBase* OldWeapon)
@@ -336,7 +331,8 @@ void UCombatComponent::ApplyCurrentWeaponAnimLayer()
 				SetAnimLayer(Data->AnimLayerClass);
 			}
 			break;
-		case EWeaponActionState::Unequip:
+		case EWeaponActionState::Reload:
+			break;
 		default:
 			SetAnimLayer(DefaultAnimLayerClass);
 			break;
@@ -390,7 +386,7 @@ void UCombatComponent::Multicast_PlayMontage_Implementation(UAnimMontage* Montag
 	if (OwnerCharacter->HasAuthority())
 	{
 		FOnMontageEnded EndDelegate;
-		EndDelegate.BindUObject(this, &ThisClass::OnMontageEnded);
+		EndDelegate.BindUObject(this, &ThisClass::OnMontageEnded, ActionState);
 
 		PlayMontage(Montage, EndDelegate);
 	}
@@ -400,18 +396,18 @@ void UCombatComponent::Multicast_PlayMontage_Implementation(UAnimMontage* Montag
 	}
 }
 
-void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, EWeaponActionState EndedAction)
 {
 	if (bInterrupted)
 	{
-		WeaponActionState = EWeaponActionState::None;
+		if (WeaponActionState == EndedAction)
+			WeaponActionState = EWeaponActionState::None;
+
 		return;
 	}
 
-	switch (WeaponActionState)
+	switch (EndedAction)
 	{
-	case EWeaponActionState::None:
-		break;
 	case EWeaponActionState::Equip:
 		OnEquipEnded();
 		break;

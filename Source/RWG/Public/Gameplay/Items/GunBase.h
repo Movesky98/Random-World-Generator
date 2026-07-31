@@ -8,6 +8,15 @@
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAmmoChangedDelegate, int32 /* CurrentAmmo */, int32 /* MaxAmmo */);
 
+UENUM()
+enum class EReloadCondition : uint8
+{
+	Ready,
+	MagazineFull,
+	NoSpareAmmo,
+	InvalidData,
+};
+
 /**
  * 
  */
@@ -55,7 +64,13 @@ public:
 
 	void SetCurrentAmmo(int32 NewAmmo);
 
+	int32 GetLoadableAmmo(const int32 AvailableAmmo) const;
+
 	int32 GetMagazineSize() const;
+
+	EReloadCondition CheckReloadCondition(int32 AvailableAmmo, class UAnimMontage*& OutReloadMontage) const;
+
+	class UItemData* GetAmmoType() const;
 
 private:
 	UFUNCTION()
