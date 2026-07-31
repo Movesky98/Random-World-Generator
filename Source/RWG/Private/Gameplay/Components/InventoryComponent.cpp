@@ -152,7 +152,7 @@ bool UInventoryComponent::RemoveItem(UItemData* ItemData, int32 Quantity)
 		if (Index == INDEX_NONE) return false;
 
 		int32 ToRemove = FMath::Min(Remainig, Slots[Index].Quantity);
-		Slots[Index].Quantity -= Remainig;
+		Slots[Index].Quantity -= ToRemove;
 		Remainig -= ToRemove;
 
 		if (Slots[Index].Quantity == 0)
