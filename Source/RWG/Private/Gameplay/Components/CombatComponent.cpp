@@ -77,6 +77,7 @@ void UCombatComponent::BindInputActions(UEnhancedInputComponent* InputComponent)
 		}
 	}
 
+	InputComponent->BindAction(Config->UnequipWeaponAction, ETriggerEvent::Started, this, &ThisClass::Server_RequestUnequipWeapon);
 	InputComponent->BindAction(Config->ReloadAction, ETriggerEvent::Started, this, &ThisClass::Server_RequestReload);
 	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Started, this, &ThisClass::Server_RequestStartAttack);
 	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Completed, this, &ThisClass::Server_RequestStopAttack);
@@ -232,22 +233,8 @@ void UCombatComponent::OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo)
 
 void UCombatComponent::Server_RequestEquipWeapon_Implementation(AWeaponBase* NewWeapon)
 {
-	if (CurrentWeapon == NewWeapon)
-	{
-		PendingWeapon = nullptr;
-
-		if (WeaponActionState == EWeaponActionState::None)
-		{
-			UnequipWeapon();
-		}
-
-		return;
-	}
-
-	if (WeaponActionState != EWeaponActionState::None)
-	{
-		return;
-	}
+	if (CurrentWeapon == NewWeapon) return;
+	if (WeaponActionState != EWeaponActionState::None) return;
 
 	if (!CurrentWeapon)
 	{
@@ -256,6 +243,16 @@ void UCombatComponent::Server_RequestEquipWeapon_Implementation(AWeaponBase* New
 	}
 
 	PendingWeapon = NewWeapon;
+	UnequipWeapon();
+}
+
+void UCombatComponent::Server_RequestUnequipWeapon_Implementation()
+{
+	PendingWeapon = nullptr;
+
+	if (!CurrentWeapon) return;
+	if (WeaponActionState == EWeaponActionState::Unequip) return;
+
 	UnequipWeapon();
 }
 

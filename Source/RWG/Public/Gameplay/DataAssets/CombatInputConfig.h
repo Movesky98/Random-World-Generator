@@ -19,6 +19,9 @@ public:
 	TArray<UInputAction*> EquipWeaponActions;
 
 	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> UnequipWeaponAction;
+	
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> ReloadAction;
 
 	UPROPERTY(EditAnywhere)

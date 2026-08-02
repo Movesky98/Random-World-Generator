@@ -73,6 +73,9 @@ private:
 	void Server_RequestEquipWeapon(AWeaponBase* NewWeapon);
 
 	UFUNCTION(Server, Reliable)
+	void Server_RequestUnequipWeapon();
+
+	UFUNCTION(Server, Reliable)
 	void Server_RequestReload();
 
 	UFUNCTION(Server, Reliable)
