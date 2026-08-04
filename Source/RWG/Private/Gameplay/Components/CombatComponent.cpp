@@ -414,8 +414,6 @@ void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, 
 	case EWeaponActionState::Reload:
 		OnReloadEnded();
 		break;
-	default:
-		break;
 	}
 }
 
