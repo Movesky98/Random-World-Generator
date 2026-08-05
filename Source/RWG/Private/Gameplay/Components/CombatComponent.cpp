@@ -106,11 +106,10 @@ void UCombatComponent::SetCurrentWeapon(AWeaponBase* NewWeapon)
 	if (AGunBase* Gun = Cast<AGunBase>(NewWeapon))
 	{
 		Gun->OnAmmoChangedDelegate.AddUObject(this, &ThisClass::OnAmmoChanged);
-
-		OnAmmoChangedDelegate.Broadcast(Gun->GetCurrentAmmo(), Gun->GetMagazineSize());
-
+		Gun->SetOwner(GetOwner());
 		CurrentWeapon = Gun;
-		CurrentWeapon->SetOwner(GetOwner());
+		
+		OnAmmoChangedDelegate.Broadcast(Gun->GetCurrentAmmo(), Gun->GetMagazineSize());
 	}
 
 	OnCurrentWeaponChanged.Broadcast(CurrentWeapon);
@@ -311,6 +310,7 @@ void UCombatComponent::OnRep_CurrentWeapon(AWeaponBase* OldWeapon)
 	if (AGunBase* Gun = Cast<AGunBase>(CurrentWeapon))
 	{
 		Gun->OnAmmoChangedDelegate.AddUObject(this, &ThisClass::OnAmmoChanged);
+		OnAmmoChangedDelegate.Broadcast(Gun->GetCurrentAmmo(), Gun->GetMagazineSize());
 	}
 }
 
