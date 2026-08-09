@@ -23,7 +23,7 @@ void UCharacterBaseAnimInstance::NativeInitializeAnimation()
 
 		if (!OwnerCharacter)
 		{
-			COMMON_LOG(LogGameplay, Warning, TEXT("OwnerCharacter is null."));
+			COMMON_LOG(LogGameplay, Error, TEXT("OwnerCharacter is null."));
 			return;
 		}
 

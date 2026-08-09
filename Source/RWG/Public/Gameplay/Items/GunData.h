@@ -7,6 +7,8 @@
 #include "GunData.generated.h"
 
 class ABulletProjectile;
+class UNiagaraSystem;
+class USoundBase;
 
 /**
  * 
@@ -44,4 +46,22 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Socket")
 	FName MuzzleSocketName = TEXT("Muzzle");
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Socket")
+	FName EjectionPortSocketName = TEXT("EjectionPort");
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Socket")
+	FName HandGuardSocketName = TEXT("HandGuard");
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|FX")
+	TObjectPtr<UNiagaraSystem> MuzzleFlashFX;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|FX")
+	TObjectPtr<UNiagaraSystem> ShellEjectFX;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Sound")
+	TObjectPtr<USoundBase> FireSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Sound")
+	TObjectPtr<USoundBase> DryFireSound;
 };

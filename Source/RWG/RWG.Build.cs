@@ -20,8 +20,9 @@ public class RWG : ModuleRules
 			"OnlineSubsystem",
 			"OnlineSubsystemNull",
 			"OnlineSubsystemUtils",
-            "NavigationSystem"
-        });
+			"NavigationSystem",
+			"Niagara",
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

@@ -5,7 +5,10 @@
 #include "Gameplay/Items/GunData.h"
 #include "Gameplay/Actors/BulletProjectile.h"
 #include "CommonLogCategories.h"
+
 #include "Net/UnrealNetwork.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 AGunBase::AGunBase()
 {
@@ -44,8 +47,16 @@ void AGunBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 void AGunBase::StartAttack()
 {
 	if (!HasAuthority()) return;
+	
+	if (!CanStartAttack())
+	{
+		if (!HasAmmo())
+		{
+			Multicast_PlayDryFireSound();
+		}
 
-	if (!CanStartAttack()) return;
+		return;
+	}
 
 	UGunData* Data = GetItemData<UGunData>();
 	if (!Data) return;
@@ -76,6 +87,7 @@ void AGunBase::Fire()
 	}
 
 	SetCurrentAmmo(CurrentAmmo - 1);
+	Multicast_PlayFireFX();
 	COMMON_LOG(LogGameplay, Log, TEXT("Fire: %s"), *GetName());
 }
 
@@ -166,7 +178,80 @@ UItemData* AGunBase::GetAmmoType() const
 	return GunData ? GunData->AmmoType : nullptr;
 }
 
+FTransform AGunBase::GetHandGuardTransform() const
+{
+	UGunData* GunData = GetItemData<UGunData>();
+	if (!GunData) return FTransform();
+
+	UStaticMeshComponent* StaticMeshComp = GetStaticMeshComponent();
+	if (!StaticMeshComp) return FTransform();
+
+	return StaticMeshComp->GetSocketTransform(GunData->HandGuardSocketName);
+}
+
 void AGunBase::OnRep_CurrentAmmo()
 {
 	OnAmmoChangedDelegate.Broadcast(CurrentAmmo, GetMagazineSize());
+}
+
+void AGunBase::Multicast_PlayDryFireSound_Implementation()
+{
+	UGunData* Data = GetItemData<UGunData>();
+	if (!Data) return;
+
+	UStaticMeshComponent* MeshComp = GetStaticMeshComponent();
+	if (!MeshComp) return;
+
+	if (Data->DryFireSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			Data->DryFireSound,
+			MeshComp->GetSocketLocation(Data->MuzzleSocketName)
+		);
+	}
+}
+
+void AGunBase::Multicast_PlayFireFX_Implementation()
+{
+	UGunData* Data = GetItemData<UGunData>();
+	if (!Data) return;
+
+	UStaticMeshComponent* MeshComp = GetStaticMeshComponent();
+	if (!MeshComp) return;
+
+	if (Data->MuzzleFlashFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+			Data->MuzzleFlashFX,
+			MeshComp,
+			Data->MuzzleSocketName,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTarget,
+			true
+		);
+	}
+
+	if (Data->ShellEjectFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+			Data->ShellEjectFX,
+			MeshComp,
+			Data->EjectionPortSocketName,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTarget,
+			true
+		);
+	}
+
+	if (Data->FireSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			Data->FireSound,
+			MeshComp->GetSocketLocation(Data->MuzzleSocketName)
+		);
+	}
 }

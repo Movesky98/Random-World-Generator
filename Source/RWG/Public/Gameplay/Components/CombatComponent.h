@@ -53,6 +53,8 @@ public:
 
 	void SetCurrentWeapon(AWeaponBase* NewWeapon);
 
+	AWeaponBase* GetCurrentWeapon() const { return CurrentWeapon; }
+
 protected:
 	void EquipWeapon(AWeaponBase* NewWeapon);
 

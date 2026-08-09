@@ -72,10 +72,18 @@ public:
 
 	class UItemData* GetAmmoType() const;
 
+	FTransform GetHandGuardTransform() const;
+
 private:
 	UFUNCTION()
 	void OnRep_CurrentAmmo();
 
 	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing = OnRep_CurrentAmmo)
 	int32 CurrentAmmo = 0;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlayFireFX();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlayDryFireSound();
 };
