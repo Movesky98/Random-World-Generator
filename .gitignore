@@ -9,6 +9,13 @@ DesignSummary/*
 Content/StarterContent/*
 Content/Fab/*
 
+# OFPA(One File Per Actor) 액터 파일 — 에셋 팩·템플릿 데모 레벨 것만 제외.
+# 게임 레벨(Content/Features/)을 나중에 World Partition으로 바꾸면 그건 커밋해야 하므로 예외로 둔다.
+Content/__ExternalActors__/*
+Content/__ExternalObjects__/*
+!Content/__ExternalActors__/Features/
+!Content/__ExternalObjects__/Features/
+
 
 /hooks/
 /lfs/
