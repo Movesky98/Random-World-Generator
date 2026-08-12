@@ -8,7 +8,7 @@
 #include "Gameplay/Items/ItemData.h"
 #include "Item.generated.h"
 
-UCLASS()
+UCLASS(Abstract)
 class RWG_API AItem : public AActor, public IInteractable
 {
 	GENERATED_BODY()
@@ -26,15 +26,9 @@ protected:
 
 	virtual void Interact(AActor* Interactor) override;
 
-	UStaticMeshComponent* GetStaticMeshComponent() const { return MeshComponent; }
-
 	UPROPERTY(EditAnywhere, Category = "Item")
 	TObjectPtr<UItemData> ItemData;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
 	int32 DropQuantity = 1;
-
-private:
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> MeshComponent;
 };

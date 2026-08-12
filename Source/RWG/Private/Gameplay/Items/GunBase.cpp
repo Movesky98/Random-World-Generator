@@ -6,13 +6,19 @@
 #include "Gameplay/Actors/BulletProjectile.h"
 #include "CommonLogCategories.h"
 
+#include "Components/SkeletalMeshComponent.h"
+
 #include "Net/UnrealNetwork.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
 AGunBase::AGunBase()
 {
-	
+	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
+	SkeletalMeshComponent->SetCollisionProfileName(TEXT("Item"));
+
+	RootComponent = SkeletalMeshComponent;
+
 }
 
 void AGunBase::BeginPlay()
@@ -105,8 +111,9 @@ bool AGunBase::SpawnBulletProjectile()
 		return false;
 	}
 
-	UStaticMeshComponent* MeshComp = GetStaticMeshComponent();
-
+	USkeletalMeshComponent* MeshComp = GetSkeletalMeshComponent();
+	if (!MeshComp) return false;
+	
 	const FVector MuzzleLocation = MeshComp->GetSocketLocation(Data->MuzzleSocketName);
 	const FRotator MuzzleRotation = MeshComp->GetSocketRotation(Data->MuzzleSocketName);
 
@@ -131,6 +138,7 @@ bool AGunBase::SpawnBulletProjectile()
 
 	COMMON_LOG(LogGameplay, Log, TEXT("SpawnParam : Owner is %s, Instigator is %s"), *GetNameSafe(SpawnParams.Owner), *GetNameSafe(SpawnParams.Instigator));
 	Bullet->InitProjectile(Data->BulletDamage, Data->BulletSpeed, Data->BulletLifeTime);
+
 	return true;
 }
 
@@ -183,10 +191,10 @@ FTransform AGunBase::GetHandGuardTransform() const
 	UGunData* GunData = GetItemData<UGunData>();
 	if (!GunData) return FTransform();
 
-	UStaticMeshComponent* StaticMeshComp = GetStaticMeshComponent();
-	if (!StaticMeshComp) return FTransform();
+	USkeletalMeshComponent* MeshComp = GetSkeletalMeshComponent();
+	if (!MeshComp) return FTransform();
 
-	return StaticMeshComp->GetSocketTransform(GunData->HandGuardSocketName);
+	return MeshComp->GetSocketTransform(GunData->HandGuardSocketName);
 }
 
 void AGunBase::OnRep_CurrentAmmo()
@@ -199,7 +207,7 @@ void AGunBase::Multicast_PlayDryFireSound_Implementation()
 	UGunData* Data = GetItemData<UGunData>();
 	if (!Data) return;
 
-	UStaticMeshComponent* MeshComp = GetStaticMeshComponent();
+	USkeletalMeshComponent* MeshComp = GetSkeletalMeshComponent();
 	if (!MeshComp) return;
 
 	if (Data->DryFireSound)
@@ -217,7 +225,7 @@ void AGunBase::Multicast_PlayFireFX_Implementation()
 	UGunData* Data = GetItemData<UGunData>();
 	if (!Data) return;
 
-	UStaticMeshComponent* MeshComp = GetStaticMeshComponent();
+	USkeletalMeshComponent* MeshComp = GetSkeletalMeshComponent();
 	if (!MeshComp) return;
 
 	if (Data->MuzzleFlashFX)

@@ -9,11 +9,6 @@
 // Sets default values
 AItem::AItem()
 {
-	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	RootComponent = MeshComponent;
-
-	MeshComponent->SetCollisionProfileName(TEXT("Item"));
-
 	bReplicates = true;
 }
 

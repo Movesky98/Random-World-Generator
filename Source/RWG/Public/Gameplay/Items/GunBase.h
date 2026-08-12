@@ -29,15 +29,14 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
-	virtual void Equip(ACharacter* NewOwner) override;
-
-	virtual void Unequip() override;
-
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	virtual void StartAttack() override;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class USkeletalMeshComponent> SkeletalMeshComponent;
 
+	virtual void Equip(ACharacter* NewOwner) override;
+	virtual void Unequip() override;
+	virtual void StartAttack() override;
 	virtual void StopAttack() override;
 
 	void Fire();
@@ -52,7 +51,6 @@ protected:
 
 	/* Ammo */
 public:
-
 	FOnAmmoChangedDelegate OnAmmoChangedDelegate;
 
 	int32 GetCurrentAmmo() const { return CurrentAmmo; }
@@ -73,6 +71,8 @@ public:
 	class UItemData* GetAmmoType() const;
 
 	FTransform GetHandGuardTransform() const;
+
+	class USkeletalMeshComponent* GetSkeletalMeshComponent() const { return SkeletalMeshComponent; }
 
 private:
 	UFUNCTION()

@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract)
 class RWG_API AWeaponBase : public AItem
 {
 	GENERATED_BODY()
@@ -21,7 +21,6 @@ public:
 	virtual void Equip(ACharacter* NewOwner);
 
 	virtual void Unequip();
-
 
 protected:
 	virtual void BeginPlay() override;
