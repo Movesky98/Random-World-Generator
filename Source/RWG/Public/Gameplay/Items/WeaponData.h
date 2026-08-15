@@ -15,25 +15,25 @@ class RWG_API UWeaponData : public UItemData
 	GENERATED_BODY()
 public:
 	// 등 소켓
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Socket")
 	FName HolsterSocketName;
 
 	// 장착 소켓
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Socket")
 	FName EquipSocketName;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Properties")
 	float BaseDamage = 10.0f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> EquipMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> UnequipMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> ReloadMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TSubclassOf<UAnimInstance> AnimLayerClass;
 };
