@@ -32,8 +32,5 @@ public:
 	TObjectPtr<UAnimMontage> UnequipMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
-	TObjectPtr<UAnimMontage> ReloadMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TSubclassOf<UAnimInstance> AnimLayerClass;
 };

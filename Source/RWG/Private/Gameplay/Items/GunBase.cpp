@@ -167,8 +167,10 @@ int32 AGunBase::GetMagazineSize() const
 
 EReloadCondition AGunBase::CheckReloadCondition(int32 AvailableAmmo, UAnimMontage*& OutReloadMontage) const
 {
+	OutReloadMontage = nullptr;
+
 	UGunData* GunData = GetItemData<UGunData>();
-	if (!GunData || !GunData->AmmoType || !GunData->ReloadMontage) return EReloadCondition::InvalidData;
+	if (!GunData || !GunData->AmmoType) return EReloadCondition::InvalidData;
 
 	int32 NeededAmmo = GunData->MagazineSize - CurrentAmmo;
 	if (NeededAmmo <= 0) return EReloadCondition::MagazineFull;
@@ -176,7 +178,9 @@ EReloadCondition AGunBase::CheckReloadCondition(int32 AvailableAmmo, UAnimMontag
 	int32 ToLoad = FMath::Min(NeededAmmo, AvailableAmmo);
 	if (ToLoad <= 0) return EReloadCondition::NoSpareAmmo;
 
-	OutReloadMontage = GunData->ReloadMontage;
+	OutReloadMontage = HasAmmo() ? GunData->ReloadMontage : GunData->ReloadEmptyMontage;
+	if (!OutReloadMontage) return EReloadCondition::MontageMissing;
+
 	return EReloadCondition::Ready;
 }
 

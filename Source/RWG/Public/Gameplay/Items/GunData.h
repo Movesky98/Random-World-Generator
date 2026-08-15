@@ -64,4 +64,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Sound")
 	TObjectPtr<USoundBase> DryFireSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> ReloadMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> ReloadEmptyMontage;
 };

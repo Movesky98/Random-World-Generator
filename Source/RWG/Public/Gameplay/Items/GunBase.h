@@ -15,6 +15,7 @@ enum class EReloadCondition : uint8
 	MagazineFull,
 	NoSpareAmmo,
 	InvalidData,
+	MontageMissing,
 };
 
 /**
