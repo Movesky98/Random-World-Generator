@@ -32,11 +32,13 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class USkeletalMeshComponent> SkeletalMeshComponent;
 
 	virtual void Equip(ACharacter* NewOwner) override;
 	virtual void Unequip() override;
+	virtual UAnimMontage* GetCharacterMontage(EWeaponActionState ActionState) const override;
+	virtual void PlayActionMontage(EWeaponActionState ActionState) override;
 	virtual void StartAttack() override;
 	virtual void StopAttack() override;
 
@@ -67,7 +69,7 @@ public:
 
 	int32 GetMagazineSize() const;
 
-	EReloadCondition CheckReloadCondition(int32 AvailableAmmo, class UAnimMontage*& OutReloadMontage) const;
+	EReloadCondition CheckReloadCondition(int32 AvailableAmmo, EWeaponActionState& OutActionState) const;
 
 	class UItemData* GetAmmoType() const;
 

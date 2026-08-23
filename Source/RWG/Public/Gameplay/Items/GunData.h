@@ -70,4 +70,17 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> CharacterReloadEmptyMontage;
+
+	// 아래는 무기 메시가 재생한다. 캐릭터 몽타주와 1:1 짝으로 authoring된 것을 물릴 것
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> GunMeshReloadMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> GunMeshReloadEmptyMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> GunMeshEquipMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> GunMeshUnequipMontage;
 };

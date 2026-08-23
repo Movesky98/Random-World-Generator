@@ -4,21 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Gameplay/Components/BaseInputComponent.h"
+#include "Gameplay/Enums/WeaponTypes.h"
 #include "CombatComponent.generated.h"
 
 class AWeaponBase;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnCurrentWeaponChanged, AWeaponBase* /* Weapon */);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAmmoChangedDelegate, int32 /* CurrentAmmo */, int32 /* MaxAmmo */);
-
-UENUM(BlueprintType)
-enum class EWeaponActionState : uint8
-{
-	None,
-	Equip,
-	Unequip,
-	Reload,
-};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RWG_API UCombatComponent : public UBaseInputComponent
@@ -64,7 +56,7 @@ protected:
 
 	void OnUnequipEnded();
 
-	void Reload(class UAnimMontage* ReloadMontage);
+	void Reload(EWeaponActionState ActionState);
 
 	void OnReloadEnded();
 
@@ -115,7 +107,7 @@ private:
 	void PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDelegate = FOnMontageEnded());
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlayMontage(UAnimMontage* Montage, EWeaponActionState ActionState);
+	void Multicast_PlayMontage(AWeaponBase* Weapon, EWeaponActionState ActionState);
 
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, EWeaponActionState EndedAction);
 

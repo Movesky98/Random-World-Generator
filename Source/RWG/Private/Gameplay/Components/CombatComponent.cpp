@@ -126,13 +126,9 @@ void UCombatComponent::EquipWeapon(AWeaponBase* NewWeapon)
 	CurrentWeapon->Equip(Cast<ACharacter>(GetOwner()));
 	WeaponActionState = EWeaponActionState::Equip;
 
-	UAnimMontage* Montage = nullptr;
-	if (UWeaponData* Data = CurrentWeapon->GetItemData<UWeaponData>())
-	{
-		Montage = Data->CharacterEquipMontage;
-	}
+	UAnimMontage* Montage = CurrentWeapon->GetCharacterMontage(EWeaponActionState::Equip);
 
-	Montage ? Multicast_PlayMontage(Montage, EWeaponActionState::Equip) : OnEquipEnded();
+	Montage ? Multicast_PlayMontage(CurrentWeapon, EWeaponActionState::Equip) : OnEquipEnded();
 }
 void UCombatComponent::UnequipWeapon()
 {
@@ -144,15 +140,11 @@ void UCombatComponent::UnequipWeapon()
 
 	CurrentWeapon->StopAttack();
 
-	UAnimMontage* Montage = nullptr;
-	if (UWeaponData* Data = CurrentWeapon->GetItemData<UWeaponData>())
-	{
-		Montage = Data->CharacterUnequipMontage;
-	}
+	UAnimMontage* Montage = CurrentWeapon->GetCharacterMontage(EWeaponActionState::Unequip);
 
 	WeaponActionState = EWeaponActionState::Unequip;
 
-	Montage ? Multicast_PlayMontage(Montage, EWeaponActionState::Unequip) : OnUnequipEnded();
+	Montage ? Multicast_PlayMontage(CurrentWeapon, EWeaponActionState::Unequip) : OnUnequipEnded();
 }
 
 void UCombatComponent::OnEquipEnded()
@@ -195,12 +187,12 @@ void UCombatComponent::OnUnequipEnded()
 	EquipWeapon(EquipToWeapon);
 }
 
-void UCombatComponent::Reload(UAnimMontage* ReloadMontage)
+void UCombatComponent::Reload(EWeaponActionState ActionState)
 {
 	CurrentWeapon->StopAttack();
 
-	WeaponActionState = EWeaponActionState::Reload;
-	Multicast_PlayMontage(ReloadMontage, EWeaponActionState::Reload);
+	WeaponActionState = ActionState;
+	Multicast_PlayMontage(CurrentWeapon, ActionState);
 }
 
 void UCombatComponent::OnReloadEnded()
@@ -273,13 +265,13 @@ void UCombatComponent::Server_RequestReload_Implementation()
 	}
 
 	// Reload 검사 시작
-	UAnimMontage* ReloadMontage = nullptr;
+	EWeaponActionState ReloadActionState = EWeaponActionState::None;
 
 	int32 AvailableAmmo = InventoryComponent->GetAmmoCount(Gun->GetAmmoType());
-	EReloadCondition ReloadCondition = Gun->CheckReloadCondition(AvailableAmmo, ReloadMontage);
+	EReloadCondition ReloadCondition = Gun->CheckReloadCondition(AvailableAmmo, ReloadActionState);
 
 	if (ReloadCondition == EReloadCondition::Ready)
-		Reload(ReloadMontage);
+		Reload(ReloadActionState);
 	else
 		COMMON_LOG(LogGameplay, Warning, TEXT("Reload failed. State : %s"), *UEnum::GetValueAsString(ReloadCondition));
 }
@@ -329,6 +321,7 @@ void UCombatComponent::ApplyCurrentWeaponAnimLayer()
 			}
 			break;
 		case EWeaponActionState::Reload:
+		case EWeaponActionState::ReloadEmpty:
 			break;
 		default:
 			SetAnimLayer(DefaultAnimLayerClass);
@@ -370,8 +363,14 @@ void UCombatComponent::PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDel
 	}
 }
 
-void UCombatComponent::Multicast_PlayMontage_Implementation(UAnimMontage* Montage, EWeaponActionState ActionState)
+void UCombatComponent::Multicast_PlayMontage_Implementation(AWeaponBase* Weapon, EWeaponActionState ActionState)
 {
+	if (!Weapon) return;
+
+	// 무기 메시 연출은 무기가 자기 데이터에서 골라 직접 재생한다
+	Weapon->PlayActionMontage(ActionState);
+
+	UAnimMontage* Montage = Weapon->GetCharacterMontage(ActionState);
 	if (!Montage) return;
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
@@ -412,6 +411,7 @@ void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, 
 		OnUnequipEnded();
 		break;
 	case EWeaponActionState::Reload:
+	case EWeaponActionState::ReloadEmpty:
 		OnReloadEnded();
 		break;
 	}

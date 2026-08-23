@@ -76,6 +76,24 @@ void AWeaponBase::Unequip()
 	);
 }
 
+UAnimMontage* AWeaponBase::GetCharacterMontage(EWeaponActionState ActionState) const
+{
+	UWeaponData* WeaponData = GetItemData<UWeaponData>();
+	if (!WeaponData) return nullptr;
+
+	switch (ActionState)
+	{
+	case EWeaponActionState::Equip:		return WeaponData->CharacterEquipMontage;
+	case EWeaponActionState::Unequip:	return WeaponData->CharacterUnequipMontage;
+	default:							return nullptr;
+	}
+}
+
+void AWeaponBase::PlayActionMontage(EWeaponActionState ActionState)
+{
+	// AWeaponBase에는 메시 컴포넌트가 없다. 메시를 가진 파생 클래스가 구현한다
+}
+
 void AWeaponBase::AttachToHolster(ACharacter* NewOwner)
 {
 	if (!NewOwner) return;

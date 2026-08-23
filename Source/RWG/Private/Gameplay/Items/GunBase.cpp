@@ -7,6 +7,7 @@
 #include "CommonLogCategories.h"
 
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimInstance.h"
 
 #include "Net/UnrealNetwork.h"
 #include "NiagaraFunctionLibrary.h"
@@ -31,7 +32,6 @@ void AGunBase::Equip(ACharacter* NewOwner)
 {
 	Super::Equip(NewOwner);
 
-	// TODO : 장착 몽타주 재생 (WeaponData->EquipMontage)
 	COMMON_LOG(LogGameplay, Log, TEXT("Gun equipped : %s"), *GetName());
 }
 
@@ -39,8 +39,43 @@ void AGunBase::Unequip()
 {
 	Super::Unequip();
 
-	// TODO : 해제 몽타주 재생 (WeaponData->UnequipMontage)
 	COMMON_LOG(LogGameplay, Log, TEXT("Gun unequipped : %s"), *GetName());
+}
+
+UAnimMontage* AGunBase::GetCharacterMontage(EWeaponActionState ActionState) const
+{
+	UGunData* GunData = GetItemData<UGunData>();
+	if (!GunData) return nullptr;
+
+	switch (ActionState)
+	{
+	case EWeaponActionState::Reload:		return GunData->CharacterReloadMontage;
+	case EWeaponActionState::ReloadEmpty:	return GunData->CharacterReloadEmptyMontage;
+	default:								return Super::GetCharacterMontage(ActionState);
+	}
+}
+
+void AGunBase::PlayActionMontage(EWeaponActionState ActionState)
+{
+	UGunData* GunData = GetItemData<UGunData>();
+	if (!GunData || !SkeletalMeshComponent) return;
+
+	UAnimMontage* Montage = nullptr;
+	switch (ActionState)
+	{
+	case EWeaponActionState::Equip:			Montage = GunData->GunMeshEquipMontage;			break;
+	case EWeaponActionState::Unequip:		Montage = GunData->GunMeshUnequipMontage;		break;
+	case EWeaponActionState::Reload:		Montage = GunData->GunMeshReloadMontage;			break;
+	case EWeaponActionState::ReloadEmpty:	Montage = GunData->GunMeshReloadEmptyMontage;	break;
+	default:								break;
+	}
+	if (!Montage) return;
+
+	UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
+	if (!AnimInstance) return;
+
+	// 연출 전용이므로 종료 델리게이트를 걸지 않는다 (상태 머신은 캐릭터 몽타주가 굴린다)
+	AnimInstance->Montage_Play(Montage);
 }
 
 void AGunBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -165,9 +200,9 @@ int32 AGunBase::GetMagazineSize() const
 	return Data ? Data->MagazineSize : INDEX_NONE;
 }
 
-EReloadCondition AGunBase::CheckReloadCondition(int32 AvailableAmmo, UAnimMontage*& OutReloadMontage) const
+EReloadCondition AGunBase::CheckReloadCondition(int32 AvailableAmmo, EWeaponActionState& OutActionState) const
 {
-	OutReloadMontage = nullptr;
+	OutActionState = EWeaponActionState::None;
 
 	UGunData* GunData = GetItemData<UGunData>();
 	if (!GunData || !GunData->AmmoType) return EReloadCondition::InvalidData;
@@ -178,8 +213,12 @@ EReloadCondition AGunBase::CheckReloadCondition(int32 AvailableAmmo, UAnimMontag
 	int32 ToLoad = FMath::Min(NeededAmmo, AvailableAmmo);
 	if (ToLoad <= 0) return EReloadCondition::NoSpareAmmo;
 
-	OutReloadMontage = HasAmmo() ? GunData->CharacterReloadMontage : GunData->CharacterReloadEmptyMontage;
-	if (!OutReloadMontage) return EReloadCondition::MontageMissing;
+	OutActionState = HasAmmo() ? EWeaponActionState::Reload : EWeaponActionState::ReloadEmpty;
+	if (!GetCharacterMontage(OutActionState))
+	{
+		OutActionState = EWeaponActionState::None;
+		return EReloadCondition::MontageMissing;
+	}
 
 	return EReloadCondition::Ready;
 }
