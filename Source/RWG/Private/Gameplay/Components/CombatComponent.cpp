@@ -129,7 +129,7 @@ void UCombatComponent::EquipWeapon(AWeaponBase* NewWeapon)
 	UAnimMontage* Montage = nullptr;
 	if (UWeaponData* Data = CurrentWeapon->GetItemData<UWeaponData>())
 	{
-		Montage = Data->EquipMontage;
+		Montage = Data->CharacterEquipMontage;
 	}
 
 	Montage ? Multicast_PlayMontage(Montage, EWeaponActionState::Equip) : OnEquipEnded();
@@ -147,7 +147,7 @@ void UCombatComponent::UnequipWeapon()
 	UAnimMontage* Montage = nullptr;
 	if (UWeaponData* Data = CurrentWeapon->GetItemData<UWeaponData>())
 	{
-		Montage = Data->UnequipMontage;
+		Montage = Data->CharacterUnequipMontage;
 	}
 
 	WeaponActionState = EWeaponActionState::Unequip;

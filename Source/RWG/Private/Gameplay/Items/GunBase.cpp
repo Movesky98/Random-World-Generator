@@ -178,7 +178,7 @@ EReloadCondition AGunBase::CheckReloadCondition(int32 AvailableAmmo, UAnimMontag
 	int32 ToLoad = FMath::Min(NeededAmmo, AvailableAmmo);
 	if (ToLoad <= 0) return EReloadCondition::NoSpareAmmo;
 
-	OutReloadMontage = HasAmmo() ? GunData->ReloadMontage : GunData->ReloadEmptyMontage;
+	OutReloadMontage = HasAmmo() ? GunData->CharacterReloadMontage : GunData->CharacterReloadEmptyMontage;
 	if (!OutReloadMontage) return EReloadCondition::MontageMissing;
 
 	return EReloadCondition::Ready;

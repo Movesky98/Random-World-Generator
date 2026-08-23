@@ -26,10 +26,10 @@ public:
 	float BaseDamage = 10.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
-	TObjectPtr<UAnimMontage> EquipMontage;
+	TObjectPtr<UAnimMontage> CharacterEquipMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
-	TObjectPtr<UAnimMontage> UnequipMontage;
+	TObjectPtr<UAnimMontage> CharacterUnequipMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TSubclassOf<UAnimInstance> AnimLayerClass;

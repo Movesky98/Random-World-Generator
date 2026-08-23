@@ -66,8 +66,8 @@ public:
 	TObjectPtr<USoundBase> DryFireSound;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
-	TObjectPtr<UAnimMontage> ReloadMontage;
+	TObjectPtr<UAnimMontage> CharacterReloadMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
-	TObjectPtr<UAnimMontage> ReloadEmptyMontage;
+	TObjectPtr<UAnimMontage> CharacterReloadEmptyMontage;
 };
