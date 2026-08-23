@@ -14,6 +14,7 @@ AWeaponBase::AWeaponBase()
 
 void AWeaponBase::BeginPlay()
 {
+	Super::BeginPlay();
 }
 
 void AWeaponBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
