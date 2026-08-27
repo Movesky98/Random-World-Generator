@@ -38,6 +38,12 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "State")
 	float Speed;
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	float AimYaw;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	float AimPitch;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "State")
 	float MoveThreshold = 3.0f;
 
