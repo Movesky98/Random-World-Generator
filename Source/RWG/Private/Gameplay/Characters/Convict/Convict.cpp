@@ -20,7 +20,7 @@
 AConvict::AConvict()
 {
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	SpringArmComponent->SetupAttachment(RootComponent);
+	SpringArmComponent->SetupAttachment(GetMesh());
 	SpringArmComponent->TargetArmLength = 200.0f;
 	SpringArmComponent->bUsePawnControlRotation = true;
 

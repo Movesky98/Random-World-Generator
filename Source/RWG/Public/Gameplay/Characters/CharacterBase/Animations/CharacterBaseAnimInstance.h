@@ -21,6 +21,10 @@ class RWG_API UCharacterBaseAnimInstance : public UAnimInstance
 public:
 	UCharacterBaseAnimInstance();
 
+	float GetAimYaw() const { return AimYaw; }
+
+	bool ShouldMove() const { return bShouldMove; }
+
 protected:
 	virtual void NativeInitializeAnimation() override;
 
