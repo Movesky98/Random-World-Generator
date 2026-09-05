@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/DataAssets/BaseInputConfig.h"
+#include "Gameplay/DataAssets/InputConfigBase.h"
 #include "LocomotionInputConfig.generated.h"
 
 class UInputMappingContext;
@@ -13,7 +13,7 @@ class UInputAction;
  * 
  */
 UCLASS()
-class RWG_API ULocomotionInputConfig : public UBaseInputConfig
+class RWG_API ULocomotionInputConfig : public UInputConfigBase
 {
 	GENERATED_BODY()
 	

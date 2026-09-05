@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/Characters/CharacterBase/Animations/CharacterBaseAnimInstance.h"
+#include "Gameplay/Characters/CharacterBase/Animation/CharacterBaseAnimInstance.h"
 #include "ZombieAnimInstance.generated.h"
 
 /**

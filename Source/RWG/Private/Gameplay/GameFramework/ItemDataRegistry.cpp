@@ -2,7 +2,7 @@
 
 
 #include "Gameplay/GameFramework/ItemDataRegistry.h"
-#include "Gameplay/Items/ItemData.h"
+#include "Gameplay/DataAssets/ItemData.h"
 #include "CommonLogCategories.h"
 
 #include "Engine/AssetManager.h"

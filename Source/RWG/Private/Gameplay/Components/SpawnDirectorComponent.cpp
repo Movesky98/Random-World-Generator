@@ -3,7 +3,7 @@
 
 #include "Gameplay/Components/SpawnDirectorComponent.h"
 #include "Gameplay/Items/Item.h"
-#include "Gameplay/Items/ItemData.h"
+#include "Gameplay/DataAssets/ItemData.h"
 #include "Gameplay/Components/TimeManagementComponent.h"
 #include "Gameplay/Components/HealthComponent.h"
 #include "Gameplay/Characters/Convict/Convict.h"

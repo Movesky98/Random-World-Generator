@@ -7,8 +7,8 @@
 #include "InputActionValue.h"
 #include "InputHandlerComponent.generated.h"
 
-class UBaseInputConfig;
-class UBaseInputComponent;
+class UInputConfigBase;
+class UInputComponentBase;
 class ULocomotionComponent;
 class IInputBindable;
 

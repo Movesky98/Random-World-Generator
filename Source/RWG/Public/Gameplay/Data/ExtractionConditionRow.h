@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Engine/DataTable.h"
-#include "Gameplay/Items/ItemData.h"
+#include "Gameplay/DataAssets/ItemData.h"
 #include "ExtractionConditionRow.generated.h"
 
 USTRUCT()

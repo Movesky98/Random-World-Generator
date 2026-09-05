@@ -2,7 +2,7 @@
 
 
 #include "Gameplay/Items/WeaponBase.h"
-#include "Gameplay/Items/WeaponData.h"
+#include "Gameplay/DataAssets/WeaponData.h"
 #include "Gameplay/Components/InventoryComponent.h"
 #include "GameFramework/Character.h"
 #include "Net/UnrealNetwork.h"

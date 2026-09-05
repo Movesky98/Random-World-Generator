@@ -2,10 +2,10 @@
 
 
 #include "Gameplay/Components/InputHandlerComponent.h"
-#include "Gameplay/DataAssets/BaseInputConfig.h"
+#include "Gameplay/DataAssets/InputConfigBase.h"
 #include "Gameplay/Components/LocomotionComponent.h"
 #include "Gameplay/Interfaces/InputBindable.h"
-#include "Gameplay/Components/BaseInputComponent.h"
+#include "Gameplay/Components/InputComponentBase.h"
 #include "CommonLogCategories.h"
 
 #include "InputMappingContext.h"

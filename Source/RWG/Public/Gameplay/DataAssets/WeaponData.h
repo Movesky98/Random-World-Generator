@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/Items/ItemData.h"
+#include "Gameplay/DataAssets/ItemData.h"
 #include "WeaponData.generated.h"
 
 /**

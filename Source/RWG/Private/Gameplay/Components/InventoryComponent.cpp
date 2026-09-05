@@ -4,7 +4,7 @@
 #include "Gameplay/Components/InventoryComponent.h"
 #include "Gameplay/DataAssets/InventoryInputConfig.h"
 #include "Gameplay/Items/WeaponBase.h"
-#include "Gameplay/Items/ArmorData.h"
+#include "Gameplay/DataAssets/ArmorData.h"
 #include "Gameplay/UI/InventoryWidget.h"
 #include "Gameplay/UI/PlayerHUD.h"
 #include "CommonLogCategories.h"
@@ -56,7 +56,7 @@ void UInventoryComponent::BindInputActions(UEnhancedInputComponent* InputCompone
 	InputComponent->BindAction(InventoryConfig->ToggleInventoryAction, ETriggerEvent::Triggered, this, &ThisClass::ToggleInventory);
 }
 
-TSubclassOf<UBaseInputConfig> UInventoryComponent::GetConfigClass()
+TSubclassOf<UInputConfigBase> UInventoryComponent::GetConfigClass()
 {
 	return UInventoryInputConfig::StaticClass();
 }

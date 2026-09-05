@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Gameplay/Items/ItemInstance.h"
+#include "Gameplay/Data/ItemInstance.h"
 #include "ItemSlot.generated.h"
 
 class UImage;

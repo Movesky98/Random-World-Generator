@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Gameplay/Interfaces/Interactable.h"
-#include "Gameplay/Items/ItemData.h"
+#include "Gameplay/DataAssets/ItemData.h"
 #include "Item.generated.h"
 
 UCLASS(Abstract)

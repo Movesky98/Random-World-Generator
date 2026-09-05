@@ -6,23 +6,23 @@
 #include "Components/ActorComponent.h"
 #include "Gameplay/Interfaces/InputBindable.h"
 #include "Gameplay/Interfaces/WidgetBindable.h"
-#include "BaseInputComponent.generated.h"
+#include "InputComponentBase.generated.h"
 
-class UBaseInputConfig;
+class UInputConfigBase;
 class UUserWidgetBase;
 
 const FName InputConfigName = FName("InputConfig");
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnConfigLoaded, UBaseInputComponent* InputComponent);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnConfigLoaded, UInputComponentBase* InputComponent);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RWG_API UBaseInputComponent : public UActorComponent, public IInputBindable, public IWidgetBindable
+class RWG_API UInputComponentBase : public UActorComponent, public IInputBindable, public IWidgetBindable
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UBaseInputComponent();
+	UInputComponentBase();
 
 	FOnConfigLoaded OnConfigLoaded;
 
@@ -41,7 +41,7 @@ protected:
 	virtual void BindInputActions(UEnhancedInputComponent* InputComponent) override
 		PURE_VIRTUAL(BindInputActions, );
 
-	virtual UBaseInputConfig* GetInputConfig() const override;
+	virtual UInputConfigBase* GetInputConfig() const override;
 
 	virtual int32 GetIMCPriority() const override;
 
@@ -51,10 +51,10 @@ protected:
 
 	void BindOnConfigLoaded(TFunction<void()> Callback) override;
 
-	virtual TSubclassOf<UBaseInputConfig> GetConfigClass() PURE_VIRTUAL(GetConfigClass, return nullptr;);
+	virtual TSubclassOf<UInputConfigBase> GetConfigClass() PURE_VIRTUAL(GetConfigClass, return nullptr;);
 
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UBaseInputConfig* LoadedConfig;
+	UInputConfigBase* LoadedConfig;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	int32 IMCPriority = 0;

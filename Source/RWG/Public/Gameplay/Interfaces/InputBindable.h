@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "EnhancedInputComponent.h"
-#include "Gameplay/DataAssets/BaseInputConfig.h"
+#include "Gameplay/DataAssets/InputConfigBase.h"
 #include "InputBindable.generated.h"
 
 // This class does not need to be modified.
@@ -26,7 +26,7 @@ class RWG_API IInputBindable
 public:
 	virtual void BindInputActions(UEnhancedInputComponent* InputComponent) = 0;
 
-	virtual UBaseInputConfig* GetInputConfig() const = 0;
+	virtual UInputConfigBase* GetInputConfig() const = 0;
 
 	virtual int32 GetIMCPriority() const = 0;
 

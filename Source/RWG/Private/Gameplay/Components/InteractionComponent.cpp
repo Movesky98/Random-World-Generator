@@ -42,7 +42,7 @@ void UInteractionComponent::BindInputActions(UEnhancedInputComponent* InputCompo
 	InputComponent->BindAction(InteractionConfig->InteractAction, ETriggerEvent::Triggered, this, &ThisClass::PerformInteractionTrace);
 }
 
-TSubclassOf<UBaseInputConfig> UInteractionComponent::GetConfigClass()
+TSubclassOf<UInputConfigBase> UInteractionComponent::GetConfigClass()
 {
 	return UInteractionInputConfig::StaticClass();
 }

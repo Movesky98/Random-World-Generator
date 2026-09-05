@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "BaseInputConfig.generated.h"
+#include "InputConfigBase.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
@@ -13,7 +13,7 @@ class UInputAction;
  * 
  */
 UCLASS()
-class RWG_API UBaseInputConfig : public UDataAsset
+class RWG_API UInputConfigBase : public UDataAsset
 {
 	GENERATED_BODY()
 	

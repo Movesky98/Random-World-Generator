@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Gameplay/Characters/CharacterBase/Animations/CharacterBaseAnimInstance.h"
+#include "Gameplay/Characters/CharacterBase/Animation/CharacterBaseAnimInstance.h"
 #include "Gameplay/Characters/CharacterBase/CharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CommonLogCategories.h"

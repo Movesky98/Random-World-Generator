@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/Components/BaseInputComponent.h"
+#include "Gameplay/Components/InputComponentBase.h"
 #include "Gameplay/Enums/WeaponTypes.h"
 #include "CombatComponent.generated.h"
 
@@ -13,7 +13,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnCurrentWeaponChanged, AWeaponBase* /* Wea
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAmmoChangedDelegate, int32 /* CurrentAmmo */, int32 /* MaxAmmo */);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RWG_API UCombatComponent : public UBaseInputComponent
+class RWG_API UCombatComponent : public UInputComponentBase
 {
 	GENERATED_BODY()
 
@@ -31,7 +31,7 @@ protected:
 
 	/* Input */
 protected:
-	TSubclassOf<UBaseInputConfig> GetConfigClass() override;
+	TSubclassOf<UInputConfigBase> GetConfigClass() override;
 
 	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
 

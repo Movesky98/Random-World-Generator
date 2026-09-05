@@ -108,7 +108,7 @@ void ULocomotionComponent::UpdateTurnInPlace(float DeltaTime)
 	}
 }
 
-TSubclassOf<UBaseInputConfig> ULocomotionComponent::GetConfigClass()
+TSubclassOf<UInputConfigBase> ULocomotionComponent::GetConfigClass()
 {
 	return ULocomotionInputConfig::StaticClass();
 }

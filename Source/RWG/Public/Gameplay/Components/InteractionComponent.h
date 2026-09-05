@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/Components/BaseInputComponent.h"
+#include "Gameplay/Components/InputComponentBase.h"
 #include "InteractionComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RWG_API UInteractionComponent : public UBaseInputComponent
+class RWG_API UInteractionComponent : public UInputComponentBase
 {
 	GENERATED_BODY()
 
@@ -21,7 +21,7 @@ protected:
 
 	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
 
-	TSubclassOf<UBaseInputConfig> GetConfigClass() override;
+	TSubclassOf<UInputConfigBase> GetConfigClass() override;
 
 	void PerformInteractionTrace();
 

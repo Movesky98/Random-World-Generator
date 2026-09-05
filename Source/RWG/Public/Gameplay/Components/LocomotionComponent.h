@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/Components/BaseInputComponent.h"
+#include "Gameplay/Components/InputComponentBase.h"
 #include "LocomotionComponent.generated.h"
 
 class ACharacter;
@@ -11,7 +11,7 @@ class UCharacterMovementComponent;
 class UConvictAnimInstance;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RWG_API ULocomotionComponent : public UBaseInputComponent
+class RWG_API ULocomotionComponent : public UInputComponentBase
 {
 	GENERATED_BODY()
 
@@ -25,7 +25,7 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	TSubclassOf<UBaseInputConfig> GetConfigClass() override;
+	TSubclassOf<UInputConfigBase> GetConfigClass() override;
 
 	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
 

@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/DataAssets/BaseInputConfig.h"
+#include "Gameplay/DataAssets/InputConfigBase.h"
 #include "CombatInputConfig.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class RWG_API UCombatInputConfig : public UBaseInputConfig
+class RWG_API UCombatInputConfig : public UInputConfigBase
 {
 	GENERATED_BODY()
 	

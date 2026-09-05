@@ -5,7 +5,7 @@
 #include "Gameplay/Components/InventoryComponent.h"
 #include "Gameplay/DataAssets/CombatInputConfig.h"
 #include "Gameplay/Items/WeaponBase.h"
-#include "Gameplay/Items/WeaponData.h"
+#include "Gameplay/DataAssets/WeaponData.h"
 #include "Gameplay/Items/GunBase.h"
 #include "Gameplay/UI/PlayerHUD.h"
 #include "CommonLogCategories.h"
@@ -48,7 +48,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, WeaponActionState);
 }
 
-TSubclassOf<UBaseInputConfig> UCombatComponent::GetConfigClass()
+TSubclassOf<UInputConfigBase> UCombatComponent::GetConfigClass()
 {
 	return UCombatInputConfig::StaticClass();
 }

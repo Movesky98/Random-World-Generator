@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ItemData.h"
+#include "Gameplay/DataAssets/ItemData.h"
 #include "ItemInstance.generated.h"
 
 USTRUCT(BlueprintType)

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/Components/BaseInputComponent.h"
-#include "Gameplay/Items/ItemInstance.h"
+#include "Gameplay/Components/InputComponentBase.h"
+#include "Gameplay/Data/ItemInstance.h"
 #include "InventoryComponent.generated.h"
 
 class AWeaponBase;
@@ -17,7 +17,7 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FOnItemAdded, UItemData* /* ItemData */, in
  * 
  */
 UCLASS()
-class RWG_API UInventoryComponent : public UBaseInputComponent
+class RWG_API UInventoryComponent : public UInputComponentBase
 {
 	GENERATED_BODY()
 public:
@@ -49,7 +49,7 @@ public:
 protected:
 	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
 
-	TSubclassOf<UBaseInputConfig> GetConfigClass() override;
+	TSubclassOf<UInputConfigBase> GetConfigClass() override;
 
 	void ToggleInventory();
 

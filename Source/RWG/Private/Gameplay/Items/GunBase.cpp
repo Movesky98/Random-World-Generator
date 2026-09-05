@@ -2,7 +2,7 @@
 
 
 #include "Gameplay/Items/GunBase.h"
-#include "Gameplay/Items/GunData.h"
+#include "Gameplay/DataAssets/GunData.h"
 #include "Gameplay/Actors/BulletProjectile.h"
 #include "CommonLogCategories.h"
 
