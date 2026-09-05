@@ -16,9 +16,9 @@ class RWG_API UCommonMessageDialog : public UUserWidget
 	
 	
 private:
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UButton* Button;
 };

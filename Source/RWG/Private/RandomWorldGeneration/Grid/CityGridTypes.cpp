@@ -1,4 +1,4 @@
-
+﻿
 #include "RandomWorldGeneration/Grid/CityGridTypes.h"
 
 const FVector FCityGrid::GetOrigin() const
