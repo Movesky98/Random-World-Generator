@@ -47,10 +47,4 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	bShouldMove = bHasInput && bIsMoving;
 	Direction = CalculateDirection(Velocity, Rotation);
-
-	const FRotator AimRotation = OwnerCharacter->GetBaseAimRotation();
-	const FRotator AimDelta = (AimRotation - Rotation).GetNormalized();
-
-	AimYaw = AimDelta.Yaw;
-	AimPitch = AimDelta.Pitch;
 }

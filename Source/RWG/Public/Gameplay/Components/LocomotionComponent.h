@@ -8,7 +8,7 @@
 
 class ACharacter;
 class UCharacterMovementComponent;
-class UCharacterBaseAnimInstance;
+class UConvictAnimInstance;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RWG_API ULocomotionComponent : public UBaseInputComponent
@@ -58,7 +58,7 @@ protected:
 	TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
 	UPROPERTY()
-	TObjectPtr<UCharacterBaseAnimInstance> AnimInstance;
+	TObjectPtr<UConvictAnimInstance> AnimInstance;
 
 public:
 	void Move(const FInputActionValue& Value);

@@ -27,11 +27,25 @@ class RWG_API AConvict : public ACharacterBase
 public:
 	AConvict();
 
+	/** 시뮬레이티드 프록시에서 쓸 조준 Yaw(도, 월드 기준). 압축을 풀고 -180~180으로 감아서 돌려준다. */
+	float GetRemoteViewYaw() const { return FRotator::NormalizeAxis(FRotator::DecompressAxisFromShort(RemoteViewYaw16)); }
+
 protected:
 	virtual void PostInitializeComponents() override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
+
 	virtual void ProcessDamage(const FDamageInfo& DamageInfo) override;
-	
+
+	/**
+	 * 이 캐릭터가 바라보는 방향(월드 기준 Yaw)을 압축해서 담는다. 엔진의 RemoteViewPitch16과 짝이다.
+	 * 주인은 자기 컨트롤러로 직접 구하므로 COND_SkipOwner로 제외한다.
+	 */
+	UPROPERTY(Replicated)
+	uint16 RemoteViewYaw16 = 0;
+
 protected:
 	UFUNCTION()
 	void OnProximityBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,

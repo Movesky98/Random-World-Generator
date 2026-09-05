@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/Characters/CharacterBase/Animations/CharacterBaseAnimInstance.h"
+#include "Gameplay/Characters/Convict/Animation/ConvictAnimInstance.h"
 #include "GunAnimInstance.generated.h"
 
 class UCombatComponent;
@@ -12,7 +12,7 @@ class UCombatComponent;
  * 
  */
 UCLASS()
-class RWG_API UGunAnimInstance : public UCharacterBaseAnimInstance
+class RWG_API UGunAnimInstance : public UConvictAnimInstance
 {
 	GENERATED_BODY()
 	

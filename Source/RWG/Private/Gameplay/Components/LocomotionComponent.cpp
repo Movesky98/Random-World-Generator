@@ -3,7 +3,7 @@
 
 #include "Gameplay/Components/LocomotionComponent.h"
 #include "Gameplay/DataAssets/LocomotionInputConfig.h"
-#include "Gameplay/Characters/CharacterBase/Animations/CharacterBaseAnimInstance.h"
+#include "Gameplay/Characters/Convict/Animation/ConvictAnimInstance.h"
 #include "CommonLogCategories.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -44,7 +44,7 @@ void ULocomotionComponent::InitializeComponent()
 
 	if (USkeletalMeshComponent* MeshComponent = OwnerCharacter->GetMesh())
 	{
-		AnimInstance = Cast<UCharacterBaseAnimInstance>(MeshComponent->GetAnimInstance());
+		AnimInstance = Cast<UConvictAnimInstance>(MeshComponent->GetAnimInstance());
 	}
 
 	if (!AnimInstance)

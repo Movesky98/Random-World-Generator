@@ -15,6 +15,7 @@
 #include "Camera/CameraComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Perception/AISense_Sight.h"
+#include "Net/UnrealNetwork.h"
 
 
 AConvict::AConvict()
@@ -47,6 +48,24 @@ void AConvict::PostInitializeComponents()
 
 	ProximityDetector->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnProximityBeginOverlap);
 	ProximityDetector->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnProximityEndOverlap);
+}
+
+void AConvict::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(AConvict, RemoteViewYaw16, COND_SkipOwner);
+}
+
+void AConvict::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
+{
+	Super::PreReplication(ChangedPropertyTracker);
+
+	// APawn이 RemoteViewPitch16을 채우는 자리와 같다. 서버만 모든 컨트롤러를 갖고 있으므로 여기서 계산한다.
+	if (GetLocalRole() == ROLE_Authority && GetController())
+	{
+		RemoteViewYaw16 = FRotator::CompressAxisToShort(GetController()->GetControlRotation().Yaw);
+	}
 }
 
 void AConvict::ProcessDamage(const FDamageInfo& DamageInfo)
