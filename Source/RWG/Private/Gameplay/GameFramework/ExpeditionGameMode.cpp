@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Gameplay/GameFramework/ExpeditionGameMode.h"
@@ -250,10 +250,10 @@ void AExpeditionGameMode::PrepareGameStart()
     // 3. 플레이어 스폰 위치 지정 (아직 없음)
     if (AExpeditionGameState* ExpeditionGS = Cast<AExpeditionGameState>(GameState))
     {
-        float StartGameTime = (float)ExpeditionGS->GetServerWorldTimeSeconds() + PrepareGameTime;
+        float GameStartTime = (float)ExpeditionGS->GetServerWorldTimeSeconds() + PrepareGameTime;
         COMMON_LOG(LogGameplay, Warning, TEXT("[Prepare] Now=%.2f, PrepareTime=%.2f, GameStartTime=%.2f"),
-            ExpeditionGS->GetServerWorldTimeSeconds(), PrepareGameTime, StartGameTime);
-        ExpeditionGS->SetGameStartTime(StartGameTime);
+            ExpeditionGS->GetServerWorldTimeSeconds(), PrepareGameTime, GameStartTime);
+        ExpeditionGS->SetGameStartTime(GameStartTime);
 
         ExpeditionGS->SetGameplayState(EGameplayState::Preparing);
         // 게임 시작 타이머 설정

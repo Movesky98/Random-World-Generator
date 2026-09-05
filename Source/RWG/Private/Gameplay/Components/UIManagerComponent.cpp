@@ -37,12 +37,12 @@ void UUIManagerComponent::BeginPlay()
 
 void UUIManagerComponent::InitializePawnWidgets(APawn* aPawn)
 {
-	if (!OwnerController->IsLocalController())
+	if (!OwnerController->IsLocalPlayerController())
 	{
 		COMMON_LOG(LogGameplay, Warning, TEXT("NetMode: %s / OwnerController: %s / IsLocal: %d / Pawn : %s"),
 			*ToString(GetWorld()->GetNetMode()),
 			*GetNameSafe(OwnerController),
-			OwnerController ? OwnerController->IsLocalController() : false,
+			OwnerController ? OwnerController->IsLocalPlayerController() : false,
 			*GetNameSafe(aPawn));
 		return;
 	}

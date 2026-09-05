@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Session/UI/Menu/LobbyMenu.h"
@@ -29,7 +29,7 @@ void ULobbyMenu::NativeConstruct()
 	if (!ensure(ReadyButton != nullptr)) return;
 
 	ExitButton->OnClicked.AddDynamic(this, &ThisClass::ExitSession);
-	ReadyButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedReadyButton);
+	ReadyButton->OnClicked.AddDynamic(this, &ThisClass::OnReadyButtonClicked);
 
 	if (ALobbyGameState* LobbyGS = GetLobbyGameState())
 	{
@@ -133,7 +133,7 @@ void ULobbyMenu::ExitSession()
 	// TODO : 세션 나가기
 }
 
-void ULobbyMenu::OnClickedReadyButton()
+void ULobbyMenu::OnReadyButtonClicked()
 {
 	APlayerControllerBase* PCBase = GetOwningPlayer<APlayerControllerBase>();
 	if (!PCBase)

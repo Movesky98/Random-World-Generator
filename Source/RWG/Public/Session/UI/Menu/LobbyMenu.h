@@ -40,7 +40,7 @@ protected:
 	void ExitSession();
 
 	UFUNCTION()
-	void OnClickedReadyButton();
+	void OnReadyButtonClicked();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lobby")
 	TSubclassOf<class UPlayerSlot> PlayerSlotClass;

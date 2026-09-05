@@ -82,25 +82,25 @@ protected:
 	void HandleError(ESessionUIError Error);
 
 private:
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* MaxPlayersText;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class USlider* MaxPlayersSlider;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UEditableTextBox* SessionNameText;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UCheckBox* LANCheckBox;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UButton* CreateSessionButton;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UButton* FindSessionsButton;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UScrollBox* SessionScrollBox;
 
 	UPROPERTY(meta = (BindWidget))

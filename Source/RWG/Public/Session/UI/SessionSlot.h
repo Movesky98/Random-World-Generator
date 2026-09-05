@@ -49,16 +49,16 @@ protected:
 	void OnJoinButtonClicked();
 	
 private:
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* SessionNameText;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* PlayerCountText;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* PingText;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UButton* JoinButton;
 
 	FSessionData SessionData;
