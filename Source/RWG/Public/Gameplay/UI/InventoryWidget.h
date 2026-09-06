@@ -18,27 +18,38 @@ class RWG_API UInventoryWidget : public UGameplayWidget
 {
 	GENERATED_BODY()
 
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	UInventoryWidget();
 
-	void InitInventory(UInventoryComponent* InInventoryComponent);
-
 protected:
 	void NativeConstruct() override;
-	
-	void ToggleInventory();
-	
-	void RefreshInventory();
 
 	void NativeDestruct() override;
 
+/*********************************************************************
+*                            캐시된 참조
+*********************************************************************/
+private:
+	UPROPERTY()
+	TObjectPtr<UInventoryComponent> InventoryComponent;
+
+/*********************************************************************
+*                           인벤토리 표시
+*********************************************************************/
+protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWrapBox> ItemGrid;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|Item")
 	TSubclassOf<UItemSlot> ItemSlotClass;
 
-private:
-	UPROPERTY()
-	TObjectPtr<UInventoryComponent> InventoryComponent;
+	void ToggleInventory();
+
+	void RefreshInventory();
+
+public:
+	void InitInventory(UInventoryComponent* InInventoryComponent);
 };

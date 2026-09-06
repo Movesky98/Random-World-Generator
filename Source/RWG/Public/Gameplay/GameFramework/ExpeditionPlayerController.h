@@ -17,25 +17,35 @@ UCLASS()
 class RWG_API AExpeditionPlayerController : public APlayerControllerBase
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	AExpeditionPlayerController();
 
 protected:
 	virtual void BeginPlay() override;
+
 	virtual void OnPossess(APawn* aPawn) override;
-	virtual void OnUnPossess() override;
+
 	virtual void AcknowledgePossession(APawn* aPawn) override;
 
+	virtual void OnUnPossess() override;
+
+/*********************************************************************
+*                           구성 컴포넌트
+*********************************************************************/
+protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UUIManagerComponent* UIManagerComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UInputHandlerComponent* InputHandlerComponent;
 
-	////////////////////////////// GameplayState 관련 //////////////////////////////
-public:
-	void RequestReturnToLobby();
-
+/*********************************************************************
+*                             게임 진행
+*********************************************************************/
 protected:
 	UFUNCTION(Server, Reliable)
 	void Server_RequestReturnToLobby();
@@ -46,4 +56,7 @@ protected:
 	void HandleGameOver();
 
 	void OnGameplayStateChanged(EGameplayState GameplayState);
+
+public:
+	void RequestReturnToLobby();
 };

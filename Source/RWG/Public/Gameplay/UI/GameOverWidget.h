@@ -16,15 +16,18 @@ UCLASS()
 class RWG_API UGameOverWidget : public UGameplayWidget
 {
 	GENERATED_BODY()
-	
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	virtual void NativeConstruct() override;
 
-	UFUNCTION()
-	void OnReturnToLobbyButtonClicked();
-
+/*********************************************************************
+*                             결과 표시
+*********************************************************************/
 private:
-	UPROPERTY(meta = (BindWidget))	
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> ResultTitleText;
 
 	UPROPERTY(meta = (BindWidget))
@@ -32,4 +35,8 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> ConfirmRewardButton;
+
+public:
+	UFUNCTION()
+	void OnReturnToLobbyButtonClicked();
 };

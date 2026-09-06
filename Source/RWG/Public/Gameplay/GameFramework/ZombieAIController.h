@@ -19,39 +19,57 @@ UCLASS()
 class RWG_API AZombieAIController : public AAIController
 {
 	GENERATED_BODY()
-	
-public:
-    AZombieAIController();
 
-    void StopBehaviorTree();
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
+	AZombieAIController();
 
 protected:
-    virtual void OnPossess(APawn* InPawn) override;
-    virtual void OnUnPossess() override;
+	virtual void OnPossess(APawn* InPawn) override;
 
-    UFUNCTION()
-    void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	virtual void OnUnPossess() override;
 
-    FGenericTeamId GetGenericTeamId() const override;
-
-    ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GenericTeam")
-    uint8 TeamId;
-
+/*********************************************************************
+*                           구성 컴포넌트
+*********************************************************************/
 private:
-    UPROPERTY()
-    TObjectPtr<UBehaviorTreeComponent> BehaviorTreeComponent;
+	UPROPERTY()
+	TObjectPtr<UBehaviorTreeComponent> BehaviorTreeComponent;
 
-    UPROPERTY()
-    UBlackboardComponent* BlackboardComponent;
+	UPROPERTY()
+	UBlackboardComponent* BlackboardComponent;
 
-    UPROPERTY()
-    TObjectPtr<UAISenseConfig_Sight> SightConfig;
+	UPROPERTY()
+	TObjectPtr<UAISenseConfig_Sight> SightConfig;
 
+/*********************************************************************
+*                          비헤이비어 트리
+*********************************************************************/
 public:
-    static const FName TargetActorKey;
-    static const FName SlotLocationKey;
-    static const FName bIsInCloseRangeKey;
-    static const FName ChaseStateKey;
+	static const FName TargetActorKey;
+	static const FName SlotLocationKey;
+	static const FName bIsInCloseRangeKey;
+	static const FName ChaseStateKey;
+
+	void StopBehaviorTree();
+
+/*********************************************************************
+*                             시야 감지
+*********************************************************************/
+protected:
+	UFUNCTION()
+	void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+/*********************************************************************
+*                                 팀
+*********************************************************************/
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GenericTeam")
+	uint8 TeamId;
+
+	FGenericTeamId GetGenericTeamId() const override;
+
+	ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 };

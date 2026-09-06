@@ -15,19 +15,27 @@ UCLASS()
 class RWG_API ALobbyPlayerState : public APlayerState
 {
 	GENERATED_BODY()
-public:
-	void SetReady(bool bNewReady);
 
-	bool IsReady() const { return bIsReady; }
-	
-	FOnReadyChanged OnReadyChanged;
-	
+/*********************************************************************
+*                                복제
+*********************************************************************/
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+/*********************************************************************
+*                             준비 상태
+*********************************************************************/
+protected:
 	UPROPERTY(ReplicatedUsing = OnRep_IsReady)
 	bool bIsReady = false;
 
 	UFUNCTION()
 	void OnRep_IsReady();
+
+public:
+	FOnReadyChanged OnReadyChanged;
+
+	void SetReady(bool bNewReady);
+
+	bool IsReady() const { return bIsReady; }
 };

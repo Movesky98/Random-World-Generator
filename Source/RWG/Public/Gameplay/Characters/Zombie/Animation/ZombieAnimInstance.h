@@ -13,10 +13,16 @@ UCLASS()
 class RWG_API UZombieAnimInstance : public UCharacterBaseAnimInstance
 {
 	GENERATED_BODY()
-	
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 protected:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+/*********************************************************************
+*                            몽타주 재생
+*********************************************************************/
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Montage")
 	TArray<TObjectPtr<UAnimMontage>> AttackMontages;

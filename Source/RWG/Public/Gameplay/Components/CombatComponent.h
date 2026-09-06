@@ -17,37 +17,68 @@ class RWG_API UCombatComponent : public UInputComponentBase
 {
 	GENERATED_BODY()
 
-public:	
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this component's properties
 	UCombatComponent();
 
-	/* Component Lifecycle */
 protected:
 	virtual void InitializeComponent() override;
 
 	virtual void BeginPlay() override;
 
+/*********************************************************************
+*                                복제
+*********************************************************************/
+protected:
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	/* Input */
+/*********************************************************************
+*                            캐시된 참조
+*********************************************************************/
+private:
+	UPROPERTY()
+	TObjectPtr<class UInventoryComponent> InventoryComponent;
+
+/*********************************************************************
+*                             입력 처리
+*********************************************************************/
 protected:
 	TSubclassOf<UInputConfigBase> GetConfigClass() override;
 
 	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
 
-	void SelectWeaponSlot(int32 SlotIndex);
+/*********************************************************************
+*                                상태
+*********************************************************************/
+private:
+	UPROPERTY(VisibleInstanceOnly, Replicated, Category = "Weapon")
+	EWeaponActionState WeaponActionState;
 
-	/* Weapon Flow */
-public:
-	FOnCurrentWeaponChanged OnCurrentWeaponChanged;
+/*********************************************************************
+*                             무기 교체
+*********************************************************************/
+private:
+	UFUNCTION(Server, Reliable)
+	void Server_RequestEquipWeapon(AWeaponBase* NewWeapon);
 
-	FOnAmmoChangedDelegate OnAmmoChangedDelegate;
+	UFUNCTION(Server, Reliable)
+	void Server_RequestUnequipWeapon();
 
-	void SetCurrentWeapon(AWeaponBase* NewWeapon);
+	UFUNCTION()
+	void OnRep_CurrentWeapon(AWeaponBase* OldWeapon);
 
-	AWeaponBase* GetCurrentWeapon() const { return CurrentWeapon; }
+	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing = OnRep_CurrentWeapon, Category = "Weapon")
+	TObjectPtr<AWeaponBase> CurrentWeapon;
+
+	UPROPERTY(VisibleInstanceOnly, Category = "Weapon")
+	TObjectPtr<AWeaponBase> PendingWeapon;
 
 protected:
+	void SelectWeaponSlot(int32 SlotIndex);
+
 	void EquipWeapon(AWeaponBase* NewWeapon);
 
 	void OnEquipEnded();
@@ -56,19 +87,17 @@ protected:
 
 	void OnUnequipEnded();
 
-	void Reload(EWeaponActionState ActionState);
+public:
+	FOnCurrentWeaponChanged OnCurrentWeaponChanged;
 
-	void OnReloadEnded();
+	void SetCurrentWeapon(AWeaponBase* NewWeapon);
 
-	void OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo);
+	AWeaponBase* GetCurrentWeapon() const { return CurrentWeapon; }
 
+/*********************************************************************
+*                            재장전·사격
+*********************************************************************/
 private:
-	UFUNCTION(Server, Reliable)
-	void Server_RequestEquipWeapon(AWeaponBase* NewWeapon);
-
-	UFUNCTION(Server, Reliable)
-	void Server_RequestUnequipWeapon();
-
 	UFUNCTION(Server, Reliable)
 	void Server_RequestReload();
 
@@ -78,31 +107,19 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_RequestStopAttack();
 
-	UFUNCTION()
-	void OnRep_CurrentWeapon(AWeaponBase* OldWeapon);
-	
-	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing = OnRep_CurrentWeapon, Category = "Weapon")
-	TObjectPtr<AWeaponBase> CurrentWeapon;
-
-	UPROPERTY(VisibleInstanceOnly, Category = "Weapon")
-	TObjectPtr<AWeaponBase> PendingWeapon;
-
-	UPROPERTY(VisibleInstanceOnly, Replicated, Category = "Weapon")
-	EWeaponActionState WeaponActionState;
-	
-	UPROPERTY()
-	TObjectPtr<class UInventoryComponent> InventoryComponent;
-
-	/* Animation */
-public:
-	void ApplyCurrentWeaponAnimLayer();
-
 protected:
-	void SetAnimLayer(TSubclassOf<UAnimInstance> AnimLayerClass);
+	void Reload(EWeaponActionState ActionState);
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TSubclassOf<UAnimInstance> DefaultAnimLayerClass;	// ABP_Unarmed_Layers
+	void OnReloadEnded();
 
+	void OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo);
+
+public:
+	FOnAmmoChangedDelegate OnAmmoChangedDelegate;
+
+/*********************************************************************
+*                             애니메이션
+*********************************************************************/
 private:
 	void PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDelegate = FOnMontageEnded());
 
@@ -111,7 +128,18 @@ private:
 
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, EWeaponActionState EndedAction);
 
-	// IWidgetBindable
+protected:
+	void SetAnimLayer(TSubclassOf<UAnimInstance> AnimLayerClass);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TSubclassOf<UAnimInstance> DefaultAnimLayerClass;	// ABP_Unarmed_Layers
+
+public:
+	void ApplyCurrentWeaponAnimLayer();
+
+/*********************************************************************
+*                             위젯 연결
+*********************************************************************/
 protected:
 	virtual TArray<TSubclassOf<UUserWidgetBase>> GetDefaultWidgetClasses() const override;
 

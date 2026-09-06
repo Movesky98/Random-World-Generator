@@ -99,6 +99,18 @@ struct FCityLot
 
 class RWG_API FCityGrid
 {
+/*********************************************************************
+*                             격자 크기
+*********************************************************************/
+private:
+	// 월드 내 가로 / 세로 셀 개수
+	int32 Width, Height;
+
+	// 셀의 크기
+	float CellSize = 200.0f;
+
+	FVector Origin = FVector::ZeroVector;
+
 public:
 	const FVector GetOrigin() const;
 	void SetOirin(const FVector InOrigin);
@@ -112,9 +124,6 @@ public:
 	const float GetCellSize() const { return CellSize; }
 	void SetCellSize(const float InCellSize);
 
-	const TArray<FCityCell> GetCityCells() const;
-	TArray<FCityCell>& GetCityCellsMutable();
-
 	FORCEINLINE int32 Index(int32 X, int32 Y) const
 	{
 		return X + Y * Width;
@@ -125,25 +134,33 @@ public:
 		return X >= 0 && X < Width && Y >= 0 && Y < Height;
 	}
 
+/*********************************************************************
+*                             격자 생성
+*********************************************************************/
+public:
 	void GenerateGrid(FVector CityCenter, float CityRadius, float InCellSize, const FRoadGraph& RoadGraph);
-	
+
+/*********************************************************************
+*                                 셀
+*********************************************************************/
+private:
+	TArray<FCityCell> CityCells;
+
+public:
+	const TArray<FCityCell> GetCityCells() const;
+	TArray<FCityCell>& GetCityCellsMutable();
+
 	void SetWorldPosition(int32 X, int32 Y, FVector InPosition);
 
 	FVector GetWorldPosition(int32 X, int32 Y);
 
+/*********************************************************************
+*                                필지
+*********************************************************************/
+private:
+	TArray<FCityLot> Lots;
+
+public:
 	const TArray<FCityLot> GetLots() const;
 	void SetLots(const TArray<FCityLot>& InLots);
-
-private:
-	TArray<FCityCell> CityCells;
-
-	// 월드 내 가로 / 세로 셀 개수
-	int32 Width, Height;
-
-	// 셀의 크기
-	float CellSize = 200.0f;
-
-	FVector Origin = FVector::ZeroVector;
-
-	TArray<FCityLot> Lots;
 };

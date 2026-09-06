@@ -17,25 +17,33 @@ UCLASS()
 class RWG_API UPlayerSlot : public UUserWidget
 {
 	GENERATED_BODY()
-public:
-	void BindPlayerState(ALobbyPlayerState* LobbyPS);
 
-	bool IsReady() const;
-	
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 protected:
 	virtual void NativeConstruct() override;
 
 	virtual void NativeDestruct() override;
 
-	void HandleReadyChanged(bool IsReady);
+/*********************************************************************
+*                           플레이어 표시
+*********************************************************************/
+private:
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<ALobbyPlayerState> LinkedPlayerState;
 
+protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* PlayerNameText;
 
 	UPROPERTY(meta = (BindWidget))
 	UCheckBox* ReadyCheckBox;
 
-private:
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<ALobbyPlayerState> LinkedPlayerState;
+	void HandleReadyChanged(bool IsReady);
+
+public:
+	void BindPlayerState(ALobbyPlayerState* LobbyPS);
+
+	bool IsReady() const;
 };

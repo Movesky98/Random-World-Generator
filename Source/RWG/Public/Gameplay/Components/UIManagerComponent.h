@@ -47,6 +47,10 @@ UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RWG_API UUIManagerComponent : public UActorComponent
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	UUIManagerComponent();
 
@@ -55,24 +59,19 @@ protected:
 
 	virtual void BeginPlay() override;
 
-	/* Initialize Settings */
-public:
-	void InitializePawnWidgets(APawn* aPawn);
+/*********************************************************************
+*                            캐시된 참조
+*********************************************************************/
+private:
+	APlayerController* OwnerController;
 
-	void BindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
-
-	void UnbindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
-
+/*********************************************************************
+*                            페이즈 판정
+*********************************************************************/
 protected:
-	void DisplayWidgetsForPhase();
-
 	void InitializeLevelNameMap();
 
-	void CreateWidgetsForPhase(EGamePhase Phase);
-
 	EGamePhase ConvertLevelNameToPhase(FName LevelName);
-
-	void ShowWidget(EUIType WidgetType);
 
 	/* 에디터 설정용 TMap */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
@@ -81,22 +80,44 @@ protected:
 	/* 런타임 조회용 TMap */
 	TMap<FName, EGamePhase> LevelNameToPhaseMap;
 
+private:
+	UPROPERTY(VisibleAnywhere, Category = "UI")
+	EGamePhase CurrentPhase;
+
+/*********************************************************************
+*                          위젯 생성과 표시
+*********************************************************************/
+public:
+	void InitializePawnWidgets(APawn* aPawn);
+
+protected:
+	void DisplayWidgetsForPhase();
+
+	void CreateWidgetsForPhase(EGamePhase Phase);
+
+	void ShowWidget(EUIType WidgetType);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TMap<EGamePhase, FWidgetClassList> WidgetClassMap;
 
 private:
-	APlayerController* OwnerController;
-
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TMap<EUIType, TObjectPtr<UUserWidgetBase>> AvailableWidgets;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UUserWidgetBase> CurrentWidget;
 
-	UPROPERTY(VisibleAnywhere, Category = "UI")
-	EGamePhase CurrentPhase;
+/*********************************************************************
+*                        위젯 델리게이트 연결
+*********************************************************************/
+public:
+	void BindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
 
-	////////////////////////////// Game Over 관련 //////////////////////////////
+	void UnbindDelegatesFromGameplayWidgets(const TArray<TScriptInterface<IWidgetBindable>>& BindableComponents);
+
+/*********************************************************************
+*                             게임 오버
+*********************************************************************/
 public:
 	void ShowGameOverWidget();
 };

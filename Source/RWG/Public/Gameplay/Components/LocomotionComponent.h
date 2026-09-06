@@ -15,7 +15,10 @@ class RWG_API ULocomotionComponent : public UInputComponentBase
 {
 	GENERATED_BODY()
 
-public:	
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this component's properties
 	ULocomotionComponent();
 
@@ -25,12 +28,40 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+/*********************************************************************
+*                            캐시된 참조
+*********************************************************************/
+protected:
+	UPROPERTY()
+	TObjectPtr<ACharacter> OwnerCharacter;
+
+	UPROPERTY()
+	TObjectPtr<UCharacterMovementComponent> MovementComponent;
+
+	UPROPERTY()
+	TObjectPtr<UConvictAnimInstance> AnimInstance;
+
+/*********************************************************************
+*                             입력 처리
+*********************************************************************/
+protected:
 	TSubclassOf<UInputConfigBase> GetConfigClass() override;
 
 	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
 
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+public:
+	void Move(const FInputActionValue& Value);
 
+	void Look(const FInputActionValue& Value);
+
+	void Jump();
+
+/*********************************************************************
+*                            제자리 회전
+*********************************************************************/
+protected:
 	/**
 	 * 정지 상태에서 조준 방향과 몸의 각도 차가 TurnThreshold를 넘으면 몸을 그쪽으로 돌린다.
 	 * 이동 중에는 CharacterMovement가 컨트롤 회전을 따라가게 맡긴다.
@@ -50,20 +81,4 @@ protected:
 
 	/** 진입 시점에 한 번 정하는 목표 Yaw */
 	float TargetYaw = 0.0f;
-
-	UPROPERTY()
-	TObjectPtr<ACharacter> OwnerCharacter;
-
-	UPROPERTY()
-	TObjectPtr<UCharacterMovementComponent> MovementComponent;
-
-	UPROPERTY()
-	TObjectPtr<UConvictAnimInstance> AnimInstance;
-
-public:
-	void Move(const FInputActionValue& Value);
-
-	void Look(const FInputActionValue& Value);
-
-	void Jump();
 };

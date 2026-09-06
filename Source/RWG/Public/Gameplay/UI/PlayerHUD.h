@@ -17,24 +17,30 @@ UCLASS()
 class RWG_API UPlayerHUD : public UGameplayWidget
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	UPlayerHUD();
 
 protected:
 	virtual void SetUp() override;
 
-	/* Display Functions */
-public:
-	void SetAmmo(int32 CurrentAmmo, int32 MaxAmmo);
-
-	void SetWeapon(AWeaponBase* Weapon);
-
-	void SetHealth(float CurrentHealth, float MaxHealth);
-
+/*********************************************************************
+*                                표시
+*********************************************************************/
 private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> AmmoTextBlock;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> HealthProgressBar;
+
+public:
+	void SetAmmo(int32 CurrentAmmo, int32 MaxAmmo);
+
+	void SetWeapon(AWeaponBase* Weapon);
+
+	void SetHealth(float CurrentHealth, float MaxHealth);
 };

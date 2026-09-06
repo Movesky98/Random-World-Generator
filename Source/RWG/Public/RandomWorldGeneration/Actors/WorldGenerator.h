@@ -21,50 +21,22 @@ UCLASS()
 class RWG_API AWorldGenerator : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this actor's properties
 	AWorldGenerator();
-
-	void GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs);
-
-	void GenerateTerrain(class UWorldGenConfig* Config);
-
-	void GenerateContent(class UWorldThemeConfig* Config);
-
-	const FRoadGraph& GetRoadGraph() const { return RoadGraph; }
-
-	const FCityGrid& GetCityGrid() const { return CityGrid; }
-
-	int32 GetSeed() const { return MasterSeed; }
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void OnPCGGraphGenerated(UPCGComponent* InComponent);
-
-	void GenerateNavProxyMesh(class UWorldGenConfig* Config);
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
-	FVector CityCenter;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
-	float CityRadius;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
-	float CityHeight;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parameters")
-	int32 MasterSeed = 0;
-	
-	void DrawDebugGrid();
-
-	void DebugSeedResult();
-
+/*********************************************************************
+*                           구성 컴포넌트
+*********************************************************************/
 private:
-	void StartGeneratePCG(UWorldThemeConfig* Config);
-
 	UPROPERTY(VisibleAnywhere, Category = "PMC")
 	UProceduralMeshComponent* ProceduralMeshComponent;
 
@@ -77,15 +49,71 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "PCG")
 	UPCGComponent* BuildingPCGComponent;
 
+/*********************************************************************
+*                             생성 진입
+*********************************************************************/
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parameters")
+	int32 MasterSeed = 0;
+
+public:
+	void GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>> Configs);
+
+	int32 GetSeed() const { return MasterSeed; }
+
+/*********************************************************************
+*                             지형 생성
+*********************************************************************/
+private:
+	UFUNCTION()
+	void OnNavMeshBuilt(ANavigationData* NavData);
+
+	UFUNCTION()
+	void OnComponentPhysicsStateChanged(UPrimitiveComponent* ChangedComponent, EComponentPhysicsStateChange StateChange);
+
+protected:
+	void GenerateNavProxyMesh(class UWorldGenConfig* Config);
+
+public:
+	void GenerateTerrain(class UWorldGenConfig* Config);
+
+/*********************************************************************
+*                          도시 콘텐츠 생성
+*********************************************************************/
+private:
+	UPROPERTY()
+	TObjectPtr<class UWorldThemeConfig> ThemeConfig = nullptr;
+
 	FRoadGraph RoadGraph;
 
 	FCityGrid CityGrid;
 
 	TArray<FCityBlock> CityBlocks;
 
-public:
-	FOnWorldGenerationCompleted OnWorldGenerationCompleted;
+	void StartGeneratePCG(UWorldThemeConfig* Config);
 
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
+	FVector CityCenter;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
+	float CityRadius;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PCG Settings")
+	float CityHeight;
+
+	void OnPCGGraphGenerated(UPCGComponent* InComponent);
+
+public:
+	void GenerateContent(class UWorldThemeConfig* Config);
+
+	const FRoadGraph& GetRoadGraph() const { return RoadGraph; }
+
+	const FCityGrid& GetCityGrid() const { return CityGrid; }
+
+/*********************************************************************
+*                             완료 판정
+*********************************************************************/
 private:
 	bool bRoadPCGCompleted = false;
 	bool bBuildingPCGCompleted = false;
@@ -93,22 +121,24 @@ private:
 
 	void CheckAllComplete();
 
-	UFUNCTION()
-	void OnNavMeshBuilt(ANavigationData* NavData);
+public:
+	FOnWorldGenerationCompleted OnWorldGenerationCompleted;
 
-	UFUNCTION()
-	void OnComponentPhysicsStateChanged(UPrimitiveComponent* ChangedComponent, EComponentPhysicsStateChange StateChange);
-
-	UPROPERTY()
-	TObjectPtr<class UWorldThemeConfig> ThemeConfig = nullptr;
-
+/*********************************************************************
+*                               디버그
+*********************************************************************/
+private:
 	double T0 = 0.0;
 	double T1 = 0.0;
 	double T2 = 0.0;
 	double T3 = 0.0;
-	
+
 	double TA = 0.0;
 	double TB = 0.0;
 	double TC = 0.0;
-};
 
+protected:
+	void DrawDebugGrid();
+
+	void DebugSeedResult();
+};

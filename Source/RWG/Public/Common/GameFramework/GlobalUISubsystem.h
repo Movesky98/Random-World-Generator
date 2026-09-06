@@ -17,28 +17,42 @@ UCLASS()
 class RWG_API UGlobalUISubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+protected:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+	virtual void Deinitialize() override;
+
+/*********************************************************************
+*                            로딩 스크린
+*********************************************************************/
+protected:
+	UPROPERTY()
+	TObjectPtr<UUserWidget> LoadingScreen = nullptr;
+
+	bool bWorldGenReady = false;
+	bool bHUDReady = false;
+
+	void TryHideLoadingScreen();
+
 public:
 	void ShowLoadingScreen();
 	void HideLoadingScreen();
 
-	void ShowCountdownWidget(const FText& InTitle, const FGetRemainingSecondsDelegate& InDelegate);
-	void HideCountdownWidget();
-
 	void NotifyWorldGenReady();
 	void NotifyHUDReady();
-	
+
+/*********************************************************************
+*                             카운트다운
+*********************************************************************/
 protected:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	virtual void Deinitialize() override;
-
-	void TryHideLoadingScreen();
-
-	UPROPERTY()
-	TObjectPtr<UUserWidget> LoadingScreen = nullptr;
-
 	UPROPERTY()
 	TObjectPtr<class UCountdownWidget> CountdownWidget = nullptr;
 
-	bool bWorldGenReady = false;
-	bool bHUDReady = false;
+public:
+	void ShowCountdownWidget(const FText& InTitle, const FGetRemainingSecondsDelegate& InDelegate);
+	void HideCountdownWidget();
 };

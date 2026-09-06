@@ -15,11 +15,12 @@ class RWG_API UTimeManagementComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this component's properties
 	UTimeManagementComponent();
-
-	FOnDayCycleChanged OnDayCycleChanged;
 
 protected:
 	virtual void InitializeComponent() override;
@@ -30,10 +31,22 @@ protected:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+/*********************************************************************
+*                            캐시된 참조
+*********************************************************************/
+protected:
+	TObjectPtr<class AExpeditionGameState> GameState;
+
+/*********************************************************************
+*                             낮/밤 주기
+*********************************************************************/
+public:
+	FOnDayCycleChanged OnDayCycleChanged;
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Time")
 	float TimeOfDay = 0.0f;
-		
+
 	UPROPERTY(EditDefaultsOnly, Category = "Time")
 	float SyncInterval = 1.0f;
 
@@ -49,6 +62,4 @@ protected:
 	float ElapsedTimeUpdate = 0.0f;
 
 	bool bIsDay = true;
-
-	TObjectPtr<class AExpeditionGameState> GameState;
 };

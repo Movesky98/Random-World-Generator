@@ -12,8 +12,11 @@ UCLASS()
 class RWG_API ASkyVisualizer : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this actor's properties
 	ASkyVisualizer();
 
@@ -24,13 +27,18 @@ protected:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+/*********************************************************************
+*                            캐시된 참조
+*********************************************************************/
+private:
+	TObjectPtr<ADirectionalLight> Sun;
+
+protected:
 	void FindSun();
 
-	UFUNCTION()
-	void OnTimeOfDayUpdated(float TimeOfDay);
-
-	void UpdateSunRotation();
-
+/*********************************************************************
+*                             태양 회전
+*********************************************************************/
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Time")
 	float LocalTimeOfDay = 0;
@@ -44,5 +52,9 @@ private:
 
 	float NightDuration;
 
-	TObjectPtr<ADirectionalLight> Sun;
+protected:
+	UFUNCTION()
+	void OnTimeOfDayUpdated(float TimeOfDay);
+
+	void UpdateSunRotation();
 };

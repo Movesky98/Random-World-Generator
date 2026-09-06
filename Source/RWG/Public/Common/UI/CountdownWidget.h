@@ -16,13 +16,17 @@ UCLASS()
 class RWG_API UCountdownWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
-public:
-	void InitializeCountdown(const FText& InTitle, const FGetRemainingSecondsDelegate& InDelegate);
-	
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
+/*********************************************************************
+*                          카운트다운 표시
+*********************************************************************/
+protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* TitleText;
 
@@ -32,4 +36,7 @@ protected:
 	FGetRemainingSecondsDelegate RemainingSecondsProvider;
 
 	int32 LastSecond = INDEX_NONE;
+
+public:
+	void InitializeCountdown(const FText& InTitle, const FGetRemainingSecondsDelegate& InDelegate);
 };

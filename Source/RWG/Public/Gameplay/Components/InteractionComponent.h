@@ -11,7 +11,10 @@ class RWG_API UInteractionComponent : public UInputComponentBase
 {
 	GENERATED_BODY()
 
-public:	
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this component's properties
 	UInteractionComponent();
 
@@ -19,10 +22,18 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+/*********************************************************************
+*                             입력 처리
+*********************************************************************/
+protected:
 	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
 
 	TSubclassOf<UInputConfigBase> GetConfigClass() override;
 
+/*********************************************************************
+*                              상호작용
+*********************************************************************/
+protected:
 	void PerformInteractionTrace();
 
 	UFUNCTION(Server, Reliable)

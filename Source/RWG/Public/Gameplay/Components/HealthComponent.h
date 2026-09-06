@@ -17,7 +17,10 @@ class RWG_API UHealthComponent : public UActorComponent, public IWidgetBindable
 {
 	GENERATED_BODY()
 
-public:	
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this component's properties
 	UHealthComponent();
 
@@ -26,16 +29,33 @@ protected:
 
 	// Called when the game starts
 	virtual void BeginPlay() override;
-	
+
+/*********************************************************************
+*                                복제
+*********************************************************************/
+protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
+/*********************************************************************
+*                                체력
+*********************************************************************/
+private:
+	UPROPERTY(EditDefaultsOnly, Category = "Health")
+	float MaxHealth = 100;
+
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth, VisibleAnywhere, Category = "Health")
+	float CurrentHealth;
+
+	UFUNCTION()
+	void OnRep_CurrentHealth();
+
 public:
 	void DecreaseHealth(float FinalDamage, const FDamageInfo& DamageInfo);
-	
+
 	void HealInstant(float Amount);
-	
+
 	bool IsDead() const { return CurrentHealth <= 0.0f; }
-	
+
 	float GetCurrentHealth() const { return CurrentHealth; }
 
 	float GetMaxHealth() const { return MaxHealth; }
@@ -44,13 +64,10 @@ public:
 
 	FOnDeathByDamage OnDeathByDamage;
 
+/*********************************************************************
+*                             체력 재생
+*********************************************************************/
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Health")
-	float MaxHealth = 100;
-
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth, VisibleAnywhere, Category = "Health")
-	float CurrentHealth;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Health|Regen")
 	float RegenDelay = 5.0f;
 
@@ -68,10 +85,9 @@ private:
 
 	void StopRegen();
 
-	UFUNCTION()
-	void OnRep_CurrentHealth();
-
-	// IWidgetBindable
+/*********************************************************************
+*                             위젯 연결
+*********************************************************************/
 protected:
 	virtual TArray<TSubclassOf<UUserWidgetBase>> GetDefaultWidgetClasses() const override;
 

@@ -12,23 +12,35 @@ UCLASS(Abstract)
 class RWG_API AItem : public AActor, public IInteractable
 {
 	GENERATED_BODY()
-	
-public:	
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this actor's properties
 	AItem();
-
-	template<typename T>
-	T* GetItemData() const { return Cast<T>(ItemData); }
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	virtual void Interact(AActor* Interactor) override;
-
+/*********************************************************************
+*                           아이템 데이터
+*********************************************************************/
+protected:
 	UPROPERTY(EditAnywhere, Category = "Item")
 	TObjectPtr<UItemData> ItemData;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
 	int32 DropQuantity = 1;
+
+public:
+	template<typename T>
+	T* GetItemData() const { return Cast<T>(ItemData); }
+
+/*********************************************************************
+*                              상호작용
+*********************************************************************/
+protected:
+	virtual void Interact(AActor* Interactor) override;
 };

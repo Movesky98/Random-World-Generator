@@ -38,56 +38,85 @@ UCLASS()
 class RWG_API USessionSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	USessionSubsystem();
 
-	void CreateSession(int32 NumPublicConnections, FName SessionName, bool IsLanMatch);
-
-	void FindSessions(int32 MaxSearchResult, bool bIsLANQuery);
-
-	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
-
-	void DestroySession();
-
-	/* 외부 오브젝트에게 Session 결과를 알려주는 Session Subsystem 내부 델리게이트 */
-	FOnCreateSessionCompletedEvent OnCreateSessionCompletedEvent;
-
-	FOnFindSessionsCompletedEvent OnFindSessionsCompletedEvent;
-
-	FOnJoinSessionCompletedEvent OnJoinSessionsCompletedEvent;
-
-	FOnDestorySessionCompletedEvent OnDestorySessionCompletedEvent;
-
-	const FLobbySessionInfo GetLobbySessionInfo() const;
-
+/*********************************************************************
+*                             세션 상태
+*********************************************************************/
 protected:
-	void OnCreateSessionCompleted(FName SessionName, bool bWasSuccessful);
-
-	void OnFindSessionsCompleted(bool bWasSuccessful);
-
-	void OnJoinSessionCompleted(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-
-	void OnDestroySessionCompleted(FName SessionName, bool bWasSuccessful);
-
-	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
-	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;
 	FName LastSessionName;
 
 	/* 로비 입장 시 현재 세션의 정보*/
 	FLobbySessionInfo LobbySessionInfo;
 
-	/* Online Subsystem 델리게이트 */
+public:
+	const FLobbySessionInfo GetLobbySessionInfo() const;
+
+/*********************************************************************
+*                             세션 생성
+*********************************************************************/
+protected:
+	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
+
 	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
 	FDelegateHandle CreateSessionCompleteDelegateHandle;
+
+	void OnCreateSessionCompleted(FName SessionName, bool bWasSuccessful);
+
+public:
+	void CreateSession(int32 NumPublicConnections, FName SessionName, bool IsLanMatch);
+
+	/* 외부 오브젝트에게 Session 결과를 알려주는 Session Subsystem 내부 델리게이트 */
+	FOnCreateSessionCompletedEvent OnCreateSessionCompletedEvent;
+
+/*********************************************************************
+*                             세션 검색
+*********************************************************************/
+protected:
+	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;
 
 	FOnFindSessionsCompleteDelegate FindSessionsCompleteDelegate;
 	FDelegateHandle FindSessionsCompleteDelegateHandle;
 
+	void OnFindSessionsCompleted(bool bWasSuccessful);
+
+public:
+	void FindSessions(int32 MaxSearchResult, bool bIsLANQuery);
+
+	FOnFindSessionsCompletedEvent OnFindSessionsCompletedEvent;
+
+/*********************************************************************
+*                             세션 참가
+*********************************************************************/
+protected:
 	FOnJoinSessionCompleteDelegate JoinSessionCompleteDelegate;
 	FDelegateHandle JoinSessionCompleteDelegateHandle;
 
+	void OnJoinSessionCompleted(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
+	bool TryTravelToCurrentSession(const FName SessionName);
+
+public:
+	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
+
+	FOnJoinSessionCompletedEvent OnJoinSessionsCompletedEvent;
+
+/*********************************************************************
+*                             세션 종료
+*********************************************************************/
+protected:
 	FOnDestroySessionCompleteDelegate DestroySessionCompleteDelegate;
 	FDelegateHandle DestroySessionCompleteDelegateHandle;
 
-	bool TryTravelToCurrentSession(const FName SessionName);
+	void OnDestroySessionCompleted(FName SessionName, bool bWasSuccessful);
+
+public:
+	void DestroySession();
+
+	FOnDestorySessionCompletedEvent OnDestorySessionCompletedEvent;
 };

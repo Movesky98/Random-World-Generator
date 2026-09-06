@@ -17,41 +17,62 @@ UCLASS()
 class RWG_API ALobbyGameState : public AGameStateBase
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	ALobbyGameState();
 
-	void SetLobbySessionInfo(const FLobbySessionInfo Info);
-
-	const FLobbySessionInfo GetLobbySessionInfo() const;
-
-	FOnLobbySessionInfoUpdated OnLobbySessionInfoUpdated;
-
-	FOnPlayerListUpdated OnPlayerListUpdated;
-
-	void RefreshReadySummary();
-
-	bool AreAllPlayersReady();
-
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "Session")
-	bool bLobbyInfoInitialized;
-
+/*********************************************************************
+*                                복제
+*********************************************************************/
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+/*********************************************************************
+*                           플레이어 목록
+*********************************************************************/
+protected:
 	virtual void AddPlayerState(APlayerState* PlayerState) override;
 
 	virtual void RemovePlayerState(APlayerState* PlayerState) override;
 
+public:
+	FOnPlayerListUpdated OnPlayerListUpdated;
 
+/*********************************************************************
+*                             세션 정보
+*********************************************************************/
+protected:
 	UPROPERTY(ReplicatedUsing = OnRep_LobbyInfo)
 	FLobbySessionInfo LobbyInfo;
 
 	UFUNCTION()
 	void OnRep_LobbyInfo();
 
+public:
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Session")
+	bool bLobbyInfoInitialized;
+
+	FOnLobbySessionInfoUpdated OnLobbySessionInfoUpdated;
+
+	void SetLobbySessionInfo(const FLobbySessionInfo Info);
+
+	const FLobbySessionInfo GetLobbySessionInfo() const;
+
+/*********************************************************************
+*                             준비 상태
+*********************************************************************/
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Session|Lobby")
 	int32 ReadyPlayerCount;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Session|Lobby")
 	bool bAllPlayersReady;
+
+public:
+	void RefreshReadySummary();
+
+	bool AreAllPlayersReady();
 };

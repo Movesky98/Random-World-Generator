@@ -13,14 +13,20 @@ UCLASS()
 class RWG_API AConsumableItem : public AItem
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	AConsumableItem();
-	
-public:
-	UStaticMeshComponent* GetStaticMeshComponent() const { return StaticMeshComponent; }
 
+/*********************************************************************
+*                           구성 컴포넌트
+*********************************************************************/
 protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
 
+public:
+	UStaticMeshComponent* GetStaticMeshComponent() const { return StaticMeshComponent; }
 };

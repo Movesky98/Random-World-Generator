@@ -14,12 +14,16 @@ class RWG_API UConvictAnimInstance : public UCharacterBaseAnimInstance
 {
 	GENERATED_BODY()
 
-public:
-	float GetAimYaw() const { return AimYaw; }
-
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 protected:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+/*********************************************************************
+*                             상체 조준
+*********************************************************************/
+protected:
 	/** 몸 기준으로 얼마나 더 좌우로 돌려 보는가 */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
 	float AimYaw;
@@ -27,4 +31,7 @@ protected:
 	/** 몸 기준으로 얼마나 더 위아래로 돌려 보는가 */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
 	float AimPitch;
+
+public:
+	float GetAimYaw() const { return AimYaw; }
 };

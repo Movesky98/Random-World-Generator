@@ -19,51 +19,73 @@ UCLASS()
 class RWG_API AZombie : public ACharacterBase
 {
 	GENERATED_BODY()
-	
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
-    AZombie();
-
-    UPROPERTY(EditDefaultsOnly, Category = "AI")
-    TObjectPtr<UBehaviorTree> BehaviorTree;
-
-    UPROPERTY(EditDefaultsOnly, Category = "AI")
-    float CloseChaseDistance = 400.0f;
-
-    UPROPERTY(EditDefaultsOnly, Category = "AI")
-    float AttackDistance = 150.0f;
+	AZombie();
 
 protected:
-    virtual void BeginPlay() override;
+	virtual void BeginPlay() override;
+
+/*********************************************************************
+*                                 AI
+*********************************************************************/
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	TObjectPtr<UBehaviorTree> BehaviorTree;
+
+/*********************************************************************
+*                                추격
+*********************************************************************/
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	float CloseChaseDistance = 400.0f;
+
+/*********************************************************************
+*                                공격
+*********************************************************************/
+protected:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayAttackMontage(int32 MontageIndex);
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	float AttackDamage = 20.f;
 
 public:
-    FOnAttackFinished OnAttackFinished;
+	FOnAttackFinished OnAttackFinished;
 
-    void RequestAttack();
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	float AttackDistance = 150.0f;
 
-    void PerformAttack();
+	void RequestAttack();
 
+	void PerformAttack();
+
+/*********************************************************************
+*                                사망
+*********************************************************************/
 protected:
-    UFUNCTION(NetMulticast, Reliable)
-    void Multicast_PlayAttackMontage(int32 MontageIndex);
+	UFUNCTION()
+	void OnDeath(const FDamageInfo& DamageInfo);
 
-    UFUNCTION(NetMulticast, Reliable)
-    void Multicast_PlayDeathMontage();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayDeathMontage();
 
-    void EnableRagdoll();
-
-    UFUNCTION()
-    void OnDeath(const FDamageInfo& DamageInfo);
-
-    UPROPERTY(EditDefaultsOnly, Category = "AI")
-    float AttackDamage = 20.f;
+	void EnableRagdoll();
 
 public:
-    FOnZombieDeath OnZombieDeath;
+	FOnZombieDeath OnZombieDeath;
 
-    void InitializeZombie(ACharacterBase* InAssignedCharacter);
-
-    ACharacterBase* GetAssignedCharacter() const;
-
+/*********************************************************************
+*                           담당 플레이어
+*********************************************************************/
 protected:
-    TObjectPtr<ACharacterBase> AssignedCharacter;
+	TObjectPtr<ACharacterBase> AssignedCharacter;
+
+public:
+	void InitializeZombie(ACharacterBase* InAssignedCharacter);
+
+	ACharacterBase* GetAssignedCharacter() const;
 };

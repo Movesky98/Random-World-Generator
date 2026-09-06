@@ -17,11 +17,13 @@ UCLASS()
 class RWG_API UItemSlot : public UUserWidget
 {
 	GENERATED_BODY()
-public:
-	void UpdateSlot(const FItemInstance& InItemInstance);
-	
-	void ClearSlot();
-	
+
+/*********************************************************************
+*                             슬롯 표시
+*********************************************************************/
+private:
+	FItemInstance ItemInstance;
+
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Frame;
@@ -32,6 +34,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> QuantityText;
 
-private:
-	FItemInstance ItemInstance;
+public:
+	void UpdateSlot(const FItemInstance& InItemInstance);
+
+	void ClearSlot();
 };

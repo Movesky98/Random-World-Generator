@@ -15,11 +15,17 @@ class RWG_API APlayerControllerBase : public APlayerController
 {
 	GENERATED_BODY()
 
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 protected:
 	virtual void BeginPlay() override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+/*********************************************************************
+*                             준비 상태
+*********************************************************************/
 public:
 	void RequestSetReady(bool bNewReady);
 

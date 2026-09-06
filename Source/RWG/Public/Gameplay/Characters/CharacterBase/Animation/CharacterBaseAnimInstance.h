@@ -16,16 +16,32 @@ UCLASS()
 class RWG_API UCharacterBaseAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	UCharacterBaseAnimInstance();
-
-	bool ShouldMove() const { return bShouldMove; }
 
 protected:
 	virtual void NativeInitializeAnimation() override;
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-	
+
+/*********************************************************************
+*                            캐시된 참조
+*********************************************************************/
+protected:
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	TObjectPtr<ACharacter> OwnerCharacter;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	TObjectPtr<UCharacterMovementComponent> MovementComponent;
+
+/*********************************************************************
+*                           로코모션 상태
+*********************************************************************/
+protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "State")
 	bool bIsInAir;
 
@@ -44,9 +60,6 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
 	FVector Velocity;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
-	TObjectPtr<ACharacter> OwnerCharacter;
-
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
-	TObjectPtr<UCharacterMovementComponent> MovementComponent;
+public:
+	bool ShouldMove() const { return bShouldMove; }
 };

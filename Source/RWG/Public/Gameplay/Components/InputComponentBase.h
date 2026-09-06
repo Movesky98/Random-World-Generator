@@ -20,11 +20,12 @@ class RWG_API UInputComponentBase : public UActorComponent, public IInputBindabl
 {
 	GENERATED_BODY()
 
-public:	
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this component's properties
 	UInputComponentBase();
-
-	FOnConfigLoaded OnConfigLoaded;
 
 protected:
 	virtual void InitializeComponent() override;
@@ -32,18 +33,22 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+/*********************************************************************
+*                             입력 설정
+*********************************************************************/
+public:
+	FOnConfigLoaded OnConfigLoaded;
+
+protected:
 	bool TryLoadConfigFromAssetManager();
 
 	void LoadInputConfig();
 
 	void OnLoadedInputConfig();
-	
-	virtual void BindInputActions(UEnhancedInputComponent* InputComponent) override
-		PURE_VIRTUAL(BindInputActions, );
+
+	virtual TSubclassOf<UInputConfigBase> GetConfigClass() PURE_VIRTUAL(GetConfigClass, return nullptr;);
 
 	virtual UInputConfigBase* GetInputConfig() const override;
-
-	virtual int32 GetIMCPriority() const override;
 
 	virtual UInputMappingContext* GetMappingContext() const override;
 
@@ -51,15 +56,24 @@ protected:
 
 	void BindOnConfigLoaded(TFunction<void()> Callback) override;
 
-	virtual TSubclassOf<UInputConfigBase> GetConfigClass() PURE_VIRTUAL(GetConfigClass, return nullptr;);
-
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputConfigBase* LoadedConfig;
+
+/*********************************************************************
+*                            입력 바인딩
+*********************************************************************/
+protected:
+	virtual void BindInputActions(UEnhancedInputComponent* InputComponent) override
+		PURE_VIRTUAL(BindInputActions, );
+
+	virtual int32 GetIMCPriority() const override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	int32 IMCPriority = 0;
 
-	// IWidgetBindable
+/*********************************************************************
+*                             위젯 연결
+*********************************************************************/
 protected:
 	virtual TArray<TSubclassOf<UUserWidgetBase>> GetDefaultWidgetClasses() const override;
 

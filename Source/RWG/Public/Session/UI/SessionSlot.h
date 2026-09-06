@@ -34,18 +34,16 @@ UCLASS()
 class RWG_API USessionSlot : public UUserWidget
 {
 	GENERATED_BODY()
-	
-public:
-	FOnJoinButtonClickedEvent OnJoinButtonClickedEvent;
-	
-	void InitializeSessionData(const FSessionData InSessionData);
 
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 protected:
 	virtual void NativeConstruct() override;
 
-	UFUNCTION()
-	void OnJoinButtonClicked();
-	
+/*********************************************************************
+*                             세션 표시
+*********************************************************************/
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* SessionNameText;
@@ -56,8 +54,22 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* PingText;
 
+	FSessionData SessionData;
+
+public:
+	void InitializeSessionData(const FSessionData InSessionData);
+
+/*********************************************************************
+*                             참가 버튼
+*********************************************************************/
+private:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* JoinButton;
 
-	FSessionData SessionData;
+protected:
+	UFUNCTION()
+	void OnJoinButtonClicked();
+
+public:
+	FOnJoinButtonClickedEvent OnJoinButtonClickedEvent;
 };

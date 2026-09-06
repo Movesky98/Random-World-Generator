@@ -17,23 +17,35 @@ UCLASS()
 class RWG_API UItemDataRegistry : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
-	
-public:
-	UItemData* FindItemDataByID(FName ID) const;
 
-	FOnRegistryReady OnRegistryReady;
-
-	bool IsReady() const;
-	
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	void OnItemAssetsLoaded();
-
+/*********************************************************************
+*                             애셋 로딩
+*********************************************************************/
 private:
-	TMap<FName /*ItemID*/, TObjectPtr<UItemData>> CachedItems;
-
 	const FPrimaryAssetType AssetType = FPrimaryAssetType(FName("Item"));
 
 	bool bIsReady = false;
+
+protected:
+	void OnItemAssetsLoaded();
+
+public:
+	FOnRegistryReady OnRegistryReady;
+
+	bool IsReady() const;
+
+/*********************************************************************
+*                            아이템 조회
+*********************************************************************/
+private:
+	TMap<FName /*ItemID*/, TObjectPtr<UItemData>> CachedItems;
+
+public:
+	UItemData* FindItemDataByID(FName ID) const;
 };

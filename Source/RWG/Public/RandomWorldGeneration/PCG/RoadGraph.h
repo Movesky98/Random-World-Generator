@@ -49,6 +49,16 @@ struct FRoadEdge
  */
 class RWG_API FRoadGraph
 {
+/*********************************************************************
+*                            노드와 엣지
+*********************************************************************/
+private:
+	TArray<FRoadNode> Nodes;
+	TArray<FRoadEdge> Edges;
+
+	bool IsValidNodeId(int32 NodeId) const { return Nodes.IsValidIndex(NodeId); }
+	bool IsValidEdgeId(int32 EdgeId) const { return Edges.IsValidIndex(EdgeId); }
+
 public:
 	int32 AddNode(const FVector& Position);
 	int32 AddEdge(int32 StartNodeId, int32 EndNodeId, float Width = 400.0f, int32 RoadType = 0);
@@ -59,24 +69,21 @@ public:
 	const FRoadEdge* GetEdge(int32 EdgeId) const;
 	FRoadEdge* GetEdgeMutable(int32 EdgeId);
 
+	// 컨테이너
+	const TArray<FRoadNode>& GetNodes() const { return Nodes; }
+	const TArray<FRoadEdge>& GetEdges() const { return Edges; }
+
+/*********************************************************************
+*                             노드 분류
+*********************************************************************/
+public:
 	int32 GetNodeDegree(int32 NodeId) const;
 
 	// NodeId 를 기준으로 Edge 반대편에 연결된 NodeId 반환
 	int32 GetOtherNode(int32 EdgeId, int32 NodeId) const;
 
 	ERoadNodeType ClassifyNode(int32 NodeId, float StraightDotThreshold = 0.95f) const;
-	
+
 	// Degree == 2일 때, 직선 도로인지 판단하는 함수
 	bool IsPassThrough(int32 NodeId, float StraightDotThreshold = 0.95f) const;
-
-	// 컨테이너
-	const TArray<FRoadNode>& GetNodes() const { return Nodes; }
-	const TArray<FRoadEdge>& GetEdges() const { return Edges; }
-
-private:
-	TArray<FRoadNode> Nodes;
-	TArray<FRoadEdge> Edges;
-
-	bool IsValidNodeId(int32 NodeId) const { return Nodes.IsValidIndex(NodeId); }
-	bool IsValidEdgeId(int32 EdgeId) const { return Edges.IsValidIndex(EdgeId); }
 };

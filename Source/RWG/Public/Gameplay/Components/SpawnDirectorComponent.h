@@ -21,10 +21,10 @@ struct FItemSpawnEntry
 	GENERATED_BODY()
 
 	FVector Location = FVector::ZeroVector;
-    TSubclassOf<AItem> ItemClass = nullptr;
-    bool bSpawned = false;
+	TSubclassOf<AItem> ItemClass = nullptr;
+	bool bSpawned = false;
 
-    TWeakObjectPtr<ABuildingActor> OwnerBuilding;
+	TWeakObjectPtr<ABuildingActor> OwnerBuilding;
 };
 
 
@@ -33,64 +33,74 @@ class RWG_API USpawnDirectorComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
-    USpawnDirectorComponent();
+	USpawnDirectorComponent();
 
 protected:
-    void BeginPlay() override;
+	void BeginPlay() override;
 
-    // Item
-public:
-    void InitializeSpawnData();
-
-    // 나중에 AssetManager를 이용해 아이템을 긁어오는 방식으로 전환
-    UPROPERTY(EditAnywhere, Category = "Spawn|Item")
-    TArray<TSubclassOf<AItem>> ItemClasses;
-
+/*********************************************************************
+*                            아이템 스폰
+*********************************************************************/
 private:
-    UPROPERTY(VisibleAnywhere, Category = "Spawn|Item")
-    TArray<FItemSpawnEntry> ItemSpawnEntries;
+	void CollectItemSpawnPoints();
 
-    void CollectItemSpawnPoints();
-    void BindBuildingDelegates(ABuildingActor* Building);
-    FVector GetRandomPointInBox(UBoxComponent* Box);
+	void BindBuildingDelegates(ABuildingActor* Building);
 
-    TSubclassOf<AItem> SelectItemClass();
+	FVector GetRandomPointInBox(UBoxComponent* Box);
 
-    void OnBuildingEntered(ABuildingActor* Building);
-    void OnBuildingExited(ABuildingActor* Building);
+	TSubclassOf<AItem> SelectItemClass();
 
-    // Zombie
+	void OnBuildingEntered(ABuildingActor* Building);
+
+	void OnBuildingExited(ABuildingActor* Building);
+
+	UPROPERTY(VisibleAnywhere, Category = "Spawn|Item")
+	TArray<FItemSpawnEntry> ItemSpawnEntries;
+
 public:
-    void OnDayCycleChanged(EDayCycle DayCycle);
+	void InitializeSpawnData();
 
-    void RegisterPlayer(APawn* PlayerPawn);
+	// 나중에 AssetManager를 이용해 아이템을 긁어오는 방식으로 전환
+	UPROPERTY(EditAnywhere, Category = "Spawn|Item")
+	TArray<TSubclassOf<AItem>> ItemClasses;
 
-    void UnregisterPlayer(APawn* PlayerPawn);
-
+/*********************************************************************
+*                             좀비 스폰
+*********************************************************************/
 protected:
-    void StartZombieWave();
+	void StartZombieWave();
 
-    void StopZombieWave();
+	void StopZombieWave();
 
-    FVector FindSpawnLocation(const FVector PlayerLocation);
+	FVector FindSpawnLocation(const FVector PlayerLocation);
 
-    void OnZombieDeath(AZombie* Zombie);
+	void OnZombieDeath(AZombie* Zombie);
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn|Zombie")
-    TSubclassOf<AZombie> ZombieClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn|Zombie")
+	TSubclassOf<AZombie> ZombieClass;
 
-    TMap<TObjectPtr<AConvict>, TArray<TObjectPtr<AZombie>>> ZombieAssignmentMap;
+	TMap<TObjectPtr<AConvict>, TArray<TObjectPtr<AZombie>>> ZombieAssignmentMap;
 
-    // 플레이어로부터 좀비가 생성될 거리 (원형)
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn|Zombie")
-    float SpawnZombieDistance = 400.0f;
+	// 플레이어로부터 좀비가 생성될 거리 (원형)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn|Zombie")
+	float SpawnZombieDistance = 400.0f;
 
-    // 플레이어 당 최대 생성 가능한 좀비 수
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn|Zombie")
-    int MaxZombiePerPlayer = 8;
+	// 플레이어 당 최대 생성 가능한 좀비 수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn|Zombie")
+	int MaxZombiePerPlayer = 8;
 
-    // 임시용. 거리 기준 좀비 스폰 시 무한루프 방지를 위한 재시도 횟수
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn|Zombie")
-    int SpawnRetryCount = 10;
+	// 임시용. 거리 기준 좀비 스폰 시 무한루프 방지를 위한 재시도 횟수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn|Zombie")
+	int SpawnRetryCount = 10;
+
+public:
+	void OnDayCycleChanged(EDayCycle DayCycle);
+
+	void RegisterPlayer(APawn* PlayerPawn);
+
+	void UnregisterPlayer(APawn* PlayerPawn);
 };

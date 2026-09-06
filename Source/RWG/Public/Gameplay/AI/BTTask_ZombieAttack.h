@@ -13,9 +13,13 @@ UCLASS()
 class RWG_API UBTTask_ZombieAttack : public UBTTaskNode
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
-    UBTTask_ZombieAttack();
+	UBTTask_ZombieAttack();
 
 protected:
-    virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

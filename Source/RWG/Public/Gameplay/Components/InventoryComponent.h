@@ -20,14 +20,45 @@ UCLASS()
 class RWG_API UInventoryComponent : public UInputComponentBase
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	UInventoryComponent();
 
 protected:
 	void BeginPlay() override;
 
+/*********************************************************************
+*                                복제
+*********************************************************************/
+protected:
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
+/*********************************************************************
+*                             입력 처리
+*********************************************************************/
+protected:
+	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
+
+	TSubclassOf<UInputConfigBase> GetConfigClass() override;
+
+/*********************************************************************
+*                            아이템 슬롯
+*********************************************************************/
+private:
+	UPROPERTY(ReplicatedUsing = OnRep_Slots)
+	TArray<FItemInstance> Slots;
+
+	int32 FindExistingSlot(UItemData* ItemData) const;
+
+	int32 FindSlot(UItemData* ItemData) const;
+
+protected:
+	UFUNCTION()
+	void OnRep_Slots();
+
 public:
 	UFUNCTION(Category = "Inventory")
 	bool AddItem(const FItemInstance& NewItem);
@@ -38,33 +69,19 @@ public:
 	UFUNCTION(Category = "Inventory")
 	bool UseItem(int32 SlotIndex);
 
-	FOnInventoryChanged	OnInventoryChanged;
+	const TArray<FItemInstance> GetSlots();
 
-	FOnInventoryToggled OnInventoryToggled;
+	FOnInventoryChanged	OnInventoryChanged;
 
 	FOnItemAdded OnItemAdded;
 
-	const TArray<FItemInstance> GetSlots();
-
+/*********************************************************************
+*                                무기
+*********************************************************************/
 protected:
-	void BindInputActions(UEnhancedInputComponent* InputComponent) override;
+	UPROPERTY(Replicated)
+	TArray<TObjectPtr<AWeaponBase>> Weapons;
 
-	TSubclassOf<UInputConfigBase> GetConfigClass() override;
-
-	void ToggleInventory();
-
-	UFUNCTION()
-	void OnRep_Slots();
-
-private:
-	UPROPERTY(ReplicatedUsing = OnRep_Slots)
-	TArray<FItemInstance> Slots;
-
-	int32 FindExistingSlot(UItemData* ItemData) const;
-
-	int32 FindSlot(UItemData* ItemData) const;
-
-	/* Weapon */
 public:
 	void TryAddWeapon(AWeaponBase* Weapon);
 
@@ -72,14 +89,9 @@ public:
 
 	int32 GetAmmoCount(UItemData* AmmoType) const;
 
-protected:
-	UPROPERTY(Replicated)
-	TArray<TObjectPtr<AWeaponBase>> Weapons;
-
-	/* Armor */
-public:
-	float ProcessArmorHit(FName BoneName);
-
+/*********************************************************************
+*                               방어구
+*********************************************************************/
 private:
 	UPROPERTY(Replicated)
 	FItemInstance HelmetSlot;
@@ -94,8 +106,18 @@ private:
 	UPROPERTY(Replicated)
 	float VestDurability = 0.0f;
 
-	// IWidgetBindable
+public:
+	float ProcessArmorHit(FName BoneName);
+
+/*********************************************************************
+*                            인벤토리 UI
+*********************************************************************/
+public:
+	FOnInventoryToggled OnInventoryToggled;
+
 protected:
+	void ToggleInventory();
+
 	virtual TArray<TSubclassOf<UUserWidgetBase>> GetDefaultWidgetClasses() const override;
 
 	virtual void BindComponent(UUserWidgetBase* Widget) override;

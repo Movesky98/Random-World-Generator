@@ -23,15 +23,12 @@ class RWG_API UInputHandlerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
+public:
 	// Sets default values for this component's properties
 	UInputHandlerComponent();
-
-	void RegisterBindableComponents(TArray<TScriptInterface<IInputBindable>>& Components, UEnhancedInputComponent* EnhancedInput);
-
-	void RequestActivateIMC(IInputBindable* Requester, bool bExclusive = false);
-
-	void RequestDeactiveIMC(IInputBindable* Requester);
 
 protected:
 	// Called when the game starts
@@ -39,8 +36,23 @@ protected:
 
 	virtual void InitializeComponent() override;
 
+/*********************************************************************
+*                            캐시된 참조
+*********************************************************************/
+protected:
 	UPROPERTY()
 	APlayerController* OwnerController;
 
+/*********************************************************************
+*                          입력 바인딩 관리
+*********************************************************************/
+public:
+	void RegisterBindableComponents(TArray<TScriptInterface<IInputBindable>>& Components, UEnhancedInputComponent* EnhancedInput);
+
+	void RequestActivateIMC(IInputBindable* Requester, bool bExclusive = false);
+
+	void RequestDeactiveIMC(IInputBindable* Requester);
+
+protected:
 	TArray<TScriptInterface<IInputBindable>> RegisteredComponents;
 };

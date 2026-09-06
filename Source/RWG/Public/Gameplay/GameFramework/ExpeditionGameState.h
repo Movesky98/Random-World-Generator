@@ -31,29 +31,17 @@ UCLASS()
 class RWG_API AExpeditionGameState : public AGameStateBase
 {
 	GENERATED_BODY()
-public:
-	FOnTimeOfDayUpdated OnTimeOfDayUpdated;
 
-	FOnDayCycleChanged OnDayCycleChanged;
-
-	FOnExtractionConditionsUpdated OnExtractionConditionsUpdated;
-
-	FOnGameplayStateChanged OnGameplayStateChanged;
-
-	FOnGameOver OnGameOver;
-
-	void SetTimeOfDay(float InTimeOfDay);
-	void SetDayCycle(EDayCycle InDayCycle);
-
-	float GetFullDuration() const;
-
-	void SetExtractionConditions(const TArray<FExtractionCondition>& Conditions);
-	const TArray<FExtractionCondition>& GetExtractionConditions() const;
-	void UpdateExtractionProgress(FName ItemID, int32 Quantity);
-
+/*********************************************************************
+*                                복제
+*********************************************************************/
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+/*********************************************************************
+*                             낮/밤 주기
+*********************************************************************/
+protected:
 	UPROPERTY(EditDefaultsOnly, ReplicatedUsing = OnRep_DayCycle, Category = "Time")
 	EDayCycle DayCycle;
 
@@ -66,31 +54,63 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, Category = "Time")
 	float NightDuration = 0.0f;
 
-	// 게임이 시작되는 서버 시간, GS->GetServerWorldTimeSeconds()로 비교할 것.
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "Gameplay")
-	float GameStartTime = 0.f;
-
-	bool bAllExtractionConditionsSatisfied = false;
-
-	UFUNCTION()
-	void OnRep_TimeOfDay();
-
 	UFUNCTION()
 	void OnRep_DayCycle();
 
 	UFUNCTION()
-	void OnRep_ExtractionConditions();
+	void OnRep_TimeOfDay();
 
+public:
+	FOnDayCycleChanged OnDayCycleChanged;
+
+	FOnTimeOfDayUpdated OnTimeOfDayUpdated;
+
+	void SetDayCycle(EDayCycle InDayCycle);
+
+	void SetTimeOfDay(float InTimeOfDay);
+
+	float GetFullDuration() const;
+
+/*********************************************************************
+*                             탈출 조건
+*********************************************************************/
+protected:
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_ExtractionConditions, Category = "Extraction|Conditions")
 	TArray<FExtractionCondition> ExtractionConditions;
 
+	bool bAllExtractionConditionsSatisfied = false;
+
+	UFUNCTION()
+	void OnRep_ExtractionConditions();
+
+public:
+	FOnExtractionConditionsUpdated OnExtractionConditionsUpdated;
+
+	void SetExtractionConditions(const TArray<FExtractionCondition>& Conditions);
+
+	const TArray<FExtractionCondition>& GetExtractionConditions() const;
+
+	void UpdateExtractionProgress(FName ItemID, int32 Quantity);
+
+/*********************************************************************
+*                             게임 진행
+*********************************************************************/
+protected:
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_GameplayState, Category = "Gameplay")
 	EGameplayState GameplayState;
+
+	// 게임이 시작되는 서버 시간, GS->GetServerWorldTimeSeconds()로 비교할 것.
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Gameplay")
+	float GameStartTime = 0.f;
 
 	UFUNCTION()
 	void OnRep_GameplayState(EGameplayState OldState);
 
 public:
+	FOnGameplayStateChanged OnGameplayStateChanged;
+
+	FOnGameOver OnGameOver;
+
 	void SetGameplayState(const EGameplayState State)
 	{
 		if (!HasAuthority()) return;
@@ -99,7 +119,7 @@ public:
 		GameplayState = State;
 		OnRep_GameplayState(OldState);
 	}
-	
+
 	EGameplayState GetGameplayState() const
 	{
 		return GameplayState;
@@ -127,5 +147,4 @@ public:
 
 		return FMath::Max(0.f, RemainingTime);
 	}
-
 };

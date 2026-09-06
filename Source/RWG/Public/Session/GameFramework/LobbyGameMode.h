@@ -13,16 +13,25 @@ UCLASS()
 class RWG_API ALobbyGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	ALobbyGameMode();
-
-	void HandleReadyRequest(class APlayerControllerBase* PC, bool bNewReady);
 
 protected:
 	virtual void BeginPlay() override;
 
-	void StartGame();
-
+/*********************************************************************
+*                             게임 시작
+*********************************************************************/
+protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Lobby|Time")
 	float StartGameDelay = 5.0f;
+
+	void StartGame();
+
+public:
+	void HandleReadyRequest(class APlayerControllerBase* PC, bool bNewReady);
 };

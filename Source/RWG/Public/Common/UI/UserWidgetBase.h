@@ -15,7 +15,10 @@ UCLASS()
 class RWG_API UUserWidgetBase : public UUserWidget
 {
 	GENERATED_BODY()
-	
+
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 public:
 	virtual void SetUp();
 

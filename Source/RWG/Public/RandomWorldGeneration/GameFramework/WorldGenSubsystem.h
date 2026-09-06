@@ -19,19 +19,29 @@ class RWG_API UWorldGenSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
-public:
-	UFUNCTION()
-	void InitiateWorldGeneration();
-
-	FOnWorldReady OnWorldReady;
-
-	bool IsWorldReady() const
-	{
-		return bWorldReady;
-	}
-
+/*********************************************************************
+*                             LifeCycle
+*********************************************************************/
 protected:
+	virtual void OnWorldBeginPlay(UWorld& World) override;
+
 	virtual void Deinitialize() override;
+
+/*********************************************************************
+*                            캐시된 참조
+*********************************************************************/
+private:
+	UPROPERTY()
+	class AWorldGenerator* WorldGenerator;
+
+/*********************************************************************
+*                           월드 설정 로딩
+*********************************************************************/
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Configs")
+	TMap<FPrimaryAssetType, TObjectPtr<UObject>> LoadedConfigs;
+
+	int32 ExpectedCount = 2;
 
 	void InitializeWorldConfig();
 
@@ -39,20 +49,29 @@ protected:
 
 	void OnConfigInitialized(FPrimaryAssetType AssetType);
 
-	virtual void OnWorldBeginPlay(UWorld& World) override;
+/*********************************************************************
+*                             월드 생성
+*********************************************************************/
+private:
+	bool bWorldReady = false;
 
+protected:
 	void OnWorldGenerationCompleted();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Configs")
-	TMap<FPrimaryAssetType, TObjectPtr<UObject>> LoadedConfigs;
+public:
+	FOnWorldReady OnWorldReady;
 
-	int32 ExpectedCount = 2;
+	UFUNCTION()
+	void InitiateWorldGeneration();
 
+	bool IsWorldReady() const
+	{
+		return bWorldReady;
+	}
+
+/*********************************************************************
+*                              UI 통지
+*********************************************************************/
+protected:
 	UGlobalUISubsystem* GetGlobalUISubsystem() const;
-
-private:
-	UPROPERTY()
-	class AWorldGenerator* WorldGenerator;
-
-	bool bWorldReady = false;
 };
