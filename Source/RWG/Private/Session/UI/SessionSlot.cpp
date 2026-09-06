@@ -5,8 +5,6 @@
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 
-DEFINE_LOG_CATEGORY(LogSessionSlot);
-
 void USessionSlot::InitializeSessionData(const FSessionData InSessionData)
 {
 	SessionData = InSessionData;

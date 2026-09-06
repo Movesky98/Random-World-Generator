@@ -17,8 +17,6 @@
 #include "RandomWorldGeneration/Actors/BuildingActor.h"
 #include "Kismet/GameplayStatics.h"
 
-DEFINE_LOG_CATEGORY(LogWorldGenerator);
-
 // Sets default values
 AWorldGenerator::AWorldGenerator()
 {
@@ -76,7 +74,7 @@ void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>>
 	T1 = FPlatformTime::Seconds();
 	GenerateNavProxyMesh(GenConfig);
 	T2 = FPlatformTime::Seconds();
-	UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile] Sync: Terrain=%.2fms  NavProxy=%.2fms  SyncTotal=%.2fms"),
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("[GenProfile] Sync: Terrain=%.2fms  NavProxy=%.2fms  SyncTotal=%.2fms"),
 		(T1 - T0) * 1000.0, (T2 - T1) * 1000.0, (T2 - T0) * 1000.0);
 }
 
@@ -204,7 +202,7 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 
 			const double W1 = FPlatformTime::Seconds();
 			// 워커에서 걸린 시간 측정
-			UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile] Grid(worker)=%.2fms"), (W1 - W0) * 1000.0);
+			COMMON_LOG(LogRandomWorldGen, Warning, TEXT("[GenProfile] Grid(worker)=%.2fms"), (W1 - W0) * 1000.0);
 
 			AsyncTask(ENamedThreads::GameThread, [WeakThis, WeakConfig, LocalGrid = MoveTemp(LocalGrid), LocalBlocks = MoveTemp(LocalBlocks)]() mutable
 				{
@@ -225,7 +223,7 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 		});
 
 	const double TG2 = FPlatformTime::Seconds();
-	UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile]  Content: RoadGraph=%.2fms  Grid=%.2fms"),
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("[GenProfile]  Content: RoadGraph=%.2fms  Grid=%.2fms"),
 		(TG1 - TG0) * 1000.0, (TG2 - TG1) * 1000.0);
 	// DebugSeedResult();
 }
@@ -337,7 +335,7 @@ void AWorldGenerator::StartGeneratePCG(UWorldThemeConfig* Config)
 
 	if (GetWorld()->GetNetMode() != NM_Client)
 	{
-		UE_LOG(LogWorldGenerator, Warning, TEXT("SERVER: Building PCG Generate"));
+		COMMON_LOG(LogRandomWorldGen, Warning, TEXT("SERVER: Building PCG Generate"));
 		if (BuildingPCGComponent && BuildingPCGComponent->GetGraph())
 		{
 			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
@@ -353,7 +351,7 @@ void AWorldGenerator::StartGeneratePCG(UWorldThemeConfig* Config)
 	}
 	else
 	{
-		UE_LOG(LogWorldGenerator, Warning, TEXT("CLIENT: Building PCG skipped"));
+		COMMON_LOG(LogRandomWorldGen, Warning, TEXT("CLIENT: Building PCG skipped"));
 		bBuildingPCGCompleted = true;
 	}
 }
@@ -433,9 +431,9 @@ void AWorldGenerator::DrawDebugGrid()
 
 void AWorldGenerator::DebugSeedResult()
 {
-	UE_LOG(LogWorldGenerator, Warning, TEXT("Master Seed : %d"), MasterSeed);
-	UE_LOG(LogWorldGenerator, Warning, TEXT("***************************** Road Graph *****************************"));
-	UE_LOG(LogWorldGenerator, Warning, TEXT("Road Num : %d"), RoadGraph.GetEdges().Num());
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Master Seed : %d"), MasterSeed);
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("***************************** Road Graph *****************************"));
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Road Num : %d"), RoadGraph.GetEdges().Num());
 
 	int32 SegmentCount = 0;
 	for (const FRoadEdge& Edge : RoadGraph.GetEdges())
@@ -443,7 +441,7 @@ void AWorldGenerator::DebugSeedResult()
 		SegmentCount += Edge.SegmentPoints.Num();
 	}
 
-	UE_LOG(LogWorldGenerator, Warning, TEXT("Road's all segment Num : %d"), SegmentCount);
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Road's all segment Num : %d"), SegmentCount);
 
 	for (int i = 0; i < RoadGraph.GetEdges().Num() && i < 10; i++)
 	{
@@ -452,11 +450,11 @@ void AWorldGenerator::DebugSeedResult()
 		const FRoadNode* SNode = RoadGraph.GetNode(SNodeId);
 		const FRoadNode* ENode = RoadGraph.GetNode(ENodeId);
 
-		UE_LOG(LogWorldGenerator, Warning, TEXT("%dth Road's StartNode Position : X = %.3f / Y = %.3f / Z = %.3f"), i + 1, SNode->Position.X, SNode->Position.Y, SNode->Position.Z);
-		UE_LOG(LogWorldGenerator, Warning, TEXT("%dth Road's EndNode Position : X = %.3f / Y = %.3f / Z = %.3f"), i + 1, ENode->Position.X, ENode->Position.Y, ENode->Position.Z);
+		COMMON_LOG(LogRandomWorldGen, Warning, TEXT("%dth Road's StartNode Position : X = %.3f / Y = %.3f / Z = %.3f"), i + 1, SNode->Position.X, SNode->Position.Y, SNode->Position.Z);
+		COMMON_LOG(LogRandomWorldGen, Warning, TEXT("%dth Road's EndNode Position : X = %.3f / Y = %.3f / Z = %.3f"), i + 1, ENode->Position.X, ENode->Position.Y, ENode->Position.Z);
 	}
 
-	UE_LOG(LogWorldGenerator, Warning, TEXT("***************************** Grid *****************************"));
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("***************************** Grid *****************************"));
 	
 	int32 RoadCellCount = 0;
 	int32 BuildableCellCount = 0;
@@ -467,9 +465,9 @@ void AWorldGenerator::DebugSeedResult()
 			RoadCellCount++;
 	}
 
-	UE_LOG(LogWorldGenerator, Warning, TEXT("RoadCells : %d"), RoadCellCount);
-	UE_LOG(LogWorldGenerator, Warning, TEXT("Lots : %d"), CityGrid.GetLots().Num());
-	UE_LOG(LogWorldGenerator, Warning, TEXT("Blocks : %d"), CityBlocks.Num());
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("RoadCells : %d"), RoadCellCount);
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Lots : %d"), CityGrid.GetLots().Num());
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Blocks : %d"), CityBlocks.Num());
 }
 
 void AWorldGenerator::CheckAllComplete()
@@ -500,7 +498,7 @@ void AWorldGenerator::OnComponentPhysicsStateChanged(UPrimitiveComponent* Change
 		if (ThemeConfig)
 		{
 			TC = FPlatformTime::Seconds();
-			UE_LOG(LogWorldGenerator, Warning, TEXT("[GenProfile] Terrain Compute=%.2fms  CookWait=%.2fms"),
+			COMMON_LOG(LogRandomWorldGen, Warning, TEXT("[GenProfile] Terrain Compute=%.2fms  CookWait=%.2fms"),
 				(TB - TA) * 1000.0, (TC - TB) * 1000.0);
 
 			GenerateContent(ThemeConfig);

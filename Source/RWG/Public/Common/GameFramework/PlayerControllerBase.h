@@ -7,8 +7,6 @@
 #include "GameFramework/PlayerController.h"
 #include "PlayerControllerBase.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogPlayerControllerBase, Log, All);
-
 /**
  * 
  */

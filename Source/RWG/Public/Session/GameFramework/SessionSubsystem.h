@@ -7,8 +7,6 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "SessionSubsystem.generated.h"
 
-RWG_API DECLARE_LOG_CATEGORY_EXTERN(LogSessionSubsystem, Log, All);
-
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnCreateSessionCompletedEvent, bool bWasSuccessful);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnFindSessionsCompletedEvent, const TArray<FOnlineSessionSearchResult>& SearchResults, bool bWasSuccessful);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnJoinSessionCompletedEvent, EOnJoinSessionCompleteResult::Type Result);

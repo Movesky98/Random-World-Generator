@@ -9,8 +9,6 @@
 #include "OnlineSessionSettings.h"
 #include "SessionMenu.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogSessionMenu, Log, All);
-
 UENUM()
 enum class ESessionUIError : uint8
 {

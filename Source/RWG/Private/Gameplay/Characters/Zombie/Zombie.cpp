@@ -70,7 +70,7 @@ void AZombie::PerformAttack()
 
     if (bHit && HitResult.GetActor())
     {
-        UE_LOG(LogTemp, Warning, TEXT("PerformAttack Hit: %s"), *HitResult.GetActor()->GetName());
+        COMMON_LOG(LogGameplay, Warning, TEXT("PerformAttack Hit: %s"), *HitResult.GetActor()->GetName());
 
         APawn* HitPawn = Cast<APawn>(HitResult.GetActor());
         if (HitPawn)

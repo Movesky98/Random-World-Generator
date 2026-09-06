@@ -6,8 +6,6 @@
 #include "GameFramework/GameModeBase.h"
 #include "LobbyGameMode.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogLobbyGameMode, Log, All);
-
 /**
  * 
  */

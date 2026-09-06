@@ -6,8 +6,7 @@
 #include "Session/GameFramework/LobbyPlayerState.h"
 #include "Session/GameFramework/SessionSubsystem.h"
 #include "Common/GameFramework/PlayerControllerBase.h"
-
-DEFINE_LOG_CATEGORY(LogLobbyGameMode);
+#include "CommonLogCategories.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -27,7 +26,7 @@ void ALobbyGameMode::BeginPlay()
 	
 	if (!SessionSubsystem || !LobbyGameState)
 	{
-		UE_LOG(LogLobbyGameMode, Error, TEXT("BeginPlay() :: Can't find SessionSubsystem or LobbyGameState."));
+		COMMON_LOG(LogSession, Error, TEXT("Can't find SessionSubsystem or LobbyGameState."));
 		return;
 	}
 
@@ -39,7 +38,7 @@ void ALobbyGameMode::HandleReadyRequest(APlayerControllerBase* PC, bool bNewRead
 {
 	if (!PC)
 	{
-		UE_LOG(LogLobbyGameMode, Error, TEXT("HandleReadyRequest() :: Invalid playercontroller parameter."));
+		COMMON_LOG(LogSession, Error, TEXT("Invalid playercontroller parameter."));
 		return;
 	}
 

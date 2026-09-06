@@ -65,7 +65,7 @@ void UInventoryComponent::ToggleInventory()
 {
 	OnInventoryToggled.Broadcast();
 
-	UE_LOG(LogGameplay, Warning, TEXT("--------------------- Inventory State ---------------------"));
+	COMMON_LOG(LogGameplay, Warning, TEXT("--------------------- Inventory State ---------------------"));
 
 	if (Slots.Num())
 	{
@@ -73,7 +73,7 @@ void UInventoryComponent::ToggleInventory()
 		{
 			FItemInstance& ItemInstance = Slots[i];
 
-			UE_LOG(LogGameplay, Warning, TEXT("%d\t%s\t%d"),
+			COMMON_LOG(LogGameplay, Warning, TEXT("%d\t%s\t%d"),
 				i,
 				*ItemInstance.ItemData->DisplayName.ToString(),
 				ItemInstance.Quantity
@@ -82,7 +82,7 @@ void UInventoryComponent::ToggleInventory()
 	}
 	else
 	{
-		UE_LOG(LogGameplay, Warning, TEXT("No Item Slots."));
+		COMMON_LOG(LogGameplay, Warning, TEXT("No Item Slots."));
 	}
 	
 }

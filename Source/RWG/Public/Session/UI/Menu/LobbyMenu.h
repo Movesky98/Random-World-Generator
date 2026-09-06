@@ -6,8 +6,6 @@
 #include "Common/UI/UserWidgetBase.h"
 #include "LobbyMenu.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogLobbyMenu, Log, All);
-
 class UTextBlock;
 class UScrollBox;
 class UButton;

@@ -8,8 +8,6 @@
 #include "Online/OnlineSessionNames.h"
 #include "CommonLogCategories.h"
 
-DEFINE_LOG_CATEGORY(LogSessionSubsystem);
-
 USessionSubsystem::USessionSubsystem() :
 	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionCompleted)),
 	FindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionsCompleted)),
@@ -23,18 +21,18 @@ void USessionSubsystem::CreateSession(int32 NumPublicConnections, FName SessionN
 	IOnlineSubsystem* OSS = Online::GetSubsystem(GetWorld());
 	if (!OSS)
 	{
-		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("OSS is nullptr."));
+		COMMON_LOG(LogSession, Warning, TEXT("OSS is nullptr."));
 		OnCreateSessionCompletedEvent.Broadcast(false);
 		return;
 	}
 	
 	FName OSSName = OSS->GetSubsystemName();
-	UE_LOG(LogSessionSubsystem, Log, TEXT("OSS Name : %s"), *OSSName.ToString());
+	COMMON_LOG(LogSession, Log, TEXT("OSS Name : %s"), *OSSName.ToString());
 
 	const IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface)
 	{
-		UE_LOG(LogSessionSubsystem, Warning, TEXT("CreateSession() :: There's no session interface."));
+		COMMON_LOG(LogSession, Warning, TEXT("There's no session interface."));
 		OnCreateSessionCompletedEvent.Broadcast(false);
 		return;
 	}
@@ -63,7 +61,7 @@ void USessionSubsystem::CreateSession(int32 NumPublicConnections, FName SessionN
 
 	if (!SessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *LastSessionSettings))
 	{
-		UE_LOG(LogSessionSubsystem, Warning, TEXT("CreateSession() :: Failed to create session."));
+		COMMON_LOG(LogSession, Warning, TEXT("Failed to create session."));
 		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
 		OnCreateSessionCompletedEvent.Broadcast(false);
 	}
@@ -74,7 +72,7 @@ void USessionSubsystem::FindSessions(int32 MaxSearchResult, bool bIsLANQuery)
 	const IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface)
 	{
-		UE_LOG(LogSessionSubsystem, Warning, TEXT("FindSessions() :: There's no session interface."));
+		COMMON_LOG(LogSession, Warning, TEXT("There's no session interface."));
 		OnFindSessionsCompletedEvent.Broadcast(TArray<FOnlineSessionSearchResult>(), false);
 		return;
 	}
@@ -90,7 +88,7 @@ void USessionSubsystem::FindSessions(int32 MaxSearchResult, bool bIsLANQuery)
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	if (!SessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), LastSessionSearch.ToSharedRef()))
 	{
-		UE_LOG(LogSessionSubsystem, Warning, TEXT("FindSessions() :: Failed to find session."));
+		COMMON_LOG(LogSession, Warning, TEXT("Failed to find session."));
 		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegateHandle);
 		OnFindSessionsCompletedEvent.Broadcast(TArray<FOnlineSessionSearchResult>(), false);
 	}
@@ -102,7 +100,7 @@ void USessionSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionRes
 	const IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface)
 	{
-		UE_LOG(LogSessionSubsystem, Warning, TEXT("JoinSession() :: There's no session interface."));
+		COMMON_LOG(LogSession, Warning, TEXT("There's no session interface."));
 		OnJoinSessionsCompletedEvent.Broadcast(EOnJoinSessionCompleteResult::UnknownError);
 		return;
 	}
@@ -112,7 +110,7 @@ void USessionSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionRes
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	if (!SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, SessionResult))
 	{
-		UE_LOG(LogSessionSubsystem, Warning, TEXT("JoinSession() :: Failed to join session."));
+		COMMON_LOG(LogSession, Warning, TEXT("Failed to join session."));
 		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
 		OnJoinSessionsCompletedEvent.Broadcast(EOnJoinSessionCompleteResult::UnknownError);
 	}
@@ -132,7 +130,7 @@ void USessionSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSuc
 	const IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface)
 	{
-		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("SessionInterface is not found."));
+		COMMON_LOG(LogSession, Warning, TEXT("SessionInterface is not found."));
 		OnCreateSessionCompletedEvent.Broadcast(false);
 		return;
 	}
@@ -141,7 +139,7 @@ void USessionSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSuc
 	
 	if (!bWasSuccessful)
 	{
-		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("Failed to create session."));
+		COMMON_LOG(LogSession, Warning, TEXT("Failed to create session."));
 		OnCreateSessionCompletedEvent.Broadcast(false);
 		return;
 	}
@@ -149,7 +147,7 @@ void USessionSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSuc
 	FOnlineSessionSettings* SessionSettings = SessionInterface->GetSessionSettings(SessionName);
 	if (!SessionSettings)
 	{
-		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("SessionSettings is not found."));
+		COMMON_LOG(LogSession, Warning, TEXT("SessionSettings is not found."));
 		OnCreateSessionCompletedEvent.Broadcast(false);
 		return;
 	}
@@ -165,7 +163,7 @@ void USessionSubsystem::OnCreateSessionCompleted(FName SessionName, bool bWasSuc
 	LobbySessionInfo.bIsLAN = SessionSettings->bIsLANMatch;
 
 	OnCreateSessionCompletedEvent.Broadcast(true);
-	UE_LOG(LogSessionSubsystem, Log, TEXT("Session created successfully."));
+	COMMON_LOG(LogSession, Log, TEXT("Session created successfully."));
 
 	UWorld* World = GetWorld();
 	if (World)
@@ -188,7 +186,7 @@ void USessionSubsystem::OnFindSessionsCompleted(bool bWasSuccessful)
 		return;
 	}
 
-	UE_LOG(LogSessionSubsystem, Warning, TEXT("OnFindSessionsCompleted() :: Sessions found successfully."));
+	COMMON_LOG(LogSession, Warning, TEXT("Sessions found successfully."));
 	OnFindSessionsCompletedEvent.Broadcast(LastSessionSearch->SearchResults, bWasSuccessful);
 
 }
@@ -198,7 +196,7 @@ void USessionSubsystem::OnJoinSessionCompleted(FName SessionName, EOnJoinSession
 	const IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface)
 	{
-		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("SessionInterface is not found."));
+		COMMON_LOG(LogSession, Warning, TEXT("SessionInterface is not found."));
 		OnJoinSessionsCompletedEvent.Broadcast(Result);
 		return;
 	}
@@ -207,7 +205,7 @@ void USessionSubsystem::OnJoinSessionCompleted(FName SessionName, EOnJoinSession
 
 	if (Result == EOnJoinSessionCompleteResult::UnknownError)
 	{
-		COMMON_LOG(LogSessionSubsystem, Warning, TEXT("Failed to join session."));
+		COMMON_LOG(LogSession, Warning, TEXT("Failed to join session."));
 		OnJoinSessionsCompletedEvent.Broadcast(Result);
 		return;
 	}

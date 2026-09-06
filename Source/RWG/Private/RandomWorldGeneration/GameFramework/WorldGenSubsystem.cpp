@@ -11,8 +11,6 @@
 #include "Engine/AssetManager.h"
 #include "HAL/IConsoleManager.h"
 
-DEFINE_LOG_CATEGORY(LogWorldGenSubsystem);
-
 void UWorldGenSubsystem::InitiateWorldGeneration()
 {
 	for (auto& Config : LoadedConfigs)
@@ -33,7 +31,7 @@ void UWorldGenSubsystem::InitiateWorldGeneration()
 		WorldGenerator->GenerateWorld(LoadedConfigs);
 	}
 	else
-		UE_LOG(LogWorldGenSubsystem, Error, TEXT("WorldGenerator is not found."));
+		COMMON_LOG(LogRandomWorldGen, Error, TEXT("WorldGenerator is not found."));
 }
 
 void UWorldGenSubsystem::Deinitialize()
@@ -69,7 +67,7 @@ void UWorldGenSubsystem::LoadConfigByType(FPrimaryAssetType AssetType)
 
 	if (AssetIds.IsEmpty())
 	{
-		UE_LOG(LogWorldGenSubsystem, Error, TEXT("%s PrimaryAssetId is not found."), *AssetType.ToString());
+		COMMON_LOG(LogRandomWorldGen, Error, TEXT("%s PrimaryAssetId is not found."), *AssetType.ToString());
 		return;
 	}
 
@@ -88,7 +86,7 @@ void UWorldGenSubsystem::LoadConfigByType(FPrimaryAssetType AssetType)
 			FStreamableDelegate::CreateUObject(this, &UWorldGenSubsystem::OnConfigInitialized, AssetType)
 		);
 
-		UE_LOG(LogWorldGenSubsystem, Log, TEXT("Starting async load for: %s"), *AssetType.ToString());
+		COMMON_LOG(LogRandomWorldGen, Log, TEXT("Starting async load for: %s"), *AssetType.ToString());
 	}
 }
 
@@ -104,7 +102,7 @@ void UWorldGenSubsystem::OnConfigInitialized(FPrimaryAssetType AssetType)
 	LoadedConfigs.Add(AssetType, LoadObject);
 	if (LoadedConfigs.Num() >= ExpectedCount)
 	{
-		UE_LOG(LogWorldGenSubsystem, Log, TEXT("All Configs loaded. Starting world generation..."));
+		COMMON_LOG(LogRandomWorldGen, Log, TEXT("All Configs loaded. Starting world generation..."));
 		InitiateWorldGeneration();
 	}
 }

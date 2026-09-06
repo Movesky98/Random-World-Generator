@@ -6,8 +6,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CommonLogCategories.h"
 
-DEFINE_LOG_CATEGORY(LogCharacterAnimation);
-
 UCharacterBaseAnimInstance::UCharacterBaseAnimInstance()
 {
 

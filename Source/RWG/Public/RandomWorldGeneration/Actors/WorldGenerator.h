@@ -11,7 +11,6 @@
 #include "RandomWorldGeneration/Grid/CityGridTypes.h"
 #include "WorldGenerator.generated.h"
 
-RWG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenerator, Log, All);
 DECLARE_MULTICAST_DELEGATE(FOnWorldGenerationCompleted);
 
 /*

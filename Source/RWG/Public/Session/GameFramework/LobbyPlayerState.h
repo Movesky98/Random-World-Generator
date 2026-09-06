@@ -6,8 +6,6 @@
 #include "GameFramework/PlayerState.h"
 #include "LobbyPlayerState.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogLobbyPlayerState, Log, All);
-
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnReadyChanged, bool IsReady);
 
 /**

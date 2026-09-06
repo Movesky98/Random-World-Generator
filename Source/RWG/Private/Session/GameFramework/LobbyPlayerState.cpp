@@ -5,8 +5,6 @@
 #include "Common/GameFramework/PlayerControllerBase.h"
 #include "Net/UnrealNetwork.h"
 
-DEFINE_LOG_CATEGORY(LogLobbyPlayerState);
-
 void ALobbyPlayerState::SetReady(bool bNewReady)
 {
 	if (bIsReady == bNewReady)

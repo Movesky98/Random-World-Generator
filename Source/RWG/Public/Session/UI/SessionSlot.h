@@ -7,8 +7,6 @@
 #include "OnlineSessionSettings.h"
 #include "SessionSlot.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogSessionSlot, Log, All);
-
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnJoinButtonClickedEvent, int32 SessionIndex);
 
 

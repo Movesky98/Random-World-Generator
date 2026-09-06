@@ -6,8 +6,6 @@
 #include "Components/CheckBox.h"
 #include "Components/TextBlock.h"
 
-DEFINE_LOG_CATEGORY(LogPlayerSlot);
-
 void UPlayerSlot::NativeConstruct()
 {
 	Super::NativeConstruct();

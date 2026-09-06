@@ -6,8 +6,6 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "WorldGenSubsystem.generated.h"
 
-RWG_API DECLARE_LOG_CATEGORY_EXTERN(LogWorldGenSubsystem, Log, All);
-
 DECLARE_MULTICAST_DELEGATE(FOnWorldReady);
 
 class UGlobalUISubsystem;

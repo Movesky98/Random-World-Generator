@@ -6,12 +6,11 @@
 
 #include "Session/GameFramework/LobbyGameState.h"
 #include "Common/GameFramework/PlayerControllerBase.h"
+#include "CommonLogCategories.h"
 
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/ScrollBox.h"
-
-DEFINE_LOG_CATEGORY(LogLobbyMenu);
 
 ULobbyMenu::ULobbyMenu()
 {
@@ -42,7 +41,7 @@ void ULobbyMenu::NativeConstruct()
 	}
 	else
 	{
-		UE_LOG(LogLobbyMenu, Error, TEXT("NativeConstruct() :: LobbyMenu is %s"), LobbyGS ? TEXT("Valid") : TEXT("Null"));
+		COMMON_LOG(LogSession, Error, TEXT("LobbyMenu is %s"), LobbyGS ? TEXT("Valid") : TEXT("Null"));
 	}
 }
 
@@ -74,7 +73,7 @@ void ULobbyMenu::RefreshPlayerList()
 	ALobbyGameState* LobbyGS = GetLobbyGameState();
 	if (!LobbyGS || !PlayerListScrollBox)
 	{
-		UE_LOG(LogLobbyMenu, Error, TEXT("RefreshPlayerList() :: Failed to reference PlayerListScrollBox or Lobby GameState."));
+		COMMON_LOG(LogSession, Error, TEXT("Failed to reference PlayerListScrollBox or Lobby GameState."));
 		return;
 	}
 
@@ -96,7 +95,7 @@ void ULobbyMenu::RefreshPlayerCount()
 	ALobbyGameState* LobbyGS = GetLobbyGameState();
 	if (!LobbyGS || !PlayerCountText)
 	{
-		UE_LOG(LogLobbyMenu, Error, TEXT("RefreshPlayerList() :: Failed to reference PlayerListScrollBox or Lobby GameState."));
+		COMMON_LOG(LogSession, Error, TEXT("Failed to reference PlayerListScrollBox or Lobby GameState."));
 		return;
 	}
 
@@ -110,7 +109,7 @@ void ULobbyMenu::InitializeLobbyView()
 {
 	if (!PlayerSlotClass)
 	{
-		UE_LOG(LogLobbyMenu, Error, TEXT("UpdatePlayers() :: Set up player class in LobbyMenu"));
+		COMMON_LOG(LogSession, Error, TEXT("Set up player class in LobbyMenu"));
 		return;
 	}
 

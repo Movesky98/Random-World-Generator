@@ -14,8 +14,6 @@
 #include "Components/ScrollBox.h"
 #include "Components/CircularThrobber.h"
 
-DEFINE_LOG_CATEGORY(LogSessionMenu);
-
 USessionMenu::USessionMenu()
 {
 
@@ -54,10 +52,10 @@ void USessionMenu::NativeConstruct()
 		SessionSubsystem->OnFindSessionsCompletedEvent.AddUObject(this, &ThisClass::OnFindSessionsCompleted);
 		SessionSubsystem->OnJoinSessionsCompletedEvent.AddUObject(this, &ThisClass::OnJoinSessionCompleted);
 
-		UE_LOG(LogSessionMenu, Warning, TEXT("NativeConstruct() :: SessionMenu's delegate binding is succeeded."));
+		COMMON_LOG(LogSession, Warning, TEXT("SessionMenu's delegate binding is succeeded."));
 	}
 	else
-		UE_LOG(LogSessionMenu, Error, TEXT("NativeConstruct() :: Can't refer SessionSubsystem."));
+		COMMON_LOG(LogSession, Error, TEXT("Can't refer SessionSubsystem."));
 
 	SessionState = ESessionState::Idle;
 }
@@ -71,7 +69,7 @@ void USessionMenu::NativeDestruct()
 		SessionSubsystem->OnJoinSessionsCompletedEvent.RemoveAll(this);
 	}
 	else
-		UE_LOG(LogSessionMenu, Error, TEXT("NativeDesturct() :: Can't refer SessionSubsystem."));
+		COMMON_LOG(LogSession, Error, TEXT("Can't refer SessionSubsystem."));
 
 	Super::NativeDestruct();
 }
@@ -106,7 +104,7 @@ void USessionMenu::OnCreateSessionButtonClicked()
 		SessionSubsystem->CreateSession(MaxPlayers, SessionName, bIsLAN);
 	}
 	else
-		UE_LOG(LogSessionMenu, Error, TEXT("OnCreateSessionButtonClicked() :: Can't refer SessionSubsystem."));
+		COMMON_LOG(LogSession, Error, TEXT("Can't refer SessionSubsystem."));
 }
 
 void USessionMenu::OnCreateSessionCompleted(bool bWasSuccessful)
@@ -117,7 +115,7 @@ void USessionMenu::OnCreateSessionCompleted(bool bWasSuccessful)
 	if (!bWasSuccessful)
 	{
 		// Show Error Msg and UI
-		UE_LOG(LogSessionMenu, Warning, TEXT("OnCreateSessionCompleted() :: Failed to create session."));
+		COMMON_LOG(LogSession, Warning, TEXT("Failed to create session."));
 		HandleError(ESessionUIError::CreateFailed);
 
 		// 상태 초기화
@@ -146,7 +144,7 @@ void USessionMenu::OnFindSessionButtonClicked()
 		LoadingThrobber->SetVisibility(ESlateVisibility::Visible);
 	}
 	else
-		UE_LOG(LogSessionMenu, Error, TEXT("OnFindSessionsButtonClicked() :: Can't refer SessionSubsystem."));
+		COMMON_LOG(LogSession, Error, TEXT("Can't refer SessionSubsystem."));
 }
 
 void USessionMenu::OnFindSessionsCompleted(const TArray<FOnlineSessionSearchResult>& SearchResults, bool bWasSuccessful)
@@ -161,7 +159,7 @@ void USessionMenu::OnFindSessionsCompleted(const TArray<FOnlineSessionSearchResu
 		// Especially check the error type.
 		// Such as Failed to find sessions, no session slot class, no available sessions, etc...
 		// Show Error Msg and UI
-		UE_LOG(LogSessionMenu, Warning, TEXT("OnFindSessionsCompleted() :: Failed to find sessions."));
+		COMMON_LOG(LogSession, Warning, TEXT("Failed to find sessions."));
 		return;
 	}
 

@@ -10,8 +10,6 @@
 class UTextBlock;
 class UCheckBox;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogPlayerSlot, Log, All);
-
 /**
  * 
  */

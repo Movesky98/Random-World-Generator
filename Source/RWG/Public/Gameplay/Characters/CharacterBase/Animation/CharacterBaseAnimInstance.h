@@ -6,8 +6,6 @@
 #include "Animation/AnimInstance.h"
 #include "CharacterBaseAnimInstance.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogCharacterAnimation, Log, All);
-
 class ACharacterBase;
 class UCharacterMovementComponent;
 

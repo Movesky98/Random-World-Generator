@@ -7,9 +7,8 @@
 #include "Session/GameFramework/LobbyGameMode.h"
 
 #include "Session/UI/Menu/SessionMenu.h"
+#include "CommonLogCategories.h"
 #include "Kismet/GameplayStatics.h"
-
-DEFINE_LOG_CATEGORY(LogPlayerControllerBase);
 
 void APlayerControllerBase::BeginPlay()
 {
@@ -33,7 +32,7 @@ void APlayerControllerBase::ServerSetReady_Implementation(bool bNewReady)
 
 	if (!LobbyPS || !LobbyGM)
 	{
-		UE_LOG(LogPlayerControllerBase, Error, TEXT("ServerSetReady() :: Please check LobbyPlayerState or LobbyGameMode."));
+		COMMON_LOG(LogSession, Error, TEXT("Please check LobbyPlayerState or LobbyGameMode."));
 		return;
 	}
 
