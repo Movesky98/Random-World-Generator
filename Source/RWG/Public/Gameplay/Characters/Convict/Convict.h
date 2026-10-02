@@ -12,6 +12,7 @@ class UCombatComponent;
 class UInventoryComponent;
 class UInteractionComponent;
 class UHealthComponent;
+class URecoilComponent;
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -63,6 +64,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	UInteractionComponent* InteractionComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	URecoilComponent* RecoilComponent;
 
 	UPROPERTY()
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSourceComponent;

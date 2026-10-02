@@ -4,8 +4,10 @@
 #include "Gameplay/Items/GunBase.h"
 #include "Gameplay/DataAssets/GunData.h"
 #include "Gameplay/Actors/BulletProjectile.h"
+#include "Gameplay/Components/RecoilComponent.h"
 #include "CommonLogCategories.h"
 
+#include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 
@@ -265,6 +267,15 @@ void AGunBase::Multicast_PlayDryFireSound_Implementation()
 
 void AGunBase::Multicast_PlayFireFX_Implementation()
 {
+	// TODO: AWeaponBase의 발사 통지로 옮긴다.
+	if (ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner()))
+	{
+		if (URecoilComponent* OwnerRecoilComponent = OwningCharacter->FindComponentByClass<URecoilComponent>())
+		{
+			OwnerRecoilComponent->ApplyRecoilShot();
+		}
+	}
+
 	UGunData* Data = GetItemData<UGunData>();
 	if (!Data) return;
 

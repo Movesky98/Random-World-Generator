@@ -7,6 +7,7 @@
 #include "Gameplay/Components/InventoryComponent.h"
 #include "Gameplay/Components/InteractionComponent.h"
 #include "Gameplay/Components/HealthComponent.h"
+#include "Gameplay/Components/RecoilComponent.h"
 #include "Gameplay/Interfaces/PlayerDetectable.h"
 #include "CommonLogCategories.h"
 
@@ -33,6 +34,7 @@ AConvict::AConvict()
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
+	RecoilComponent = CreateDefaultSubobject<URecoilComponent>(TEXT("RecoilComponent"));
 
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
 	StimuliSourceComponent->RegisterForSense(TSubclassOf<UAISense_Sight>());
