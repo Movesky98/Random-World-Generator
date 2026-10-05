@@ -39,6 +39,22 @@ void UTimeManagementComponent::BeginPlay()
 	}
 }
 
+void UTimeManagementComponent::StartTime()
+{
+	if (!GameState)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Can't find ExpeditionGameState"));
+		return;
+	}
+
+	FDayNightSettings Settings;
+	Settings.DayDuration = DayDuration;
+	Settings.NightDuration = NightDuration;
+
+	GameState->StartDayNight(Settings, TimeOfDay);
+	SetComponentTickEnabled(true);
+}
+
 // Called every frame
 void UTimeManagementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {

@@ -43,6 +43,9 @@ protected:
 public:
 	FOnDayCycleChanged OnDayCycleChanged;
 
+	/* GameState에 하루 길이를 넘기고 시간 진행을 시작한다 */
+	void StartTime();
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Time")
 	float TimeOfDay = 0.0f;

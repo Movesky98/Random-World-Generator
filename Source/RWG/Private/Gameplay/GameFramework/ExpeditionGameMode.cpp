@@ -273,7 +273,7 @@ void AExpeditionGameMode::GameStart()
         ExpeditionGS->SetGameplayState(EGameplayState::Playing);
     }
 
-    TimeManagementComponent->SetComponentTickEnabled(true);
+    TimeManagementComponent->StartTime();
 }
 
 void AExpeditionGameMode::SubscribeInventoryComponent(AConvict* Player)
