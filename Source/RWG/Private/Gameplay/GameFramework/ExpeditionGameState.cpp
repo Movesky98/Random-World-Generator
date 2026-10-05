@@ -5,6 +5,19 @@
 #include "CommonLogCategories.h"
 #include "Net/UnrealNetwork.h"
 
+void AExpeditionGameState::StartDayNight(const FDayNightSettings& InSettings, float InTimeOfDay)
+{
+	if (!HasAuthority())
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Server authority required."));
+		return;
+	}
+
+	DayNightSettings = InSettings;
+	SetTimeOfDay(InTimeOfDay);
+	OnDayNightStarted.Broadcast(DayNightSettings);
+}
+
 void AExpeditionGameState::SetTimeOfDay(float InTimeOfDay)
 {
 	TimeOfDay = InTimeOfDay;
@@ -16,11 +29,6 @@ void AExpeditionGameState::SetDayCycle(EDayCycle InDayCycle)
 	DayCycle = InDayCycle;
 	COMMON_LOG(LogGameplay, Log, TEXT("%s"), InDayCycle == EDayCycle::Day ? TEXT("Now Day") : TEXT("Now Night"));
 	OnDayCycleChanged.Broadcast(DayCycle);
-}
-
-float AExpeditionGameState::GetFullDuration() const
-{
-	return DayDuration + NightDuration;
 }
 
 void AExpeditionGameState::SetExtractionConditions(const TArray<FExtractionCondition>& Conditions)
@@ -84,8 +92,7 @@ void AExpeditionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
 	DOREPLIFETIME(AExpeditionGameState, TimeOfDay);
 	DOREPLIFETIME(AExpeditionGameState, DayCycle);
-	DOREPLIFETIME(AExpeditionGameState, DayDuration);
-	DOREPLIFETIME(AExpeditionGameState, NightDuration);
+	DOREPLIFETIME(AExpeditionGameState, DayNightSettings);
 	DOREPLIFETIME(AExpeditionGameState, ExtractionConditions);
 	DOREPLIFETIME(AExpeditionGameState, GameplayState);
 	DOREPLIFETIME(AExpeditionGameState, GameStartTime);
@@ -94,6 +101,11 @@ void AExpeditionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 void AExpeditionGameState::OnRep_TimeOfDay()
 {
 	OnTimeOfDayUpdated.Broadcast(TimeOfDay);
+}
+
+void AExpeditionGameState::OnRep_DayNightSettings()
+{
+	OnDayNightStarted.Broadcast(DayNightSettings);
 }
 
 void AExpeditionGameState::OnRep_DayCycle()

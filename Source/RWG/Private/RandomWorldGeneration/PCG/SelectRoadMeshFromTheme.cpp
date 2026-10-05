@@ -43,12 +43,8 @@ TArray<FPCGPinProperties> USelectRoadMeshFromThemeSettings::InputPinProperties()
 {
 	TArray<FPCGPinProperties> Pins;
 	Pins.Emplace(SelectRoadMeshFromTheme::InPinLabel, EPCGDataType::Point);
+	Pins.Emplace(SelectRoadMeshFromTheme::ConfigPinLabel, EPCGDataType::Param);
 
-	FPCGPinProperties ConfigPin;
-	ConfigPin.Label = SelectRoadMeshFromTheme::ConfigPinLabel;
-	ConfigPin.AllowedTypes = EPCGDataType::Param;
-	Pins.Add(ConfigPin);
-	
 	return Pins;
 }
 

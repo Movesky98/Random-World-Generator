@@ -8,6 +8,23 @@
 #include "Gameplay/Data/ExtractionConditionRow.h"
 #include "ExpeditionGameState.generated.h"
 
+USTRUCT()
+struct FDayNightSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere)
+	float DayDuration = 0.0f;
+
+	UPROPERTY(VisibleAnywhere)
+	float NightDuration = 0.0f;
+
+	float GetFullDuration() const { return DayDuration + NightDuration; }
+
+	bool IsValid() const { return GetFullDuration() > 0.0f; }
+};
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDayNightStarted, const FDayNightSettings& /* Settings */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimeOfDayUpdated, float /* TimeOfDay */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDayCycleChanged, EDayCycle /* DayCycle */);
 DECLARE_MULTICAST_DELEGATE(FOnExtractionConditionsUpdated);
@@ -48,11 +65,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, ReplicatedUsing = OnRep_TimeOfDay, Category = "Time")
 	float TimeOfDay;
 
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "Time")
-	float DayDuration = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "Time")
-	float NightDuration = 0.0f;
+	// 두 값을 묶어 OnRep 한 번에 둘 다 도착하도록
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_DayNightSettings, Category = "Time")
+	FDayNightSettings DayNightSettings;
 
 	UFUNCTION()
 	void OnRep_DayCycle();
@@ -60,16 +75,25 @@ protected:
 	UFUNCTION()
 	void OnRep_TimeOfDay();
 
+	UFUNCTION()
+	void OnRep_DayNightSettings();
+
 public:
 	FOnDayCycleChanged OnDayCycleChanged;
 
 	FOnTimeOfDayUpdated OnTimeOfDayUpdated;
 
+	FOnDayNightStarted OnDayNightStarted;
+
+	void StartDayNight(const FDayNightSettings& InSettings, float InTimeOfDay);
+
 	void SetDayCycle(EDayCycle InDayCycle);
 
 	void SetTimeOfDay(float InTimeOfDay);
 
-	float GetFullDuration() const;
+	const FDayNightSettings& GetDayNightSettings() const { return DayNightSettings; }
+
+	float GetTimeOfDay() const { return TimeOfDay; }
 
 /*********************************************************************
 *                             탈출 조건

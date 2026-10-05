@@ -7,6 +7,8 @@
 #include "SkyVisualizer.generated.h"
 
 class ADirectionalLight;
+class AExpeditionGameState;
+struct FDayNightSettings;
 
 UCLASS()
 class RWG_API ASkyVisualizer : public AActor
@@ -33,6 +35,9 @@ protected:
 private:
 	TObjectPtr<ADirectionalLight> Sun;
 
+	UPROPERTY()
+	TObjectPtr<AExpeditionGameState> GameState;
+
 protected:
 	void FindSun();
 
@@ -46,13 +51,14 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Time")
 	float TargetTimeOfDay = 0;
 
-	float FullDuration;
+	UPROPERTY(EditAnywhere, Category = "Time")
+	float InterpSpeed = 2.0f;
 
-	float DayDuration;
-
-	float NightDuration;
+	float FullDuration = 0.0f;
 
 protected:
+	void OnDayNightStarted(const FDayNightSettings& Settings);
+
 	UFUNCTION()
 	void OnTimeOfDayUpdated(float TimeOfDay);
 

@@ -4,7 +4,7 @@
 #include "Gameplay/Animation/Notifies/AnimNotify_ApplyWeaponAnimLayer.h"
 #include "Gameplay/Components/CombatComponent.h"
 
-void UAnimNotify_ApplyWeaponAnimLayer::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UAnimNotify_ApplyWeaponAnimLayer::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	if (AActor* OwnerActor = MeshComp->GetOwner())
 	{

@@ -4,9 +4,9 @@
 #include "Gameplay/Animation/Notifies/AnimNotify_ZombieAttack.h"
 #include "Gameplay/Characters/Zombie/Zombie.h"
 
-void UAnimNotify_ZombieAttack::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UAnimNotify_ZombieAttack::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-    Super::Notify(MeshComp, Animation);
+    Super::Notify(MeshComp, Animation, EventReference);
 
     AZombie* Zombie = Cast<AZombie>(MeshComp->GetOwner());
     if (!Zombie) return;

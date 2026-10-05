@@ -14,5 +14,5 @@ class RWG_API UAnimNotify_ApplyWeaponAnimLayer : public UAnimNotify
 {
 	GENERATED_BODY()
 	
-	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
+	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 };
