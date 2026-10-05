@@ -83,7 +83,7 @@ void USessionSubsystem::FindSessions(int32 MaxSearchResult, bool bIsLANQuery)
 	LastSessionSearch->MaxSearchResults = MaxSearchResult;
 	LastSessionSearch->bIsLanQuery = bIsLANQuery;
 
-	LastSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+	LastSessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	if (!SessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), LastSessionSearch.ToSharedRef()))

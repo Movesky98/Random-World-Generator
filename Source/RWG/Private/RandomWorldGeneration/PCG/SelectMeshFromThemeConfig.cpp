@@ -47,11 +47,7 @@ TArray<FPCGPinProperties> USelectMeshFromThemeConfigSettings::InputPinProperties
 {
 	TArray<FPCGPinProperties> Pins;
 	Pins.Emplace(SelectMeshFromThemeConfigPins::InPinLabel, EPCGDataType::Point);
-	
-	FPCGPinProperties ConfigPin;
-	ConfigPin.Label = SelectMeshFromThemeConfigPins::ConfigPinLabel;
-	ConfigPin.AllowedTypes = EPCGDataType::Param;
-	Pins.Add(ConfigPin);
+	Pins.Emplace(SelectMeshFromThemeConfigPins::ConfigPinLabel, EPCGDataType::Param);
 
 	return Pins;
 }
