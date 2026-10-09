@@ -3,6 +3,7 @@
 
 #include "Gameplay/Components/CombatComponent.h"
 #include "Gameplay/Components/InventoryComponent.h"
+#include "Gameplay/Components/RecoilComponent.h"
 #include "Gameplay/DataAssets/CombatInputConfig.h"
 #include "Gameplay/Items/WeaponBase.h"
 #include "Gameplay/DataAssets/WeaponData.h"
@@ -29,6 +30,12 @@ void UCombatComponent::InitializeComponent()
 	if (!InventoryComponent)
 	{
 		COMMON_LOG(LogGameplay, Error, TEXT("CombatComponent must attach to Character with InventoryComponent."));
+	}
+
+	RecoilComponent = GetOwner()->FindComponentByClass<URecoilComponent>();
+	if (!RecoilComponent)
+	{
+		COMMON_LOG(LogGameplay, Error, TEXT("CombatComponent must attach to Character with RecoilComponent."));
 	}
 }
 
@@ -110,6 +117,11 @@ void UCombatComponent::SetCurrentWeapon(AWeaponBase* NewWeapon)
 		CurrentWeapon = Gun;
 		
 		OnAmmoChangedDelegate.Broadcast(Gun->GetCurrentAmmo(), Gun->GetMagazineSize());
+	}
+
+	if (RecoilComponent)
+	{
+		RecoilComponent->SetWeapon(CurrentWeapon);
 	}
 
 	OnCurrentWeaponChanged.Broadcast(CurrentWeapon);
@@ -295,6 +307,11 @@ void UCombatComponent::OnRep_CurrentWeapon(AWeaponBase* OldWeapon)
 	if (AGunBase* OldGun = Cast<AGunBase>(OldWeapon))
 	{
 		OldGun->OnAmmoChangedDelegate.RemoveAll(this);
+	}
+
+	if (RecoilComponent)
+	{
+		RecoilComponent->SetWeapon(CurrentWeapon);
 	}
 
 	OnCurrentWeaponChanged.Broadcast(CurrentWeapon);

@@ -2,6 +2,7 @@
 
 
 #include "Gameplay/Components/RecoilComponent.h"
+#include "Gameplay/Items/GunBase.h"
 #include "CommonLogCategories.h"
 
 #include "GameFramework/Character.h"
@@ -59,6 +60,26 @@ void URecoilComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 	AccumulatedPitch -= RecoveryStep;
 	LastKnownPitch = ControlRotation.Pitch;
+}
+
+void URecoilComponent::SetWeapon(AWeaponBase* NewWeapon)
+{
+	if (Gun)
+	{
+		Gun->OnFired.RemoveAll(this);
+	}
+
+	Gun = Cast<AGunBase>(NewWeapon);
+
+	if (Gun)
+	{
+		Gun->OnFired.AddUObject(this, &ThisClass::OnGunFired);
+	}
+}
+
+void URecoilComponent::OnGunFired()
+{
+	ApplyRecoilShot();
 }
 
 bool URecoilComponent::IsRecoilOwner() const

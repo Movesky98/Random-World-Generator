@@ -7,6 +7,8 @@
 #include "RecoilComponent.generated.h"
 
 class ACharacter;
+class AWeaponBase;
+class AGunBase;
 
 /**
  * 사격 반동을 소유 클라의 컨트롤 로테이션에 적용한다.
@@ -32,6 +34,20 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<ACharacter> OwnerCharacter;
+
+/*********************************************************************
+*                             발사 신호
+*********************************************************************/
+private:
+	/** 발사 신호를 구독 중인 총 */
+	UPROPERTY()
+	TObjectPtr<AGunBase> Gun;
+
+	void OnGunFired();
+
+public:
+	/** 발사 신호를 받을 무기를 바꾼다. 이전 총의 구독은 해제하고, 총일 때만 새로 구독한다 */
+	void SetWeapon(AWeaponBase* NewWeapon);
 
 /*********************************************************************
 *                             반동 적용

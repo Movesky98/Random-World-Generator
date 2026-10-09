@@ -42,6 +42,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<class UInventoryComponent> InventoryComponent;
 
+	UPROPERTY()
+	TObjectPtr<class URecoilComponent> RecoilComponent;
+
 /*********************************************************************
 *                             입력 처리
 *********************************************************************/

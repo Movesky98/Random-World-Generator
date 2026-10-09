@@ -7,6 +7,7 @@
 #include "GunBase.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAmmoChangedDelegate, int32 /* CurrentAmmo */, int32 /* MaxAmmo */);
+DECLARE_MULTICAST_DELEGATE(FOnGunFired);
 
 UENUM()
 enum class EReloadCondition : uint8
@@ -91,6 +92,10 @@ protected:
 	void Fire();
 
 	bool SpawnBulletProjectile();
+
+public:
+	/** 발사할 때마다 Broadcast되는 델리게이트 */
+	FOnGunFired OnFired;
 
 /*********************************************************************
 *                                탄약
