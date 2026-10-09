@@ -51,7 +51,7 @@ protected:
 
 	/** 마지막 발 뒤 복원을 시작하기까지 기다리는 시간(초) */
 	UPROPERTY(EditAnywhere, Category = "Recoil", meta = (ClampMin = "0.0"))
-	float RecoveryDelay = 1.0f;
+	float RecoveryDelay = 0.15f;
 
 	float AccumulatedPitch = 0.f;
 	float LastKnownPitch = 0.f;
