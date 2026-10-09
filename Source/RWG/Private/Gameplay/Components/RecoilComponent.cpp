@@ -44,6 +44,13 @@ void URecoilComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 		AccumulatedPitch = FMath::Max(0.f, AccumulatedPitch + ViewDeltaPitch);
 	}
 
+	// 마지막 발 뒤 지연 시간이 지나기 전에는 복원하지 않는다.
+	if (GetWorld()->GetTimeSeconds() - LastShotTime < RecoveryDelay)
+	{
+		LastKnownPitch = CurrentPitch;
+		return;
+	}
+
 	// 남은 누적치를 넘지 않는 만큼 조준과 누적치를 같이 내린다.
 	const float RecoveryStep = FMath::Min(AccumulatedPitch, RecoverySpeed * DeltaTime);
 
@@ -77,6 +84,7 @@ void URecoilComponent::ApplyRecoilShot()
 	const float TargetPitch = FMath::ClampAngle(CurrentPitch + PitchKick, PlayerCameraManager->ViewPitchMin, PlayerCameraManager->ViewPitchMax);
 
 	LastKnownPitch = TargetPitch;
+	LastShotTime = GetWorld()->GetTimeSeconds();
 	AccumulatedPitch += TargetPitch - CurrentPitch;
 
 	ControlRotation.Pitch = TargetPitch;

@@ -49,8 +49,15 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Recoil", meta = (ClampMin = "0.0"))
 	float RecoverySpeed = 2.0f;
 
+	/** 마지막 발 뒤 복원을 시작하기까지 기다리는 시간(초) */
+	UPROPERTY(EditAnywhere, Category = "Recoil", meta = (ClampMin = "0.0"))
+	float RecoveryDelay = 1.0f;
+
 	float AccumulatedPitch = 0.f;
 	float LastKnownPitch = 0.f;
+
+	/** 마지막 발의 월드 시간 */
+	double LastShotTime = 0.0;
 
 public:
 	/** 한 발분 반동을 넣는다 */
