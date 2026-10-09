@@ -44,12 +44,8 @@ void ASkyVisualizer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// 서버 값이 오기 전까지 같은 속도로 직접 흘림 (1을 넘으면 0부터)
 	LocalTimeOfDay = FMath::Frac(LocalTimeOfDay + DeltaTime / FullDuration);
-
-	// 1→0 경계를 넘을 때 최단 방향(-0.5 ~ 0.5) 차이로 보간
-	float Diff = TargetTimeOfDay - LocalTimeOfDay;
-	Diff -= FMath::RoundToFloat(Diff);
-	LocalTimeOfDay = FMath::Frac(LocalTimeOfDay + Diff * FMath::Clamp(DeltaTime * InterpSpeed, 0.f, 1.f));
 
 	UpdateSunRotation();
 }
@@ -67,14 +63,15 @@ void ASkyVisualizer::FindSun()
 void ASkyVisualizer::OnDayNightStarted(const FDayNightSettings& Settings)
 {
 	FullDuration = Settings.GetFullDuration();
-	LocalTimeOfDay = TargetTimeOfDay = GameState->GetTimeOfDay();
+	LocalTimeOfDay = GameState->GetTimeOfDay();
 	UpdateSunRotation();
 	SetActorTickEnabled(true);
 }
 
 void ASkyVisualizer::OnTimeOfDayUpdated(float TimeOfDay)
 {
-	TargetTimeOfDay = TimeOfDay;
+	// 서버 시각으로 바로 맞춤
+	LocalTimeOfDay = TimeOfDay;
 }
 
 void ASkyVisualizer::UpdateSunRotation()

@@ -48,12 +48,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Time")
 	float LocalTimeOfDay = 0;
 
-	UPROPERTY(VisibleAnywhere, Category = "Time")
-	float TargetTimeOfDay = 0;
-
-	UPROPERTY(EditAnywhere, Category = "Time")
-	float InterpSpeed = 2.0f;
-
 	float FullDuration = 0.0f;
 
 protected:
