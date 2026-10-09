@@ -106,7 +106,9 @@ void URecoilComponent::ApplyRecoilShot()
 
 	LastKnownPitch = TargetPitch;
 	LastShotTime = GetWorld()->GetTimeSeconds();
-	AccumulatedPitch += TargetPitch - CurrentPitch;
+
+	// 이번 발의 킥만 복원 대상으로 남긴다. 복원이 끝나면 마지막 발이 나간 조준으로 돌아온다.
+	AccumulatedPitch = TargetPitch - CurrentPitch;
 
 	ControlRotation.Pitch = TargetPitch;
 	OwnerController->SetControlRotation(ControlRotation);
