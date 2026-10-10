@@ -5,6 +5,7 @@
 #include "Gameplay/Items/GunBase.h"
 #include "CommonLogCategories.h"
 
+#include "Curves/CurveFloat.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Controller.h"
 
@@ -97,6 +98,22 @@ void URecoilComponent::ApplyRecoilShot()
 	auto PlayerCameraManager = OwnerController->PlayerCameraManager;
 	if (!PlayerCameraManager) return;
 
+	if (!PitchKickCurve)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("PitchKickCurve is null. Recoil is not applied."));
+		return;
+	}
+
+	// 마지막 발 뒤 오래 쉬었으면 새 연사로 보고 처음부터 센다.
+	const double CurrentTime = GetWorld()->GetTimeSeconds();
+	if (CurrentTime - LastShotTime >= ShotCountResetDelay)
+	{
+		ShotCount = 0;
+	}
+	++ShotCount;
+
+	const float PitchKick = PitchKickCurve->GetFloatValue(ShotCount);
+
 	// 현재 컨트롤 로테이션의 Pitch를 가져와 (-180, 180]으로 변환
 	FRotator ControlRotation = OwnerController->GetControlRotation();
 	const float CurrentPitch = FRotator::NormalizeAxis(ControlRotation.Pitch);
@@ -105,7 +122,7 @@ void URecoilComponent::ApplyRecoilShot()
 	const float TargetPitch = FMath::ClampAngle(CurrentPitch + PitchKick, PlayerCameraManager->ViewPitchMin, PlayerCameraManager->ViewPitchMax);
 
 	LastKnownPitch = TargetPitch;
-	LastShotTime = GetWorld()->GetTimeSeconds();
+	LastShotTime = CurrentTime;
 
 	// 이번 발의 킥만 복원 대상으로 남긴다. 복원이 끝나면 마지막 발이 나간 조준으로 돌아온다.
 	AccumulatedPitch = TargetPitch - CurrentPitch;

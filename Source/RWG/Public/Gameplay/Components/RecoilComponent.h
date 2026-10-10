@@ -9,6 +9,7 @@
 class ACharacter;
 class AWeaponBase;
 class AGunBase;
+class UCurveFloat;
 
 /**
  * 사격 반동을 소유 클라의 컨트롤 로테이션에 적용한다.
@@ -57,9 +58,13 @@ private:
 	bool IsRecoilOwner() const;
 
 protected:
-	/** 발당 컨트롤 로테이션을 올리는 각도(도) */
+	/** 연사 중 발마다 조준이 위로 튀는 각도 커브 (X: 몇 번째 발, Y: 각도(도)) */
 	UPROPERTY(EditAnywhere, Category = "Recoil")
-	float PitchKick = 1.0f;
+	TObjectPtr<UCurveFloat> PitchKickCurve;
+
+	/** 연사 카운트를 리셋하는 마지막 발 뒤 대기 시간(초) */
+	UPROPERTY(EditAnywhere, Category = "Recoil", meta = (ClampMin = "0.0"))
+	float ShotCountResetDelay = 0.3f;
 
 	/** 누적된 반동을 되돌리는 속도(도/초) */
 	UPROPERTY(EditAnywhere, Category = "Recoil", meta = (ClampMin = "0.0"))
@@ -71,6 +76,9 @@ protected:
 
 	float AccumulatedPitch = 0.f;
 	float LastKnownPitch = 0.f;
+
+	/** 이번 연사의 발 번호 */
+	int32 ShotCount = 0;
 
 	/** 마지막 발의 월드 시간 */
 	double LastShotTime = 0.0;
