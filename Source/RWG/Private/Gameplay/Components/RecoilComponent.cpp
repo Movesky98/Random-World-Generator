@@ -3,6 +3,7 @@
 
 #include "Gameplay/Components/RecoilComponent.h"
 #include "Gameplay/Items/GunBase.h"
+#include "Gameplay/DataAssets/GunData.h"
 #include "CommonLogCategories.h"
 
 #include "Camera/CameraShakeBase.h"
@@ -35,6 +36,9 @@ void URecoilComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	if (!IsRecoilOwner()) return;
 	if (AccumulatedPitch <= 0.f) return;
 
+	const FRecoilSettings* RecoilSettings = GetRecoilSettings();
+	if (!RecoilSettings) return;
+
 	APlayerController* OwnerController = Cast<APlayerController>(OwnerCharacter->GetController());
 	if (!OwnerController) return;
 
@@ -49,14 +53,14 @@ void URecoilComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	}
 
 	// 마지막 발 뒤 지연 시간이 지나기 전에는 복원하지 않는다.
-	if (GetWorld()->GetTimeSeconds() - LastShotTime < RecoveryDelay)
+	if (GetWorld()->GetTimeSeconds() - LastShotTime < RecoilSettings->RecoveryDelay)
 	{
 		LastKnownPitch = CurrentPitch;
 		return;
 	}
 
 	// 남은 누적치를 넘지 않는 만큼 조준과 누적치를 같이 내린다.
-	const float RecoveryStep = FMath::Min(AccumulatedPitch, RecoverySpeed * DeltaTime);
+	const float RecoveryStep = FMath::Min(AccumulatedPitch, RecoilSettings->RecoverySpeed * DeltaTime);
 
 	ControlRotation.Pitch = CurrentPitch - RecoveryStep;
 	OwnerController->SetControlRotation(ControlRotation);
@@ -78,11 +82,23 @@ void URecoilComponent::SetWeapon(AWeaponBase* NewWeapon)
 	{
 		Gun->OnFired.AddUObject(this, &ThisClass::OnGunFired);
 	}
+
+	// 이전 총의 반동은 복원하지 않고 버린다.
+	AccumulatedPitch = 0.f;
+	ShotCount = 0;
 }
 
 void URecoilComponent::OnGunFired()
 {
 	ApplyRecoilShot();
+}
+
+const FRecoilSettings* URecoilComponent::GetRecoilSettings() const
+{
+	if (!Gun) return nullptr;
+
+	const UGunData* GunData = Gun->GetItemData<UGunData>();
+	return GunData ? &GunData->Recoil : nullptr;
 }
 
 bool URecoilComponent::IsRecoilOwner() const
@@ -100,7 +116,10 @@ void URecoilComponent::ApplyRecoilShot()
 	auto PlayerCameraManager = OwnerController->PlayerCameraManager;
 	if (!PlayerCameraManager) return;
 
-	if (!PitchKickCurve)
+	const FRecoilSettings* RecoilSettings = GetRecoilSettings();
+	if (!RecoilSettings) return;
+
+	if (!RecoilSettings->PitchKickCurve)
 	{
 		COMMON_LOG(LogGameplay, Warning, TEXT("PitchKickCurve is null. Recoil is not applied."));
 		return;
@@ -108,13 +127,13 @@ void URecoilComponent::ApplyRecoilShot()
 
 	// 마지막 발 뒤 오래 쉬었으면 새 연사로 보고 처음부터 센다.
 	const double CurrentTime = GetWorld()->GetTimeSeconds();
-	if (CurrentTime - LastShotTime >= ShotCountResetDelay)
+	if (CurrentTime - LastShotTime >= RecoilSettings->ShotCountResetDelay)
 	{
 		ShotCount = 0;
 	}
 	++ShotCount;
 
-	const float PitchKick = PitchKickCurve->GetFloatValue(ShotCount);
+	const float PitchKick = RecoilSettings->PitchKickCurve->GetFloatValue(ShotCount);
 
 	// 현재 컨트롤 로테이션의 Pitch를 가져와 (-180, 180]으로 변환
 	FRotator ControlRotation = OwnerController->GetControlRotation();
@@ -132,8 +151,8 @@ void URecoilComponent::ApplyRecoilShot()
 	ControlRotation.Pitch = TargetPitch;
 	OwnerController->SetControlRotation(ControlRotation);
 
-	if (FireCameraShake)
+	if (RecoilSettings->FireCameraShake)
 	{
-		PlayerCameraManager->StartCameraShake(FireCameraShake);
+		PlayerCameraManager->StartCameraShake(RecoilSettings->FireCameraShake);
 	}
 }

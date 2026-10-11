@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Gameplay/DataAssets/WeaponData.h"
+#include "Gameplay/Data/RecoilSettings.h"
 #include "GunData.generated.h"
 
 class ABulletProjectile;
@@ -31,6 +32,9 @@ public:
 	// 소모 탄약 타입
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	TObjectPtr<UItemData> AmmoType = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gun")
+	FRecoilSettings Recoil;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Projectile")
 	TSubclassOf<ABulletProjectile> BulletProjectileClass;
