@@ -5,6 +5,8 @@
 #include "Gameplay/Items/GunBase.h"
 #include "CommonLogCategories.h"
 
+#include "Camera/CameraShakeBase.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Curves/CurveFloat.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Controller.h"
@@ -129,4 +131,9 @@ void URecoilComponent::ApplyRecoilShot()
 
 	ControlRotation.Pitch = TargetPitch;
 	OwnerController->SetControlRotation(ControlRotation);
+
+	if (FireCameraShake)
+	{
+		PlayerCameraManager->StartCameraShake(FireCameraShake);
+	}
 }

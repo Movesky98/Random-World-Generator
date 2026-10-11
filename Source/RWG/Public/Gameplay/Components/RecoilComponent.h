@@ -10,6 +10,7 @@ class ACharacter;
 class AWeaponBase;
 class AGunBase;
 class UCurveFloat;
+class UCameraShakeBase;
 
 /**
  * 사격 반동을 소유 클라의 컨트롤 로테이션에 적용한다.
@@ -61,6 +62,10 @@ protected:
 	/** 연사 중 발마다 조준이 위로 튀는 각도 커브 (X: 몇 번째 발, Y: 각도(도)) */
 	UPROPERTY(EditAnywhere, Category = "Recoil")
 	TObjectPtr<UCurveFloat> PitchKickCurve;
+
+	/** 쏠 때마다 쏜 사람의 화면만 흔드는 카메라 셰이크 */
+	UPROPERTY(EditAnywhere, Category = "Recoil")
+	TSubclassOf<UCameraShakeBase> FireCameraShake;
 
 	/** 연사 카운트를 리셋하는 마지막 발 뒤 대기 시간(초) */
 	UPROPERTY(EditAnywhere, Category = "Recoil", meta = (ClampMin = "0.0"))

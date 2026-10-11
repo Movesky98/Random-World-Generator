@@ -83,4 +83,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> GunMeshUnequipMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> GunMeshFireMontage;
 };

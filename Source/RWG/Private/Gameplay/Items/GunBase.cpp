@@ -274,6 +274,14 @@ void AGunBase::Multicast_PlayFireFX_Implementation()
 	USkeletalMeshComponent* MeshComp = GetSkeletalMeshComponent();
 	if (!MeshComp) return;
 
+	if (Data->GunMeshFireMontage)
+	{
+		if (UAnimInstance* AnimInstance = MeshComp->GetAnimInstance())
+		{
+			AnimInstance->Montage_Play(Data->GunMeshFireMontage);
+		}
+	}
+
 	if (Data->MuzzleFlashFX)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
