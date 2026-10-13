@@ -59,10 +59,17 @@ void AExpeditionGameState::UpdateExtractionProgress(FName ItemID, int32 Quantity
 		return;
 	}
 
+	// 이번 판 탈출 조건에 없는 아이템이면 판정하지 않음
+	if (!IsExtractionConditionItem(ItemID))
+	{
+		return;
+	}
+
 	bAllExtractionConditionsSatisfied = true;
 
 	for (auto& Condition : ExtractionConditions)
 	{
+		// 주운 아이템의 조건에만 수량을 더함
 		if (Condition.ItemID == ItemID)
 		{
 			Condition.CurrentQuantity += Quantity;
@@ -71,10 +78,16 @@ void AExpeditionGameState::UpdateExtractionProgress(FName ItemID, int32 Quantity
 			if (Condition.IsSatisfied())
 			{
 				COMMON_LOG(LogGameplay, Warning, TEXT("Extraction Conditions Satisfied: %s"), *ItemID.ToString());
-				continue;
 			}
+			else
+			{
+				COMMON_LOG(LogGameplay, Warning, TEXT("Extraction Condition %s is updated. Now we have %d %s."), *ItemID.ToString(), Condition.CurrentQuantity, *ItemID.ToString());
+			}
+		}
 
-			COMMON_LOG(LogGameplay, Warning, TEXT("Extraction Condition %s is updated. Now we have %d %s."), *ItemID.ToString(), Condition.CurrentQuantity, *ItemID.ToString());
+		// 주운 아이템과 상관없이 모든 조건의 충족 여부를 확인
+		if (!Condition.IsSatisfied())
+		{
 			bAllExtractionConditionsSatisfied = false;
 		}
 	}
@@ -84,6 +97,19 @@ void AExpeditionGameState::UpdateExtractionProgress(FName ItemID, int32 Quantity
 	{
 		SetGameplayState(EGameplayState::GameOver);
 	}
+}
+
+bool AExpeditionGameState::IsExtractionConditionItem(FName ItemID) const
+{
+	for (const FExtractionCondition& Condition : ExtractionConditions)
+	{
+		if (Condition.ItemID == ItemID)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void AExpeditionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

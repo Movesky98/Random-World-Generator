@@ -116,6 +116,9 @@ public:
 
 	void UpdateExtractionProgress(FName ItemID, int32 Quantity);
 
+	// 이번 판 탈출 조건에 있는 아이템인지 확인
+	bool IsExtractionConditionItem(FName ItemID) const;
+
 /*********************************************************************
 *                             게임 진행
 *********************************************************************/
