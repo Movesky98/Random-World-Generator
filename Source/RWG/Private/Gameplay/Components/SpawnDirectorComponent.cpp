@@ -196,11 +196,22 @@ void USpawnDirectorComponent::StartZombieWave()
     // 좀비 스폰 시작
     for (auto& [Convict, Zombies] : ZombieAssignmentMap)
     {
-        while (Zombies.Num() < MaxZombiePerPlayer)
+        // 위치·스폰 실패가 반복돼도 반복문이 끝나도록 시도 횟수 상한을 둔다.
+        const int32 MaxAttempts = MaxZombiePerPlayer * 3;
+        int32 Attempts = 0;
+
+        while (Zombies.Num() < MaxZombiePerPlayer && Attempts < MaxAttempts)
         {
+            ++Attempts;
+
             // 현재는 일정 거리 이내의 가능한 좌표에서 생성하도록 해놓았으나
             // 나중에 플레이어로부터 어느정도 멀어진 곳 <-> 최대 거리를 기준으로 만들어야 할 듯.
-            FVector Location = FindSpawnLocation(Convict->GetActorLocation());
+            FVector Location;
+            if (!FindSpawnLocation(Convict->GetActorLocation(), Location))
+            {
+                continue;
+            }
+
             FRotator Rotation = FRotator::ZeroRotator;
 
             AZombie* NewZombie = GetWorld()->SpawnActor<AZombie>(ZombieClass, Location, Rotation);
@@ -215,6 +226,15 @@ void USpawnDirectorComponent::StartZombieWave()
 
                 COMMON_LOG(LogGameplay, Log, TEXT("Spawn Zombie. Assigned player : %s, Current assigned zombies is %d"), *GetNameSafe(Convict), Zombies.Num());
             }
+            else
+            {
+                COMMON_LOG(LogGameplay, Warning, TEXT("Failed to spawn zombie at %s."), *Location.ToString());
+            }
+        }
+
+        if (Zombies.Num() < MaxZombiePerPlayer)
+        {
+            COMMON_LOG(LogGameplay, Warning, TEXT("Zombie spawn attempts exhausted. Assigned player : %s, Spawned %d / %d"), *GetNameSafe(Convict), Zombies.Num(), MaxZombiePerPlayer);
         }
     }
 }
@@ -224,26 +244,24 @@ void USpawnDirectorComponent::StopZombieWave()
 
 }
 
-FVector USpawnDirectorComponent::FindSpawnLocation(const FVector PlayerLocation)
+bool USpawnDirectorComponent::FindSpawnLocation(const FVector PlayerLocation, FVector& OutLocation)
 {
-    FVector SpawnLocation = FVector::ZeroVector;
-
     UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
     if (!NavSys)
     {
         COMMON_LOG(LogGameplay, Warning, TEXT("Failed to find NavigationSystem."));
-        return SpawnLocation;
+        return false;
     }
 
-    FNavLocation OutLocation;
+    FNavLocation NavLocation;
 
-    bool IsSuccess = NavSys->GetRandomReachablePointInRadius(PlayerLocation, SpawnZombieDistance, OutLocation);
+    bool IsSuccess = NavSys->GetRandomReachablePointInRadius(PlayerLocation, SpawnZombieDistance, NavLocation);
     if (IsSuccess)
     {
-        SpawnLocation = OutLocation.Location;
+        OutLocation = NavLocation.Location;
     }
 
-    return SpawnLocation;
+    return IsSuccess;
 }
 
 void USpawnDirectorComponent::OnZombieDeath(AZombie* Zombie)
@@ -257,17 +275,13 @@ void USpawnDirectorComponent::OnZombieDeath(AZombie* Zombie)
     Zombie->OnZombieDeath.RemoveAll(this);
 
     // 좀비 찾아서 삭제
-    TArray<TObjectPtr<AZombie>> Zombies = ZombieAssignmentMap.FindRef(Cast<AConvict>(Zombie->GetAssignedCharacter()));
-    if (!Zombies.IsEmpty())
+    TArray<TObjectPtr<AZombie>>* Zombies = ZombieAssignmentMap.Find(Cast<AConvict>(Zombie->GetAssignedCharacter()));
+    if (Zombies)
     {
-        int32 Index = Zombies.Find(Zombie);
-        if (Index != INDEX_NONE)
-        {
-            Zombies.RemoveAt(Index);
-        }
+        Zombies->Remove(Zombie);
     }
     else
     {
-        COMMON_LOG(LogGameplay, Warning, TEXT("Zombie Array is already empty. Convict is %s"), *GetNameSafe(Zombie->GetAssignedCharacter()));
+        COMMON_LOG(LogGameplay, Warning, TEXT("Failed to find zombie array. Convict is %s"), *GetNameSafe(Zombie->GetAssignedCharacter()));
     }
 }

@@ -76,7 +76,7 @@ protected:
 
 	void StopZombieWave();
 
-	FVector FindSpawnLocation(const FVector PlayerLocation);
+	bool FindSpawnLocation(const FVector PlayerLocation, FVector& OutLocation);
 
 	void OnZombieDeath(AZombie* Zombie);
 
