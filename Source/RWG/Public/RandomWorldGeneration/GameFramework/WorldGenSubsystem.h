@@ -55,6 +55,9 @@ protected:
 private:
 	bool bWorldReady = false;
 
+	// 생성 시작 여부
+	bool bGenerationStarted = false;
+
 protected:
 	void OnWorldGenerationCompleted();
 
@@ -63,6 +66,8 @@ public:
 
 	UFUNCTION()
 	void InitiateWorldGeneration();
+
+	void RegisterWorldGenerator(class AWorldGenerator* InWorldGenerator);
 
 	bool IsWorldReady() const
 	{

@@ -34,6 +34,12 @@ protected:
 	virtual void BeginPlay() override;
 
 /*********************************************************************
+*                               복제
+*********************************************************************/
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+/*********************************************************************
 *                           구성 컴포넌트
 *********************************************************************/
 private:
@@ -53,7 +59,7 @@ private:
 *                             생성 진입
 *********************************************************************/
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parameters")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category = "Parameters")
 	int32 MasterSeed = 0;
 
 public:

@@ -13,25 +13,46 @@
 
 void UWorldGenSubsystem::InitiateWorldGeneration()
 {
-	for (auto& Config : LoadedConfigs)
+	if (bGenerationStarted) return;
+	if (LoadedConfigs.Num() < ExpectedCount) return;
+
+	// 서버: 생성기를 직접 스폰, 클라이언트: 복제 도착 시 RegisterWorldGenerator로 등록
+	if (!WorldGenerator && GetWorld()->GetNetMode() != NM_Client)
 	{
-		if (Config.Key == FPrimaryAssetType(WorldConfigTags::GenConfigName))
+		for (auto& Config : LoadedConfigs)
 		{
-			UWorldGenConfig* GenConfig = Cast<UWorldGenConfig>(Config.Value);
-			WorldGenerator = GetWorld()->SpawnActor<AWorldGenerator>(GenConfig->WorldGeneratorClass);
-			break;
+			if (Config.Key == FPrimaryAssetType(WorldConfigTags::GenConfigName))
+			{
+				UWorldGenConfig* GenConfig = Cast<UWorldGenConfig>(Config.Value);
+				WorldGenerator = GetWorld()->SpawnActor<AWorldGenerator>(GenConfig->WorldGeneratorClass);
+				break;
+			}
+			else
+				continue;
 		}
-		else
-			continue;
+
+		if (!WorldGenerator)
+		{
+			COMMON_LOG(LogRandomWorldGen, Error, TEXT("WorldGenerator is not found."));
+			return;
+		}
 	}
 
-	if (WorldGenerator)
+	if (!WorldGenerator)
 	{
-		WorldGenerator->OnWorldGenerationCompleted.AddUObject(this, &ThisClass::OnWorldGenerationCompleted);
-		WorldGenerator->GenerateWorld(LoadedConfigs);
+		COMMON_LOG(LogRandomWorldGen, Log, TEXT("Waiting for replicated WorldGenerator."));
+		return;
 	}
-	else
-		COMMON_LOG(LogRandomWorldGen, Error, TEXT("WorldGenerator is not found."));
+
+	bGenerationStarted = true;
+	WorldGenerator->OnWorldGenerationCompleted.AddUObject(this, &ThisClass::OnWorldGenerationCompleted);
+	WorldGenerator->GenerateWorld(LoadedConfigs);
+}
+
+void UWorldGenSubsystem::RegisterWorldGenerator(AWorldGenerator* InWorldGenerator)
+{
+	WorldGenerator = InWorldGenerator;
+	InitiateWorldGeneration();
 }
 
 void UWorldGenSubsystem::Deinitialize()

@@ -2,6 +2,7 @@
 
 
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
+#include "RandomWorldGeneration/GameFramework/WorldGenSubsystem.h"
 #include "RandomWorldGeneration/DataAssets/WorldGenConfig.h"
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Core/WorldGenTypes.h"
@@ -16,10 +17,14 @@
 
 #include "RandomWorldGeneration/Actors/BuildingActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AWorldGenerator::AWorldGenerator()
 {
+	bReplicates = true;
+	bAlwaysRelevant = true;
+
 	ProceduralMeshComponent = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("GeneratedMesh"));
 	ProceduralMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	RootComponent = ProceduralMeshComponent;
@@ -72,7 +77,11 @@ void AWorldGenerator::GenerateWorld(TMap<FPrimaryAssetType, TObjectPtr<UObject>>
 	GenerateTerrain(GenConfig);
 
 	T1 = FPlatformTime::Seconds();
-	GenerateNavProxyMesh(GenConfig);
+	// 내비메시용 프록시, 서버 AI 전용
+	if (HasAuthority())
+	{
+		GenerateNavProxyMesh(GenConfig);
+	}
 	T2 = FPlatformTime::Seconds();
 	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("[GenProfile] Sync: Terrain=%.2fms  NavProxy=%.2fms  SyncTotal=%.2fms"),
 		(T1 - T0) * 1000.0, (T2 - T1) * 1000.0, (T2 - T0) * 1000.0);
@@ -238,6 +247,22 @@ void AWorldGenerator::BeginPlay()
 		NavSys->OnNavigationGenerationFinishedDelegate.AddDynamic(
 			this, &AWorldGenerator::OnNavMeshBuilt);
 	}
+
+	// 클라이언트: 서버에서 복제된 생성기를 서브시스템에 등록
+	if (!HasAuthority())
+	{
+		if (UWorldGenSubsystem* WorldGenSubsystem = GetWorld()->GetSubsystem<UWorldGenSubsystem>())
+		{
+			WorldGenSubsystem->RegisterWorldGenerator(this);
+		}
+	}
+}
+
+void AWorldGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AWorldGenerator, MasterSeed);
 }
 
 void AWorldGenerator::OnPCGGraphGenerated(UPCGComponent* InComponent)
