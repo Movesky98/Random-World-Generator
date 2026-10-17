@@ -36,7 +36,7 @@ void FCityGrid::SetCellSize(const float InCellSize)
 	CellSize = InCellSize;
 }
 
-const TArray<FCityCell> FCityGrid::GetCityCells() const
+const TArray<FCityCell>& FCityGrid::GetCityCells() const
 {
 	return CityCells;
 }
@@ -116,9 +116,9 @@ FVector FCityGrid::GetWorldPosition(int32 X, int32 Y)
 	return Origin + FVector(X * CellSize, Y * CellSize, 0.0f);
 }
 
-const TArray<FCityLot> FCityGrid::GetLots() const
+const TArray<FCityLot>& FCityGrid::GetLots() const
 {
-	return Lots.Num() ? Lots : TArray<FCityLot>();
+	return Lots;
 }
 
 void FCityGrid::SetLots(const TArray<FCityLot>& InLots)

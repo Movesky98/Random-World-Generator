@@ -147,7 +147,7 @@ private:
 	TArray<FCityCell> CityCells;
 
 public:
-	const TArray<FCityCell> GetCityCells() const;
+	const TArray<FCityCell>& GetCityCells() const;
 	TArray<FCityCell>& GetCityCellsMutable();
 
 	void SetWorldPosition(int32 X, int32 Y, FVector InPosition);
@@ -161,6 +161,6 @@ private:
 	TArray<FCityLot> Lots;
 
 public:
-	const TArray<FCityLot> GetLots() const;
+	const TArray<FCityLot>& GetLots() const;
 	void SetLots(const TArray<FCityLot>& InLots);
 };
