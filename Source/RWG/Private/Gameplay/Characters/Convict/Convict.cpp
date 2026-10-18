@@ -42,6 +42,7 @@ AConvict::AConvict()
 
 	ProximityDetector = CreateDefaultSubobject<USphereComponent>(TEXT("ProximityDetector"));
 	ProximityDetector->SetupAttachment(RootComponent);
+	ProximityDetector->SetCollisionProfileName(TEXT("PlayerDetector"));
 }
 
 void AConvict::PostInitializeComponents()
