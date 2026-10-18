@@ -33,7 +33,6 @@ void ABulletProjectile::InitProjectile(float InDamage, float InInitialSpeed, flo
 	Damage = InDamage;
 	ProjectileMovementComponent->InitialSpeed = InInitialSpeed;
 	ProjectileMovementComponent->MaxSpeed = InInitialSpeed;
-	ProjectileMovementComponent->Velocity = GetActorForwardVector() * InInitialSpeed;
 
 	if (HasAuthority())
 	{

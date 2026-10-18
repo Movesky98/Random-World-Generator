@@ -150,19 +150,19 @@ bool AGunBase::SpawnBulletProjectile()
 	USkeletalMeshComponent* MeshComp = GetSkeletalMeshComponent();
 	if (!MeshComp) return false;
 	
-	const FVector MuzzleLocation = MeshComp->GetSocketLocation(Data->MuzzleSocketName);
-	const FRotator MuzzleRotation = MeshComp->GetSocketRotation(Data->MuzzleSocketName);
+	const FTransform MuzzleTransform(
+		MeshComp->GetSocketRotation(Data->MuzzleSocketName),
+		MeshComp->GetSocketLocation(Data->MuzzleSocketName)
+	);
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-	SpawnParams.Instigator = Cast<APawn>(GetOwner());
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 
-	ABulletProjectile* Bullet = GetWorld()->SpawnActor<ABulletProjectile>(
+	ABulletProjectile* Bullet = GetWorld()->SpawnActorDeferred<ABulletProjectile>(
 		Data->BulletProjectileClass,
-		MuzzleLocation,
-		MuzzleRotation,
-		SpawnParams
+		MuzzleTransform,
+		this,
+		InstigatorPawn,
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn
 		);
 
 	if (!Bullet)
@@ -171,9 +171,11 @@ bool AGunBase::SpawnBulletProjectile()
 		return false;
 	}
 
+	COMMON_LOG(LogGameplay, Log, TEXT("SpawnParam : Owner is %s, Instigator is %s"), *GetNameSafe(this), *GetNameSafe(InstigatorPawn));
 
-	COMMON_LOG(LogGameplay, Log, TEXT("SpawnParam : Owner is %s, Instigator is %s"), *GetNameSafe(SpawnParams.Owner), *GetNameSafe(SpawnParams.Instigator));
+	// 피해량·속도는 BeginPlay 전에 넣고, 스폰 완료 중 바로 맞아 사라지는 경우도 발사로 친다
 	Bullet->InitProjectile(Data->BulletDamage, Data->BulletSpeed, Data->BulletLifeTime);
+	Bullet->FinishSpawning(MuzzleTransform);
 
 	return true;
 }
