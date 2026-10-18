@@ -33,18 +33,21 @@ protected:
 *                            캐시된 참조
 *********************************************************************/
 private:
-	TObjectPtr<ADirectionalLight> Sun;
-
 	UPROPERTY()
 	TObjectPtr<AExpeditionGameState> GameState;
 
-protected:
-	void FindSun();
-
 /*********************************************************************
-*                             태양 회전
+*                             해·달 회전
 *********************************************************************/
 private:
+	// 낮의 방향광
+	UPROPERTY(EditInstanceOnly, Category = "Sky")
+	TObjectPtr<ADirectionalLight> Sun;
+
+	// 밤의 방향광 (해의 반대편)
+	UPROPERTY(EditInstanceOnly, Category = "Sky")
+	TObjectPtr<ADirectionalLight> Moon;
+
 	UPROPERTY(VisibleAnywhere, Category = "Time")
 	float LocalTimeOfDay = 0;
 
@@ -56,5 +59,5 @@ protected:
 	UFUNCTION()
 	void OnTimeOfDayUpdated(float TimeOfDay);
 
-	void UpdateSunRotation();
+	void UpdateSunMoonRotation();
 };

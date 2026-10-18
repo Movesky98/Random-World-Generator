@@ -5,7 +5,6 @@
 #include "Gameplay/GameFramework/ExpeditionGameState.h"
 #include "CommonLogCategories.h"
 
-#include "Kismet/GameplayStatics.h"
 #include "Engine/DirectionalLight.h"
 
 // Sets default values
@@ -28,7 +27,11 @@ void ASkyVisualizer::BeginPlay()
 		return;
 	}
 
-	FindSun();
+	if (!Sun || !Moon)
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Sun or Moon is not assigned. Sun : %s, Moon : %s"), *GetNameSafe(Sun), *GetNameSafe(Moon));
+	}
+
 	GameState->OnTimeOfDayUpdated.AddUObject(this, &ThisClass::OnTimeOfDayUpdated);
 	GameState->OnDayNightStarted.AddUObject(this, &ThisClass::OnDayNightStarted);
 
@@ -47,24 +50,14 @@ void ASkyVisualizer::Tick(float DeltaTime)
 	// 서버 값이 오기 전까지 같은 속도로 직접 흘림 (1을 넘으면 0부터)
 	LocalTimeOfDay = FMath::Frac(LocalTimeOfDay + DeltaTime / FullDuration);
 
-	UpdateSunRotation();
-}
-
-void ASkyVisualizer::FindSun()
-{
-	Sun = Cast<ADirectionalLight>(UGameplayStatics::GetActorOfClass(GetWorld(), ADirectionalLight::StaticClass()));
-
-	if (!Sun)
-	{
-		COMMON_LOG(LogGameplay, Warning, TEXT("Can't find Sun in %s Level."), *FPaths::GetBaseFilename(GetWorld()->GetMapName()))
-	}
+	UpdateSunMoonRotation();
 }
 
 void ASkyVisualizer::OnDayNightStarted(const FDayNightSettings& Settings)
 {
 	FullDuration = Settings.GetFullDuration();
 	LocalTimeOfDay = GameState->GetTimeOfDay();
-	UpdateSunRotation();
+	UpdateSunMoonRotation();
 	SetActorTickEnabled(true);
 }
 
@@ -74,13 +67,22 @@ void ASkyVisualizer::OnTimeOfDayUpdated(float TimeOfDay)
 	LocalTimeOfDay = TimeOfDay;
 }
 
-void ASkyVisualizer::UpdateSunRotation()
+void ASkyVisualizer::UpdateSunMoonRotation()
 {
-	if (!Sun) return;
-
 	float SunAngle = LocalTimeOfDay * 360.f;
+
 	// Pitch축 기준 회전 (태양이 동→서로 호를 그림)
-	FQuat SunQuat = FQuat(FVector::RightVector, FMath::DegreesToRadians(SunAngle));
-	Sun->SetActorRotation(SunQuat);
+	if (Sun)
+	{
+		FQuat SunQuat = FQuat(FVector::RightVector, FMath::DegreesToRadians(SunAngle));
+		Sun->SetActorRotation(SunQuat);
+	}
+
+	// 해의 반대편
+	if (Moon)
+	{
+		FQuat MoonQuat = FQuat(FVector::RightVector, FMath::DegreesToRadians(SunAngle + 180.f));
+		Moon->SetActorRotation(MoonQuat);
+	}
 }
 
