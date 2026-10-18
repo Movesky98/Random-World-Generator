@@ -49,6 +49,7 @@ void ABulletProjectile::BeginPlay()
 	if (HasAuthority())
 	{
 		CollisionComponent->OnComponentHit.AddDynamic(this, &ThisClass::OnProjectileHit);
+		CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnProjectileBeginOverlap);
 	}
 }
 
@@ -56,13 +57,22 @@ void ABulletProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* Ot
 {
 	if (!HasAuthority()) return;
 
+	DestroyProjectile();
+}
+
+void ABulletProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!HasAuthority()) return;
+
+	if (IsActorBeingDestroyed()) return;
+
 	if (OtherActor == GetOwner() || OtherActor == GetInstigator()) return;
 
 	UGameplayStatics::ApplyPointDamage(
 		OtherActor,
 		Damage,
 		GetActorForwardVector(),
-		Hit,
+		SweepResult,
 		GetInstigatorController(),
 		GetOwner(),
 		UDamageType::StaticClass()
