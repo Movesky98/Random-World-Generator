@@ -53,6 +53,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Structures")
 	TArray<FBuildingAssetEntry> BuildingEntries;
 
+	/* 등록된 건물 바닥 크기로 정한 필지 크기 범위 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Structures")
+	FLotSizeRange LotSizeRange;
+
 	/* 월드에 배치될 도로나 바닥 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Structures")
 	TArray<UStaticMesh*> Roads;
@@ -66,4 +70,5 @@ protected:
 
 	void RefreshBuildingFootprints();
 	void RefreshSingleBuildingFootprint(FBuildingAssetEntry& Entry) const;
+	void RefreshLotSizeRange();
 };

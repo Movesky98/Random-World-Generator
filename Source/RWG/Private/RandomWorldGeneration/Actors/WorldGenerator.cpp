@@ -197,6 +197,7 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 	GridBuildParams.CityCenter = CityCenter;
 	GridBuildParams.CityRadius = CityRadius;
 	GridBuildParams.RoadGraph = RoadGraph;
+	GridBuildParams.LotSizeRange = Config->LotSizeRange;
 
 	TWeakObjectPtr<AWorldGenerator> WeakThis(this);
 	TWeakObjectPtr<UWorldThemeConfig> WeakConfig(Config);
@@ -207,7 +208,7 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 
 			FCityGrid LocalGrid = FCityGridBuilder::BuildGrid2D(GridBuildParams);
 			TArray<FCityBlock> LocalBlocks = FCityGridBuilder::BuildBlocks(LocalGrid);
-			FCityGridBuilder::ExtractLotsFromBlock(LocalGrid, LocalBlocks);
+			FCityGridBuilder::ExtractLotsFromBlock(LocalGrid, LocalBlocks, GridBuildParams);
 
 			const double W1 = FPlatformTime::Seconds();
 			// 워커에서 걸린 시간 측정

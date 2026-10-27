@@ -38,6 +38,8 @@ void UWorldThemeConfig::RefreshBuildingFootprints()
 		RefreshSingleBuildingFootprint(Entry);
 	}
 
+	RefreshLotSizeRange();
+
 #if WITH_EDITOR
 	Modify();
 #endif
@@ -75,4 +77,30 @@ void UWorldThemeConfig::RefreshSingleBuildingFootprint(FBuildingAssetEntry& Entr
 
     Entry.FootprintSizeX = FMath::Max(1, FMath::CeilToInt(SizeX / CellSize));
     Entry.FootprintSizeY = FMath::Max(1, FMath::CeilToInt(SizeY / CellSize));
+}
+
+void UWorldThemeConfig::RefreshLotSizeRange()
+{
+	FLotSizeRange NewRange;
+	NewRange.MinX = MAX_int32;
+	NewRange.MinY = MAX_int32;
+	NewRange.MaxX = 0;
+	NewRange.MaxY = 0;
+
+	int32 ValidEntryNum = 0;
+
+	// 건물 바닥 크기의 축별 최솟값·최댓값
+	for (const FBuildingAssetEntry& Entry : BuildingEntries)
+	{
+		if (!Entry.ActorClass)
+			continue;
+
+		NewRange.MinX = FMath::Min(NewRange.MinX, Entry.FootprintSizeX);
+		NewRange.MinY = FMath::Min(NewRange.MinY, Entry.FootprintSizeY);
+		NewRange.MaxX = FMath::Max(NewRange.MaxX, Entry.FootprintSizeX);
+		NewRange.MaxY = FMath::Max(NewRange.MaxY, Entry.FootprintSizeY);
+		++ValidEntryNum;
+	}
+
+	LotSizeRange = ValidEntryNum > 0 ? NewRange : FLotSizeRange();
 }

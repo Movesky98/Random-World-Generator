@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "RandomWorldGeneration/Grid/CityGridTypes.h"
+#include "RandomWorldGeneration/Core/WorldGenTypes.h"
 
 struct FGridBuildParams
 {
@@ -11,6 +12,7 @@ struct FGridBuildParams
 	float CityRadius = 400.0f;
 	float CellSize = 400.0f;
 	FRoadGraph RoadGraph = FRoadGraph();
+	FLotSizeRange LotSizeRange;
 };
 
 /**
@@ -29,7 +31,7 @@ public:
 
 	static FCityBlock BlockFloodFill(FCityGrid& Grid, const int32 StartX, const int32 StartY, const int32 InBlockId);
 
-	static void ExtractLotsFromBlock(FCityGrid& Grid, const TArray<FCityBlock>& Blocks);
+	static void ExtractLotsFromBlock(FCityGrid& Grid, const TArray<FCityBlock>& Blocks, const FGridBuildParams& InParams);
 
 	static TArray<bool> BuildBaseBuildableMask(FCityGrid& Grid);
 
@@ -37,7 +39,7 @@ public:
 
 	static bool IsRectangleValid(const FCityGrid& Grid, int32 StartX, int32 StartY, int32 Width, int32 Height, int32 BlockId, const TArray<bool>& Used, const TArray<bool>& Base);
 
-	static bool FindBestRectangle(const FCityGrid& Grid, const TArray<bool>& Used, const TArray<bool>& Base, int32 StartX, int32 StartY, int32 BlockId, int32& OutWidth, int32& OutHeight);
+	static bool FindBestRectangle(const FCityGrid& Grid, const TArray<bool>& Used, const TArray<bool>& Base, int32 StartX, int32 StartY, int32 BlockId, const FLotSizeRange& LotSizeRange, int32& OutWidth, int32& OutHeight);
 
 	static FCityLot MarkLotFromRectangle(const FCityGrid& Grid, TArray<bool>& Used, int32 BlockId, int32 LotId, int32 StartX, int32 StartY, int32 Width, int32 Height);
 };

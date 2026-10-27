@@ -147,7 +147,7 @@ FCityBlock FCityGridBuilder::BlockFloodFill(FCityGrid& Grid, const int32 StartX,
 	return Block;
 }
 
-void FCityGridBuilder::ExtractLotsFromBlock(FCityGrid& Grid, const TArray<FCityBlock>& Blocks)
+void FCityGridBuilder::ExtractLotsFromBlock(FCityGrid& Grid, const TArray<FCityBlock>& Blocks, const FGridBuildParams& InParams)
 {
 	TArray<bool> BaseBuildableCell = BuildBaseBuildableMask(Grid);
 	TArray<bool> Used;
@@ -168,7 +168,7 @@ void FCityGridBuilder::ExtractLotsFromBlock(FCityGrid& Grid, const TArray<FCityB
 			int32 Width = 0;
 			int32 Height = 0;
 
-			if (FindBestRectangle(Grid, Used, BaseBuildableCell, X, Y, Block.BlockId, Width, Height))
+			if (FindBestRectangle(Grid, Used, BaseBuildableCell, X, Y, Block.BlockId, InParams.LotSizeRange, Width, Height))
 			{	
 				Lot = MarkLotFromRectangle(Grid, Used, Block.BlockId, Lots.Num(), X, Y, Width, Height);
 				Lots.Add(Lot);
@@ -239,32 +239,32 @@ bool FCityGridBuilder::IsRectangleValid(const FCityGrid& Grid, int32 StartX, int
 	return true;
 }
 
-bool FCityGridBuilder::FindBestRectangle(const FCityGrid& Grid, const TArray<bool>& Used, const TArray<bool>& Base, int32 StartX, int32 StartY, int32 BlockId, int32& OutWidth, int32& OutHeight)
+bool FCityGridBuilder::FindBestRectangle(const FCityGrid& Grid, const TArray<bool>& Used, const TArray<bool>& Base, int32 StartX, int32 StartY, int32 BlockId, const FLotSizeRange& LotSizeRange, int32& OutWidth, int32& OutHeight)
 {
 	OutWidth = 0;
 	OutHeight = 0;
 
 	int32 MaxWidth = 0;
 
-	// 직사각형이 될 수 있는 최대 가로 길이 계산
-	while (IsBuildableCell(Grid, StartX + MaxWidth, StartY, BlockId, Used, Base))
+	// 직사각형이 될 수 있는 최대 가로 길이 계산 (필지 최대 가로 크기까지)
+	while (MaxWidth < LotSizeRange.MaxX && IsBuildableCell(Grid, StartX + MaxWidth, StartY, BlockId, Used, Base))
 	{
 		MaxWidth++;
 	}
 
 	int32 BestScore = -1;
 
-	for (int32 Width = 2; Width <= MaxWidth; ++Width)
+	for (int32 Width = LotSizeRange.MinX; Width <= MaxWidth; ++Width)
 	{
 		int32 Height = 0;
 
-		// 직사각형이 될 수 있는 최대 세로 길이 계산
-		while (IsRectangleValid(Grid, StartX, StartY, Width, Height + 1, BlockId, Used, Base))
+		// 직사각형이 될 수 있는 최대 세로 길이 계산 (필지 최대 세로 크기까지)
+		while (Height < LotSizeRange.MaxY && IsRectangleValid(Grid, StartX, StartY, Width, Height + 1, BlockId, Used, Base))
 		{
 			++Height;
 		}
 
-		if (Height < 2) continue;
+		if (Height < LotSizeRange.MinY) continue;
 
 		const int32 Score = Width * Height;
 

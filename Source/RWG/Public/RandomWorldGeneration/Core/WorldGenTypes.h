@@ -14,6 +14,29 @@ enum class EWorldTheme : uint8
 	Joseon			UMETA(DisplayName = "Joseon"),			// 조선
 };
 
+USTRUCT(BlueprintType)
+struct FLotSizeRange
+{
+	GENERATED_BODY()
+
+public:
+	/* 필지 가로 최소 크기(셀) */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lot")
+	int32 MinX = 1;
+
+	/* 필지 세로 최소 크기(셀) */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lot")
+	int32 MinY = 1;
+
+	/* 필지 가로 최대 크기(셀) */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lot")
+	int32 MaxX = 1;
+
+	/* 필지 세로 최대 크기(셀) */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lot")
+	int32 MaxY = 1;
+};
+
 namespace WorldConfigTags
 {
 	const FName GenConfigName = FName("WorldGenConfig");
