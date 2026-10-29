@@ -53,6 +53,12 @@ public:
 	class USkeletalMeshComponent* GetSkeletalMeshComponent() const { return SkeletalMeshComponent; }
 
 /*********************************************************************
+*                           아이템 데이터
+*********************************************************************/
+protected:
+	virtual void ApplyItemData() override;
+
+/*********************************************************************
 *                                장착
 *********************************************************************/
 protected:

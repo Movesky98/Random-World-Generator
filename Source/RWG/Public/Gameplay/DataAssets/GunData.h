@@ -10,6 +10,7 @@
 class ABulletProjectile;
 class UNiagaraSystem;
 class USoundBase;
+class USkeletalMesh;
 
 /**
  * 
@@ -35,6 +36,14 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	FRecoilSettings Recoil;
+
+	// 총 메시
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Mesh")
+	TObjectPtr<USkeletalMesh> GunMesh;
+
+	// 총 메시가 쓰는 애니메이션 블루프린트
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Mesh")
+	TSubclassOf<UAnimInstance> GunAnimClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Projectile")
 	TSubclassOf<ABulletProjectile> BulletProjectileClass;

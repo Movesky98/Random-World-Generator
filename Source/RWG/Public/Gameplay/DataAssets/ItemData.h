@@ -11,6 +11,7 @@ enum class EItemType : uint8
 {
 	None,
 	Weapon,
+	Ammo,
 	Consumable,
 	Material,
 };
@@ -51,4 +52,8 @@ public:
 	// 슬롯에 저장 가능한 최대 개수
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stack")
 	int32 MaxStackSize = 1;
+
+	// 월드에서 한 번 주울 때 들어오는 개수 (무기는 1 고정)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stack", meta = (EditCondition = "ItemType != EItemType::Weapon", EditConditionHides))
+	int32 DropQuantity = 1;
 };

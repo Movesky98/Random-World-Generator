@@ -5,6 +5,8 @@
 #include "Gameplay/Components/InventoryComponent.h"
 #include "CommonLogCategories.h"
 
+#include "Net/UnrealNetwork.h"
+
 
 // Sets default values
 AItem::AItem()
@@ -16,7 +18,25 @@ AItem::AItem()
 void AItem::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	ApplyItemData();
+}
+
+void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AItem, ItemData);
+}
+
+void AItem::ApplyItemData()
+{
+
+}
+
+void AItem::SetItemData(UItemData* NewItemData)
+{
+	ItemData = NewItemData;
 }
 
 void AItem::Interact(AActor* Interactor)
@@ -31,7 +51,7 @@ void AItem::Interact(AActor* Interactor)
 	{
 		FItemInstance NewInstance;
 		NewInstance.ItemData = ItemData;
-		NewInstance.Quantity = DropQuantity;
+		NewInstance.Quantity = ItemData->DropQuantity;
 
 		InventoryComp->AddItem(NewInstance);
 		Destroy();

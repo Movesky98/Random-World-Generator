@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Gameplay/DataAssets/ItemData.h"
 #include "SpawnDirectorComponent.generated.h"
 
 enum class EDayCycle : uint8;
@@ -21,7 +22,7 @@ struct FItemSpawnEntry
 	GENERATED_BODY()
 
 	FVector Location = FVector::ZeroVector;
-	TSubclassOf<AItem> ItemClass = nullptr;
+	TObjectPtr<UItemData> ItemData = nullptr;
 	bool bSpawned = false;
 
 	TWeakObjectPtr<ABuildingActor> OwnerBuilding;
@@ -52,7 +53,9 @@ private:
 
 	FVector GetRandomPointInBox(UBoxComponent* Box);
 
-	TSubclassOf<AItem> SelectItemClass();
+	void CollectSpawnableItems(TArray<UItemData*>& OutItems) const;
+
+	UItemData* SelectItemData(const TArray<UItemData*>& SpawnableItems) const;
 
 	void OnBuildingEntered(ABuildingActor* Building);
 
@@ -64,9 +67,9 @@ private:
 public:
 	void InitializeSpawnData();
 
-	// 나중에 AssetManager를 이용해 아이템을 긁어오는 방식으로 전환
+	// 아이템 타입별로 스폰할 액터 클래스
 	UPROPERTY(EditAnywhere, Category = "Spawn|Item")
-	TArray<TSubclassOf<AItem>> ItemClasses;
+	TMap<EItemType, TSubclassOf<AItem>> ItemClassByType;
 
 /*********************************************************************
 *                             좀비 스폰

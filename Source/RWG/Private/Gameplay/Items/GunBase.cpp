@@ -29,6 +29,15 @@ void AGunBase::BeginPlay()
 
 }
 
+void AGunBase::ApplyItemData()
+{
+	UGunData* GunData = GetItemData<UGunData>();
+	if (!GunData || !SkeletalMeshComponent) return;
+
+	SkeletalMeshComponent->SetSkeletalMeshAsset(GunData->GunMesh);
+	SkeletalMeshComponent->SetAnimInstanceClass(GunData->GunAnimClass);
+}
+
 void AGunBase::Equip(ACharacter* NewOwner)
 {
 	Super::Equip(NewOwner);

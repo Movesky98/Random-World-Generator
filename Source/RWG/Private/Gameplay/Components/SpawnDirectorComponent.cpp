@@ -8,6 +8,7 @@
 #include "Gameplay/Components/HealthComponent.h"
 #include "Gameplay/Characters/Convict/Convict.h"
 #include "Gameplay/Characters/Zombie/Zombie.h"
+#include "Common/GameFramework/GameAssetManager.h"
 
 #include "RandomWorldGeneration/Actors/BuildingActor.h"
 #include "CommonLogCategories.h"
@@ -43,6 +44,9 @@ void USpawnDirectorComponent::BeginPlay()
 
 void USpawnDirectorComponent::CollectItemSpawnPoints()
 {
+    TArray<UItemData*> SpawnableItems;
+    CollectSpawnableItems(SpawnableItems);
+
     TArray<AActor*> Buildings;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABuildingActor::StaticClass(), Buildings);
 
@@ -57,7 +61,7 @@ void USpawnDirectorComponent::CollectItemSpawnPoints()
 
             FItemSpawnEntry Entry;
             Entry.Location = GetRandomPointInBox(Box);
-            Entry.ItemClass = SelectItemClass();
+            Entry.ItemData = SelectItemData(SpawnableItems);
             Entry.bSpawned = false;
             Entry.OwnerBuilding = Building;
 
@@ -83,12 +87,30 @@ void USpawnDirectorComponent::BindBuildingDelegates(ABuildingActor* Building)
         });
 }
 
-TSubclassOf<AItem> USpawnDirectorComponent::SelectItemClass()
+void USpawnDirectorComponent::CollectSpawnableItems(TArray<UItemData*>& OutItems) const
 {
-    if (ItemClasses.IsEmpty()) return nullptr;
+    TArray<UObject*> LoadedAssets;
+    UGameAssetManager::Get().GetLoadedAssets(FPrimaryAssetType(TEXT("Item")), LoadedAssets);
 
-    int32 Index = FMath::RandRange(0, ItemClasses.Num() - 1);
-    return ItemClasses[Index];
+    // 타입에 대응하는 액터 클래스가 있는 데이터만 스폰 후보로 둔다
+    for (UObject* Asset : LoadedAssets)
+    {
+        UItemData* ItemData = Cast<UItemData>(Asset);
+        if (!ItemData) continue;
+        if (!ItemClassByType.FindRef(ItemData->ItemType)) continue;
+
+        OutItems.Add(ItemData);
+    }
+
+    COMMON_LOG(LogGameplay, Log, TEXT("Spawnable items : %d"), OutItems.Num());
+}
+
+UItemData* USpawnDirectorComponent::SelectItemData(const TArray<UItemData*>& SpawnableItems) const
+{
+    if (SpawnableItems.IsEmpty()) return nullptr;
+
+    int32 Index = FMath::RandRange(0, SpawnableItems.Num() - 1);
+    return SpawnableItems[Index];
 }
 
 
@@ -98,20 +120,28 @@ void USpawnDirectorComponent::OnBuildingEntered(ABuildingActor* Building)
     {
         if (Entry.OwnerBuilding != Building) continue;
         if (Entry.bSpawned) continue;
-        if (!Entry.ItemClass) continue;
+        if (!Entry.ItemData) continue;
 
-        FActorSpawnParameters Params;
-        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        TSubclassOf<AItem> ItemClass = ItemClassByType.FindRef(Entry.ItemData->ItemType);
+        if (!ItemClass) continue;
 
-        AItem* Item = GetWorld()->SpawnActor<AItem>(
-            Entry.ItemClass,
-            Entry.Location,
-            FRotator::ZeroRotator,
-            Params
+        const FTransform SpawnTransform(FRotator::ZeroRotator, Entry.Location);
+
+        AItem* Item = GetWorld()->SpawnActorDeferred<AItem>(
+            ItemClass,
+            SpawnTransform,
+            nullptr,
+            nullptr,
+            ESpawnActorCollisionHandlingMethod::AlwaysSpawn
         );
 
-        if (Item)
-            Entry.bSpawned = true;
+        if (!Item) continue;
+
+        // 데이터는 BeginPlay 전에 넣는다
+        Item->SetItemData(Entry.ItemData);
+        Item->FinishSpawning(SpawnTransform);
+
+        Entry.bSpawned = true;
     }
 }
 
