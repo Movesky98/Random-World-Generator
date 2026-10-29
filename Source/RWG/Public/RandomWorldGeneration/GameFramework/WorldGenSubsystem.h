@@ -45,9 +45,7 @@ protected:
 
 	void InitializeWorldConfig();
 
-	void LoadConfigByType(FPrimaryAssetType AssetType);
-
-	void OnConfigInitialized(FPrimaryAssetType AssetType);
+	void CacheConfigByType(FPrimaryAssetType AssetType);
 
 /*********************************************************************
 *                             월드 생성

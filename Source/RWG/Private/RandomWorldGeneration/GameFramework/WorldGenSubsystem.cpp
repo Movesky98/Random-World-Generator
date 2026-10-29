@@ -6,9 +6,9 @@
 #include "RandomWorldGeneration/DataAssets/WorldThemeConfig.h"
 #include "RandomWorldGeneration/Actors/WorldGenerator.h"
 #include "Common/GameFramework/GlobalUISubsystem.h"
+#include "Common/GameFramework/GameAssetManager.h"
 #include "CommonLogCategories.h"
 
-#include "Engine/AssetManager.h"
 #include "HAL/IConsoleManager.h"
 
 void UWorldGenSubsystem::InitiateWorldGeneration()
@@ -76,55 +76,21 @@ void UWorldGenSubsystem::Deinitialize()
 
 void UWorldGenSubsystem::InitializeWorldConfig()
 {
-	LoadConfigByType(FPrimaryAssetType(WorldConfigTags::GenConfigName));
-	LoadConfigByType(FPrimaryAssetType(WorldConfigTags::ThemeConfigName));
-}
+	CacheConfigByType(FPrimaryAssetType(WorldConfigTags::GenConfigName));
+	CacheConfigByType(FPrimaryAssetType(WorldConfigTags::ThemeConfigName));
 
-void UWorldGenSubsystem::LoadConfigByType(FPrimaryAssetType AssetType)
-{
-	UAssetManager& AssetManager = UAssetManager::Get();
-	TArray<FPrimaryAssetId> AssetIds;
-	AssetManager.GetPrimaryAssetIdList(AssetType, AssetIds);
-
-	if (AssetIds.IsEmpty())
-	{
-		COMMON_LOG(LogRandomWorldGen, Error, TEXT("%s PrimaryAssetId is not found."), *AssetType.ToString());
-		return;
-	}
-
-	if (UObject* LoadObject = AssetManager.GetPrimaryAssetObject(AssetIds[0]))
-	{
-		// 이미 있다면 즉시 콜백 호출
-		OnConfigInitialized(AssetType);
-	}
-	else
-	{
-		// 비동기 로드 시작
-		// 여기서 AssetType을 바인딩하여 OnConfigInitialized의 인자를 넘겨줌
-		AssetManager.LoadPrimaryAssets(
-			AssetIds,
-			TArray<FName>(),
-			FStreamableDelegate::CreateUObject(this, &UWorldGenSubsystem::OnConfigInitialized, AssetType)
-		);
-
-		COMMON_LOG(LogRandomWorldGen, Log, TEXT("Starting async load for: %s"), *AssetType.ToString());
-	}
-}
-
-void UWorldGenSubsystem::OnConfigInitialized(FPrimaryAssetType AssetType)
-{
-	UAssetManager& AssetManager = UAssetManager::Get();
-	TArray<FPrimaryAssetId> AssetIds;
-	AssetManager.GetPrimaryAssetIdList(AssetType, AssetIds);
-
-	UObject* LoadObject = AssetManager.GetPrimaryAssetObject(AssetIds[0]);
-	if (!LoadObject) return;
-
-	LoadedConfigs.Add(AssetType, LoadObject);
 	if (LoadedConfigs.Num() >= ExpectedCount)
 	{
 		COMMON_LOG(LogRandomWorldGen, Log, TEXT("All Configs loaded. Starting world generation..."));
 		InitiateWorldGeneration();
+	}
+}
+
+void UWorldGenSubsystem::CacheConfigByType(FPrimaryAssetType AssetType)
+{
+	if (UObject* Config = UGameAssetManager::Get().FindLoadedAsset(AssetType))
+	{
+		LoadedConfigs.Add(AssetType, Config);
 	}
 }
 

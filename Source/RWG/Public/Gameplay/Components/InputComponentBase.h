@@ -42,10 +42,6 @@ public:
 protected:
 	bool TryLoadConfigFromAssetManager();
 
-	void LoadInputConfig();
-
-	void OnLoadedInputConfig();
-
 	virtual TSubclassOf<UInputConfigBase> GetConfigClass() PURE_VIRTUAL(GetConfigClass, return nullptr;);
 
 	virtual UInputConfigBase* GetInputConfig() const override;
