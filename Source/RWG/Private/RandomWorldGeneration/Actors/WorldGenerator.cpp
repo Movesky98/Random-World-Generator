@@ -116,16 +116,7 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 		{
 			FVector2D CurrentPos(X, Y);
 
-			// 1. Perlin Noise로 기본 높이 생성 (Scale 조절로 굴곡 빈도 결정)
-			// 1. --- 기본 노이즈 지형 생성 ---
-			float NoiseScale = 0.4;
-			float NoiseValue = FMath::PerlinNoise2D(FVector2D(CurrentPos * NoiseScale));
-
-			// 노이즈 값은 보통 -1 ~ 1 사이 → 0 ~ 1로 보정 후 높이 곱하기
-			// 기본 굴곡
-			float BaseHeight = (NoiseValue + 1.0f) * 0.5f * 500.0f;
-
-			// --- 2. 도시 고원 (Plateau) 계산 ---
+			// --- 도시 고원 (Plateau) 계산 ---
 			float DistToCenter = FVector2D::Distance(CurrentPos, CenterPos);
 			float CityMask = 0.0f;
 
@@ -140,8 +131,8 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 				CityMask = FMath::InterpEaseInOut(0.0f, 1.0f, CityMask, 2.0f);
 			}
 
-			// FinalZ = (도시/다리 높이로 보간) + (마스크가 없는 곳은 기본 노이즈 지형)
-			float FinalZ = FMath::Lerp(BaseHeight + Config->OuterHeight, Config->CityHeight, CityMask);
+			// FinalZ = 도시 밖 평지 높이와 도시 높이 사이를 마스크로 보간
+			float FinalZ = FMath::Lerp(Config->OuterHeight, Config->CityHeight, CityMask);
 
 			Vertices.Add(FVector(X * Config->GridSpacing, Y * Config->GridSpacing, FinalZ));
 			UV0.Add(FVector2D(X, Y));		// 텍스처 타일링을 위해 정수 단위로 설정
