@@ -163,6 +163,12 @@ void AWorldGenerator::GenerateTerrain(UWorldGenConfig* Config)
 	// 3. 실제 메쉬 섹션 생성
 	ProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UV0, VertexColors, Tangents, true);
 
+	// 테마에 지정된 지형 머티리얼 적용
+	if (ThemeConfig->TerrainMaterial)
+	{
+		ProceduralMeshComponent->SetMaterial(0, ThemeConfig->TerrainMaterial);
+	}
+
 	// 4. 충돌체 활성화
 	ProceduralMeshComponent->ContainsPhysicsTriMeshData(true);
 	ProceduralMeshComponent->bUseComplexAsSimpleCollision = true;

@@ -61,6 +61,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Structures")
 	TArray<UStaticMesh*> Roads;
 
+	/* 지형 메시에 입힐 머티리얼 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain")
+	TObjectPtr<UMaterialInterface> TerrainMaterial;
+
 protected:
 	FPrimaryAssetId GetPrimaryAssetId() const override;
 
