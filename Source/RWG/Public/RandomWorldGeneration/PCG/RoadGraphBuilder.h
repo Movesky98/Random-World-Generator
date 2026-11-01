@@ -25,6 +25,13 @@ struct FRoadBuildParams
  */
 class RWG_API FRoadGraphBuilder
 {
+private:
+	/** 2D 좌표들의 Delaunay 삼각분할 엣지 목록 (X: 작은 인덱스, Y: 큰 인덱스) */
+	static TArray<FIntPoint> BuildDelaunayEdges(const TArray<FVector2D>& Points);
+
+	/** 엣지 목록 중 lune 안에 다른 점이 없는 엣지 목록 */
+	static TArray<FIntPoint> FilterRNGEdges(const TArray<FVector2D>& Points, const TArray<FIntPoint>& Edges);
+
 public:
 	static FRoadGraph BuildGraph2D(UWorld* InWorld, const FRoadBuildParams& InParams)
 	{
@@ -65,41 +72,20 @@ public:
 		}
 
 		// 2) 엣지 생성
-		// 가장 가까운 거리에 있는 이웃 2개를 연결한다.
-		for (int32 i = 0; i < Graph.GetNodes().Num(); ++i)
+		// Delaunay 삼각분할 엣지 중 RNG 조건을 만족하는 엣지만 연결한다.
+		TArray<FVector2D> Points;
+		Points.Reserve(Graph.GetNodes().Num());
+		for (const FRoadNode& Node : Graph.GetNodes())
 		{
-			int32 BestNeighbor1 = INDEX_NONE, BestNeighbor2 = INDEX_NONE;
-			float MinDist1 = TNumericLimits<float>::Max();
-			float MinDist2 = TNumericLimits<float>::Max();
+			Points.Add(FVector2D(Node.Position.X, Node.Position.Y));
+		}
 
-			// Node[i]'s Position
-			const FVector2D Pi(Graph.GetNode(i)->Position.X, Graph.GetNode(i)->Position.Y);
+		const TArray<FIntPoint> DelaunayEdges = BuildDelaunayEdges(Points);
+		const TArray<FIntPoint> RNGEdges = FilterRNGEdges(Points, DelaunayEdges);
 
-			for (int32 j = 0; j < Graph.GetNodes().Num(); j++)
-			{
-				if (i == j) continue;
-
-				// Node[j]'s Position
-				const FVector2D Pj(Graph.GetNode(j)->Position.X, Graph.GetNode(j)->Position.Y);
-				const float Distance = FVector2D::Distance(Pi, Pj);
-
-				if (Distance < MinDist1)
-				{
-					MinDist2 = MinDist1;
-					BestNeighbor2 = BestNeighbor1;
-
-					MinDist1 = Distance;
-					BestNeighbor1 = j;
-				}
-				else if (Distance < MinDist2)
-				{
-					MinDist2 = Distance;
-					BestNeighbor2 = j;
-				}
-			}
-
-			if (BestNeighbor1 != INDEX_NONE) Graph.AddEdge(i, BestNeighbor1, InParams.RoadWidth);
-			if (BestNeighbor2 != INDEX_NONE) Graph.AddEdge(i, BestNeighbor2, InParams.RoadWidth);
+		for (const FIntPoint& Edge : RNGEdges)
+		{
+			Graph.AddEdge(Edge.X, Edge.Y, InParams.RoadWidth);
 		}
 
 		return Graph;
