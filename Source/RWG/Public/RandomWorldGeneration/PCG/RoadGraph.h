@@ -86,4 +86,7 @@ public:
 
 	// Degree == 2일 때, 직선 도로인지 판단하는 함수
 	bool IsPassThrough(int32 NodeId, float StraightDotThreshold = 0.95f) const;
+
+	// PrevNodeId → NodeId → NextNodeId 경로가 NodeId에서 직선에 가까운지 판단하는 함수
+	bool IsPassThrough(int32 PrevNodeId, int32 NodeId, int32 NextNodeId, float StraightDotThreshold = 0.95f) const;
 };

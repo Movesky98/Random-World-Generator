@@ -2,6 +2,7 @@
 
 
 #include "RandomWorldGeneration/PCG/RoadGraphBuilder.h"
+#include "CommonLogCategories.h"
 
 namespace
 {
@@ -42,6 +43,30 @@ namespace
 	FIntPoint MakeEdgeKey(int32 A, int32 B)
 	{
 		return A < B ? FIntPoint(A, B) : FIntPoint(B, A);
+	}
+
+	struct FMergedEdge
+	{
+		// 원래 그래프 기준 양 끝 노드 Id
+		int32 StartNodeId = INDEX_NONE;
+		int32 EndNodeId = INDEX_NONE;
+
+		float Width = 400.0f;
+		int32 RoadType = 0;
+
+		// 차수 2 노드를 빼고 합쳐서 생긴 엣지인지
+		bool bMerged = false;
+	};
+
+	// 두 선분이 끝점이 아닌 곳에서 서로 가로지르는지
+	bool DoSegmentsCross(const FVector2D& A, const FVector2D& B, const FVector2D& C, const FVector2D& D)
+	{
+		const double SideC = FVector2D::CrossProduct(B - A, C - A);
+		const double SideD = FVector2D::CrossProduct(B - A, D - A);
+		const double SideA = FVector2D::CrossProduct(D - C, A - C);
+		const double SideB = FVector2D::CrossProduct(D - C, B - C);
+
+		return SideC * SideD < 0.0 && SideA * SideB < 0.0;
 	}
 }
 
@@ -149,4 +174,146 @@ TArray<FIntPoint> FRoadGraphBuilder::FilterRNGEdges(const TArray<FVector2D>& Poi
 	}
 
 	return Result;
+}
+
+FRoadGraph FRoadGraphBuilder::MergePassThroughNodes(const FRoadGraph& Graph, float MaxBendAngle, TArray<int32>& OutMergedEdgeIds)
+{
+	OutMergedEdgeIds.Reset();
+
+	const TArray<FRoadNode>& Nodes = Graph.GetNodes();
+	const TArray<FRoadEdge>& Edges = Graph.GetEdges();
+	const float StraightDotThreshold = FMath::Cos(FMath::DegreesToRadians(MaxBendAngle));
+
+	TArray<bool> bRemovedNodes;
+	bRemovedNodes.Init(false, Nodes.Num());
+
+	TArray<bool> bVisitedEdges;
+	bVisitedEdges.Init(false, Edges.Num());
+
+	TArray<FMergedEdge> MergedEdges;
+
+	// 차수 2가 아닌 노드에서 출발해 차수 2 노드를 따라가며 뺄지 판정한다
+	for (const FRoadNode& StartNode : Nodes)
+	{
+		if (Graph.GetNodeDegree(StartNode.Id) == 2) continue;
+
+		for (const int32 StartEdgeId : StartNode.EdgeIds)
+		{
+			if (bVisitedEdges[StartEdgeId]) continue;
+			bVisitedEdges[StartEdgeId] = true;
+
+			const FRoadEdge& StartEdge = Edges[StartEdgeId];
+
+			// 마지막으로 남긴 노드
+			int32 PrevNodeId = StartNode.Id;
+			int32 CurrentNodeId = Graph.GetOtherNode(StartEdgeId, StartNode.Id);
+			int32 LastEdgeId = StartEdgeId;
+			bool bMerged = false;
+
+			while (Graph.GetNodeDegree(CurrentNodeId) == 2)
+			{
+				const FRoadNode& CurrentNode = Nodes[CurrentNodeId];
+				const int32 NextEdgeId = (CurrentNode.EdgeIds[0] == LastEdgeId) ? CurrentNode.EdgeIds[1] : CurrentNode.EdgeIds[0];
+				const int32 NextNodeId = Graph.GetOtherNode(NextEdgeId, CurrentNodeId);
+				bVisitedEdges[NextEdgeId] = true;
+
+				if (Graph.IsPassThrough(PrevNodeId, CurrentNodeId, NextNodeId, StraightDotThreshold))
+				{
+					// 현재 노드를 빼고 PrevNodeId에서 계속 잇는다
+					bRemovedNodes[CurrentNodeId] = true;
+					bMerged = true;
+				}
+				else
+				{
+					// 현재 노드를 남기고 여기까지를 엣지 하나로 확정한다
+					MergedEdges.Add({ PrevNodeId, CurrentNodeId, StartEdge.Width, StartEdge.RoadType, bMerged });
+					PrevNodeId = CurrentNodeId;
+					bMerged = false;
+				}
+
+				LastEdgeId = NextEdgeId;
+				CurrentNodeId = NextNodeId;
+			}
+
+			MergedEdges.Add({ PrevNodeId, CurrentNodeId, StartEdge.Width, StartEdge.RoadType, bMerged });
+		}
+	}
+
+	// 모든 노드가 차수 2인 순환은 출발할 노드가 없으므로 원래 엣지를 그대로 둔다
+	for (const FRoadEdge& Edge : Edges)
+	{
+		if (bVisitedEdges[Edge.Id]) continue;
+
+		MergedEdges.Add({ Edge.StartNodeId, Edge.EndNodeId, Edge.Width, Edge.RoadType, false });
+	}
+
+	// 남은 노드와 확정한 엣지로 그래프를 새로 만든다
+	FRoadGraph Result;
+
+	TArray<int32> NewNodeIds;
+	NewNodeIds.Init(INDEX_NONE, Nodes.Num());
+
+	for (const FRoadNode& Node : Nodes)
+	{
+		if (bRemovedNodes[Node.Id]) continue;
+
+		NewNodeIds[Node.Id] = Result.AddNode(Node.Position);
+	}
+
+	for (const FMergedEdge& Edge : MergedEdges)
+	{
+		const int32 NewEdgeId = Result.AddEdge(NewNodeIds[Edge.StartNodeId], NewNodeIds[Edge.EndNodeId], Edge.Width, Edge.RoadType);
+
+		if (Edge.bMerged && NewEdgeId != INDEX_NONE)
+		{
+			OutMergedEdgeIds.Add(NewEdgeId);
+		}
+	}
+
+	return Result;
+}
+
+void FRoadGraphBuilder::LogMergedEdgeCrossings(const FRoadGraph& Graph, const TArray<int32>& MergedEdgeIds)
+{
+	const TArray<FRoadNode>& Nodes = Graph.GetNodes();
+	const TArray<FRoadEdge>& Edges = Graph.GetEdges();
+
+	TArray<bool> bMergedEdges;
+	bMergedEdges.Init(false, Edges.Num());
+	for (const int32 EdgeId : MergedEdgeIds)
+	{
+		bMergedEdges[EdgeId] = true;
+	}
+
+	int32 CrossingNum = 0;
+
+	for (const int32 MergedEdgeId : MergedEdgeIds)
+	{
+		const FRoadEdge& MergedEdge = Edges[MergedEdgeId];
+		const FVector& A = Nodes[MergedEdge.StartNodeId].Position;
+		const FVector& B = Nodes[MergedEdge.EndNodeId].Position;
+
+		for (const FRoadEdge& Other : Edges)
+		{
+			// 합친 엣지끼리는 한 번만 비교한다
+			if (Other.Id == MergedEdgeId || (bMergedEdges[Other.Id] && Other.Id < MergedEdgeId)) continue;
+
+			// 끝점을 공유하는 엣지는 교차가 아니다
+			if (Other.StartNodeId == MergedEdge.StartNodeId || Other.StartNodeId == MergedEdge.EndNodeId
+				|| Other.EndNodeId == MergedEdge.StartNodeId || Other.EndNodeId == MergedEdge.EndNodeId) continue;
+
+			const FVector& C = Nodes[Other.StartNodeId].Position;
+			const FVector& D = Nodes[Other.EndNodeId].Position;
+
+			if (DoSegmentsCross(FVector2D(A), FVector2D(B), FVector2D(C), FVector2D(D)))
+			{
+				++CrossingNum;
+				COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Merged edge crossing: Edge %d (Node %d %s - Node %d %s) x Edge %d (Node %d %s - Node %d %s)"),
+					MergedEdgeId, MergedEdge.StartNodeId, *A.ToString(), MergedEdge.EndNodeId, *B.ToString(),
+					Other.Id, Other.StartNodeId, *C.ToString(), Other.EndNodeId, *D.ToString());
+			}
+		}
+	}
+
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Merged edge crossings: %d (merged edges: %d)"), CrossingNum, MergedEdgeIds.Num());
 }

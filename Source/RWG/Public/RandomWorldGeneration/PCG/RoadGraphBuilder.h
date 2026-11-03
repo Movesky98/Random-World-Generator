@@ -18,6 +18,9 @@ struct FRoadBuildParams
 	int32 MaxRoadNum = 100;
 
 	float RoadWidth = 400.0f;
+
+	// 차수 2 노드를 빼고 양쪽 엣지를 합치는 최대 꺾임 각도(도)
+	float MaxPassThroughBendAngle = 18.2f;
 };
 
 /**
@@ -31,6 +34,12 @@ private:
 
 	/** 엣지 목록 중 lune 안에 다른 점이 없는 엣지 목록 */
 	static TArray<FIntPoint> FilterRNGEdges(const TArray<FVector2D>& Points, const TArray<FIntPoint>& Edges);
+
+	/** 꺾임이 MaxBendAngle(도) 이하인 차수 2 노드를 빼고 양쪽 엣지를 직선 하나로 합친 그래프 (OutMergedEdgeIds: 합쳐서 새로 생긴 엣지 Id) */
+	static FRoadGraph MergePassThroughNodes(const FRoadGraph& Graph, float MaxBendAngle, TArray<int32>& OutMergedEdgeIds);
+
+	/** 합쳐서 새로 생긴 엣지와 XY 평면에서 교차하는 엣지를 로그로 남긴다 */
+	static void LogMergedEdgeCrossings(const FRoadGraph& Graph, const TArray<int32>& MergedEdgeIds);
 
 public:
 	static FRoadGraph BuildGraph2D(UWorld* InWorld, const FRoadBuildParams& InParams)
@@ -87,6 +96,15 @@ public:
 		{
 			Graph.AddEdge(Edge.X, Edge.Y, InParams.RoadWidth);
 		}
+
+		// 3) 차수 2 노드 합치기
+		// 직선에 가까운 차수 2 노드를 빼고 양쪽 엣지를 하나로 합친다.
+		TArray<int32> MergedEdgeIds;
+		Graph = MergePassThroughNodes(Graph, InParams.MaxPassThroughBendAngle, MergedEdgeIds);
+
+#if !UE_BUILD_SHIPPING
+		LogMergedEdgeCrossings(Graph, MergedEdgeIds);
+#endif
 
 		return Graph;
 	}

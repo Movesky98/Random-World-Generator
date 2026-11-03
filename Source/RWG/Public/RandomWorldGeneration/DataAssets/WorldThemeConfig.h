@@ -47,6 +47,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
 	float RoadWidth = 400.0f;
 	
+	/* 차수 2 노드를 빼고 양쪽 엣지를 합치는 최대 꺾임 각도(도) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
+	float MaxPassThroughBendAngle = 18.2f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Theme Settings")
 	EWorldTheme WorldTheme;
 

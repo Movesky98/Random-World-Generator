@@ -110,10 +110,17 @@ bool FRoadGraph::IsPassThrough(int32 NodeId, float StraightDotThreshold) const
 
 	const int32 NodeA = GetOtherNode(EdgeA, NodeId);
 	const int32 NodeB = GetOtherNode(EdgeB, NodeId);
-	if (NodeA == INDEX_NONE || NodeB == INDEX_NONE) return false;
 
-	const FVector VectorA = (Nodes[NodeA].Position - N->Position).GetSafeNormal();
-	const FVector VectorB = (Nodes[NodeB].Position - N->Position).GetSafeNormal();
+	return IsPassThrough(NodeA, NodeId, NodeB, StraightDotThreshold);
+}
+
+bool FRoadGraph::IsPassThrough(int32 PrevNodeId, int32 NodeId, int32 NextNodeId, float StraightDotThreshold) const
+{
+	if (!IsValidNodeId(PrevNodeId) || !IsValidNodeId(NodeId) || !IsValidNodeId(NextNodeId)) return false;
+
+	const FVector& Position = Nodes[NodeId].Position;
+	const FVector VectorA = (Nodes[PrevNodeId].Position - Position).GetSafeNormal();
+	const FVector VectorB = (Nodes[NextNodeId].Position - Position).GetSafeNormal();
 
 	// 내적, 직선 통과는 반대 방향에 가까워야 한다. (-1)
 	const float Dot = FVector::DotProduct(VectorA, VectorB);
