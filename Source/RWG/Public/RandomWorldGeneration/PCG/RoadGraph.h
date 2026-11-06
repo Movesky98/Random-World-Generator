@@ -63,6 +63,9 @@ public:
 	int32 AddNode(const FVector& Position);
 	int32 AddEdge(int32 StartNodeId, int32 EndNodeId, float Width = 400.0f, int32 RoadType = 0);
 
+	// 직선 대신 InSegmentPoints를 그대로 점으로 쓰는 엣지 추가 (원호 엣지)
+	int32 AddCurveEdge(int32 StartNodeId, int32 EndNodeId, const TArray<FVector>& InSegmentPoints, float Width = 400.0f, int32 RoadType = 0);
+
 	const FRoadNode* GetNode(int32 NodeId) const;
 	FRoadNode* GetNodeMutable(int32 NodeId);
 

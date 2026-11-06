@@ -187,6 +187,8 @@ void AWorldGenerator::GenerateContent(UWorldThemeConfig* Config)
 	RoadBuildParams.MaxRoadNum = Config->MaxRoadNum;
 	RoadBuildParams.RoadWidth = Config->RoadWidth;
 	RoadBuildParams.MaxPassThroughBendAngle = Config->MaxPassThroughBendAngle;
+	RoadBuildParams.CurveRadius = Config->CurveRadius;
+	RoadBuildParams.CurveSegmentSpacing = Config->CurveSegmentSpacing;
 
 	RoadGraph = FRoadGraphBuilder::BuildGraph2D(GetWorld(), RoadBuildParams);
 	const double TG1 = FPlatformTime::Seconds();

@@ -52,6 +52,27 @@ int32 FRoadGraph::AddEdge(int32 StartNodeId, int32 EndNodeId, float Width, int32
 	return NewId;
 }
 
+int32 FRoadGraph::AddCurveEdge(int32 StartNodeId, int32 EndNodeId, const TArray<FVector>& InSegmentPoints, float Width, int32 RoadType)
+{
+	if (!IsValidNodeId(StartNodeId) || !IsValidNodeId(EndNodeId) || StartNodeId == EndNodeId)
+	{
+		return INDEX_NONE;
+	}
+
+	const int32 NewId = Edges.Num();
+	Edges.Emplace(NewId, StartNodeId, EndNodeId, Width, RoadType);
+
+	Nodes[StartNodeId].EdgeIds.Add(NewId);
+	Nodes[EndNodeId].EdgeIds.Add(NewId);
+
+	// 방향은 AddEdge와 같이 두 노드를 잇는 직선 기준
+	FRoadEdge* Edge = GetEdgeMutable(NewId);
+	Edge->Direction = (Nodes[StartNodeId].Position - Nodes[EndNodeId].Position).GetSafeNormal();
+	Edge->SegmentPoints = InSegmentPoints;
+
+	return NewId;
+}
+
 const FRoadNode* FRoadGraph::GetNode(int32 NodeId) const
 {
 	return IsValidNodeId(NodeId) ? &Nodes[NodeId] : nullptr;

@@ -21,6 +21,12 @@ struct FRoadBuildParams
 
 	// 차수 2 노드를 빼고 양쪽 엣지를 합치는 최대 꺾임 각도(도)
 	float MaxPassThroughBendAngle = 18.2f;
+
+	// 차수 2 노드의 모서리를 깎는 원호의 기본 반지름
+	float CurveRadius = 800.0f;
+
+	// 원호 엣지 위 점 사이 간격(원호 길이)
+	float CurveSegmentSpacing = 100.0f;
 };
 
 /**
@@ -40,6 +46,9 @@ private:
 
 	/** 합쳐서 새로 생긴 엣지와 XY 평면에서 교차하는 엣지를 로그로 남긴다 */
 	static void LogMergedEdgeCrossings(const FRoadGraph& Graph, const TArray<int32>& MergedEdgeIds);
+
+	/** 차수 2 노드의 모서리를 원호로 깎아, 그 노드 대신 원호 양 끝 노드와 원호 엣지를 넣은 그래프 (CurveSegmentSpacing: 원호 위 점 간격) */
+	static FRoadGraph BuildCurveEdges(const FRoadGraph& Graph, float CurveRadius, float CurveSegmentSpacing);
 
 public:
 	static FRoadGraph BuildGraph2D(UWorld* InWorld, const FRoadBuildParams& InParams)
@@ -105,6 +114,10 @@ public:
 #if !UE_BUILD_SHIPPING
 		LogMergedEdgeCrossings(Graph, MergedEdgeIds);
 #endif
+
+		// 4) 곡선 엣지 만들기
+		// 남은 차수 2 노드의 모서리를 원호로 깎는다.
+		Graph = BuildCurveEdges(Graph, InParams.CurveRadius, InParams.CurveSegmentSpacing);
 
 		return Graph;
 	}

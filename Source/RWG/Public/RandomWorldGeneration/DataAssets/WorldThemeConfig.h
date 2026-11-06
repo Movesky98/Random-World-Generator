@@ -51,6 +51,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
 	float MaxPassThroughBendAngle = 18.2f;
 
+	/* 차수 2 노드의 모서리를 깎는 원호의 기본 반지름 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
+	float CurveRadius = 800.0f;
+
+	/* 원호 엣지 위 점 사이 간격(원호 길이) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
+	float CurveSegmentSpacing = 100.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Theme Settings")
 	EWorldTheme WorldTheme;
 

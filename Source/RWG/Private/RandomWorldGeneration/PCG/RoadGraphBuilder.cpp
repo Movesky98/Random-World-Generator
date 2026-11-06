@@ -317,3 +317,197 @@ void FRoadGraphBuilder::LogMergedEdgeCrossings(const FRoadGraph& Graph, const TA
 
 	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Merged edge crossings: %d (merged edges: %d)"), CrossingNum, MergedEdgeIds.Num());
 }
+
+FRoadGraph FRoadGraphBuilder::BuildCurveEdges(const FRoadGraph& Graph, float CurveRadius, float CurveSegmentSpacing)
+{
+	const TArray<FRoadNode>& Nodes = Graph.GetNodes();
+	const TArray<FRoadEdge>& Edges = Graph.GetEdges();
+	const float Spacing = FMath::Max(10.0f, CurveSegmentSpacing);
+
+	// 같은 위치로 보는 거리
+	const float TouchTolerance = 1.0f;
+
+	// 노드에서 원호가 양쪽 엣지에 닿는 점까지의 XY 거리 (0: 곡선을 만들지 않는 노드)
+	TArray<float> BaseDistances;
+	BaseDistances.Init(0.0f, Nodes.Num());
+
+	// 1. 차수 2 노드마다 기본 반지름으로 거리를 구한다
+	for (const FRoadNode& Node : Nodes)
+	{
+		if (Node.EdgeIds.Num() != 2) continue;
+
+		const FVector2D NodeXY(Node.Position);
+		const FVector2D DirToPrev = (FVector2D(Nodes[Graph.GetOtherNode(Node.EdgeIds[0], Node.Id)].Position) - NodeXY).GetSafeNormal();
+		const FVector2D DirToNext = (FVector2D(Nodes[Graph.GetOtherNode(Node.EdgeIds[1], Node.Id)].Position) - NodeXY).GetSafeNormal();
+		if (DirToPrev.IsNearlyZero() || DirToNext.IsNearlyZero()) continue;
+
+		// 두 엣지 사이 각의 절반
+		const float HalfAngle = 0.5f * FMath::Acos(FMath::Clamp(FVector2D::DotProduct(DirToPrev, DirToNext), -1.0f, 1.0f));
+		const float HalfTan = FMath::Tan(HalfAngle);
+		if (HalfTan < KINDA_SMALL_NUMBER) continue;
+
+		const float Distance = CurveRadius / HalfTan;
+		if (Distance < TouchTolerance) continue;
+
+		BaseDistances[Node.Id] = Distance;
+	}
+
+	// 2. 두 원호가 겹치는 엣지는 양 끝 거리를 같은 비율로 줄이고, 노드는 두 엣지 중 더 작은 값을 쓴다
+	TArray<float> CurveDistances = BaseDistances;
+
+	for (const FRoadEdge& Edge : Edges)
+	{
+		const float EdgeLength = FVector2D::Distance(FVector2D(Nodes[Edge.StartNodeId].Position), FVector2D(Nodes[Edge.EndNodeId].Position));
+		const float DistanceSum = BaseDistances[Edge.StartNodeId] + BaseDistances[Edge.EndNodeId];
+		if (DistanceSum <= EdgeLength) continue;
+
+		const float Scale = EdgeLength / DistanceSum;
+		CurveDistances[Edge.StartNodeId] = FMath::Min(CurveDistances[Edge.StartNodeId], BaseDistances[Edge.StartNodeId] * Scale);
+		CurveDistances[Edge.EndNodeId] = FMath::Min(CurveDistances[Edge.EndNodeId], BaseDistances[Edge.EndNodeId] * Scale);
+	}
+
+	// 3. 겹쳤던 엣지에 남은 길이는, 노드의 반대쪽 엣지에서도 겹치지 않는 만큼만 원호를 키워 채운다
+	for (const FRoadEdge& Edge : Edges)
+	{
+		const float EdgeLength = FVector2D::Distance(FVector2D(Nodes[Edge.StartNodeId].Position), FVector2D(Nodes[Edge.EndNodeId].Position));
+		if (BaseDistances[Edge.StartNodeId] + BaseDistances[Edge.EndNodeId] <= EdgeLength) continue;
+
+		const int32 EndNodeIds[2] = { Edge.StartNodeId, Edge.EndNodeId };
+
+		for (int32 i = 0; i < 2; ++i)
+		{
+			const int32 NodeId = EndNodeIds[i];
+			const int32 FacingNodeId = EndNodeIds[1 - i];
+			if (CurveDistances[NodeId] <= 0.0f) continue;
+
+			const float RemainLength = EdgeLength - CurveDistances[NodeId] - CurveDistances[FacingNodeId];
+			if (RemainLength <= 0.0f) continue;
+
+			// 이 노드의 반대쪽 엣지에서 더 쓸 수 있는 길이
+			const FRoadNode& Node = Nodes[NodeId];
+			const int32 OtherEdgeId = (Node.EdgeIds[0] == Edge.Id) ? Node.EdgeIds[1] : Node.EdgeIds[0];
+			const int32 FarNodeId = Graph.GetOtherNode(OtherEdgeId, NodeId);
+			const float OtherEdgeLength = FVector2D::Distance(FVector2D(Node.Position), FVector2D(Nodes[FarNodeId].Position));
+			const float OtherRoom = OtherEdgeLength - CurveDistances[NodeId] - CurveDistances[FarNodeId];
+
+			CurveDistances[NodeId] += FMath::Min(RemainLength, FMath::Max(0.0f, OtherRoom));
+		}
+	}
+
+	// 4. 곡선을 만들지 않는 노드는 그대로 옮긴다
+	FRoadGraph Result;
+
+	TArray<int32> NewNodeIds;
+	NewNodeIds.Init(INDEX_NONE, Nodes.Num());
+
+	for (const FRoadNode& Node : Nodes)
+	{
+		if (CurveDistances[Node.Id] > 0.0f) continue;
+
+		NewNodeIds[Node.Id] = Result.AddNode(Node.Position);
+	}
+
+	// 5. 엣지마다 원호가 닿는 점에 노드를 만들고 그 사이를 직선 엣지로 잇는다 (X: 시작 쪽 노드 Id, Y: 끝 쪽 노드 Id)
+	TArray<FIntPoint> CutNodeIds;
+	CutNodeIds.Init(FIntPoint(INDEX_NONE, INDEX_NONE), Edges.Num());
+
+	for (const FRoadEdge& Edge : Edges)
+	{
+		const FVector& StartPos = Nodes[Edge.StartNodeId].Position;
+		const FVector& EndPos = Nodes[Edge.EndNodeId].Position;
+		const float EdgeLength = FVector2D::Distance(FVector2D(StartPos), FVector2D(EndPos));
+		if (EdgeLength < KINDA_SMALL_NUMBER) continue;
+
+		const float StartDistance = CurveDistances[Edge.StartNodeId];
+		const float EndDistance = CurveDistances[Edge.EndNodeId];
+
+		int32 StartCutId = (StartDistance > 0.0f) ? INDEX_NONE : NewNodeIds[Edge.StartNodeId];
+		int32 EndCutId = (EndDistance > 0.0f) ? INDEX_NONE : NewNodeIds[Edge.EndNodeId];
+
+		const FVector StartCutPos = FMath::Lerp(StartPos, EndPos, StartDistance / EdgeLength);
+		const FVector EndCutPos = FMath::Lerp(EndPos, StartPos, EndDistance / EdgeLength);
+
+		if (EdgeLength - StartDistance - EndDistance <= TouchTolerance)
+		{
+			// 두 점이 맞닿으면 길이 0 엣지를 만들지 않고 노드 하나를 같이 쓴다
+			int32 SharedId = (StartCutId != INDEX_NONE) ? StartCutId : EndCutId;
+			if (SharedId == INDEX_NONE)
+			{
+				SharedId = Result.AddNode(StartCutPos);
+			}
+
+			StartCutId = SharedId;
+			EndCutId = SharedId;
+		}
+		else
+		{
+			if (StartCutId == INDEX_NONE)
+			{
+				StartCutId = Result.AddNode(StartCutPos);
+			}
+
+			if (EndCutId == INDEX_NONE)
+			{
+				EndCutId = Result.AddNode(EndCutPos);
+			}
+
+			Result.AddEdge(StartCutId, EndCutId, Edge.Width, Edge.RoadType);
+		}
+
+		CutNodeIds[Edge.Id] = FIntPoint(StartCutId, EndCutId);
+	}
+
+	// 6. 곡선 노드마다 양쪽 엣지에 만든 노드를 원호 엣지로 잇는다
+	for (const FRoadNode& Node : Nodes)
+	{
+		const float Distance = CurveDistances[Node.Id];
+		if (Distance <= 0.0f) continue;
+
+		const FRoadEdge& PrevEdge = Edges[Node.EdgeIds[0]];
+		const FRoadEdge& NextEdge = Edges[Node.EdgeIds[1]];
+
+		const int32 ArcStartId = (PrevEdge.StartNodeId == Node.Id) ? CutNodeIds[PrevEdge.Id].X : CutNodeIds[PrevEdge.Id].Y;
+		const int32 ArcEndId = (NextEdge.StartNodeId == Node.Id) ? CutNodeIds[NextEdge.Id].X : CutNodeIds[NextEdge.Id].Y;
+		if (ArcStartId == INDEX_NONE || ArcEndId == INDEX_NONE || ArcStartId == ArcEndId) continue;
+
+		const FVector ArcStartPos = Result.GetNode(ArcStartId)->Position;
+		const FVector ArcEndPos = Result.GetNode(ArcEndId)->Position;
+
+		// 원 중심: 노드에서 두 엣지 사이 각의 이등분선 위
+		const FVector2D NodeXY(Node.Position);
+		const FVector2D DirToPrev = (FVector2D(ArcStartPos) - NodeXY).GetSafeNormal();
+		const FVector2D DirToNext = (FVector2D(ArcEndPos) - NodeXY).GetSafeNormal();
+		const FVector2D Bisector = (DirToPrev + DirToNext).GetSafeNormal();
+		const float HalfAngle = 0.5f * FMath::Acos(FMath::Clamp(FVector2D::DotProduct(DirToPrev, DirToNext), -1.0f, 1.0f));
+
+		const float Radius = Distance * FMath::Tan(HalfAngle);
+		const FVector2D Center = NodeXY + Bisector * (Distance / FMath::Cos(HalfAngle));
+
+		// 원호 시작 각과 진행 각 (-PI ~ PI)
+		const FVector2D StartOffset = FVector2D(ArcStartPos) - Center;
+		const FVector2D EndOffset = FVector2D(ArcEndPos) - Center;
+		const float StartAngle = FMath::Atan2(StartOffset.Y, StartOffset.X);
+		const float SweepAngle = FMath::UnwindRadians(FMath::Atan2(EndOffset.Y, EndOffset.X) - StartAngle);
+
+		const int32 NumSegment = FMath::Max(1, FMath::CeilToInt(FMath::Abs(SweepAngle) * Radius / Spacing));
+
+		TArray<FVector> ArcPoints;
+		ArcPoints.Reserve(NumSegment + 1);
+		ArcPoints.Add(ArcStartPos);
+
+		for (int32 i = 1; i < NumSegment; ++i)
+		{
+			const float Alpha = (float)i / (float)NumSegment;
+			const float Angle = StartAngle + SweepAngle * Alpha;
+			const FVector2D PointXY = Center + FVector2D(FMath::Cos(Angle), FMath::Sin(Angle)) * Radius;
+
+			ArcPoints.Add(FVector(PointXY.X, PointXY.Y, FMath::Lerp(ArcStartPos.Z, ArcEndPos.Z, Alpha)));
+		}
+
+		ArcPoints.Add(ArcEndPos);
+
+		Result.AddCurveEdge(ArcStartId, ArcEndId, ArcPoints, PrevEdge.Width, PrevEdge.RoadType);
+	}
+
+	return Result;
+}
