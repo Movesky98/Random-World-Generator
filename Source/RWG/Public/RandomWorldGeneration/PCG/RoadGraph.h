@@ -44,6 +44,19 @@ struct FRoadEdge
 		: Id(InId), StartNodeId(InStartNodeId), EndNodeId(InEndNodeId), Width(InWidth), RoadType(InRoadType) { }
 };
 
+struct FRoadIntersection
+{
+	// 교차로 중심 노드 Id
+	int32 NodeId = INDEX_NONE;
+
+	// 교차로 중앙 조각의 닫힌 윤곽. 노드 기준 반시계 순서, 월드 좌표
+	TArray<FVector> OutlinePoints;
+
+	FRoadIntersection() = default;
+	FRoadIntersection(int32 InNodeId, const TArray<FVector>& InOutlinePoints)
+		: NodeId(InNodeId), OutlinePoints(InOutlinePoints) { }
+};
+
 /**
  * 
  */
@@ -75,6 +88,17 @@ public:
 	// 컨테이너
 	const TArray<FRoadNode>& GetNodes() const { return Nodes; }
 	const TArray<FRoadEdge>& GetEdges() const { return Edges; }
+
+/*********************************************************************
+*                               교차로
+*********************************************************************/
+private:
+	TArray<FRoadIntersection> Intersections;
+
+public:
+	void AddIntersection(int32 NodeId, const TArray<FVector>& OutlinePoints);
+
+	const TArray<FRoadIntersection>& GetIntersections() const { return Intersections; }
 
 /*********************************************************************
 *                             노드 분류

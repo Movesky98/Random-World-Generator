@@ -25,6 +25,12 @@ namespace RoadAttributes
 	static const FName LeaveTangent = TEXT("LeaveTangent");
 }
 
+namespace IntersectionAttributes
+{
+	static const FName IntersectionId = TEXT("IntersectionId");
+	static const FName OutlineIndex = TEXT("OutlineIndex");	// 윤곽 안에서 점의 순서 (노드 기준 반시계)
+}
+
 namespace
 {
 	// 엣지 점들이 놓인 원의 XY 중심과 반지름 (처음·가운데·마지막 점 기준, 일직선이면 false)
@@ -98,6 +104,11 @@ FName URoadGraphToPointsSettings::GetMainOutputLabel() const
 	return TEXT("RoadPoints");
 }
 
+FName URoadGraphToPointsSettings::GetIntersectionOutputLabel() const
+{
+	return TEXT("Intersections");
+}
+
 // Input/Output pin setup with specific properties, including:
 // Pin data type, allowing singular or multiple inputs per pin, and creating multiple in/out pins.
 TArray<FPCGPinProperties> URoadGraphToPointsSettings::InputPinProperties() const
@@ -110,6 +121,7 @@ TArray<FPCGPinProperties> URoadGraphToPointsSettings::OutputPinProperties() cons
 {
 	TArray<FPCGPinProperties> Pins;
 	Pins.Emplace(GetMainOutputLabel(), EPCGDataType::Point);
+	Pins.Emplace(GetIntersectionOutputLabel(), EPCGDataType::Point);
 	return Pins;
 }
 
@@ -218,6 +230,42 @@ bool FRoadGraphToPointsElement::ExecuteInternal(FPCGContext* Context) const
 	FPCGTaggedData& Tagged = Context->OutputData.TaggedData.Emplace_GetRef();
 	Tagged.Pin = Settings->GetMainOutputLabel();
 	Tagged.Data = OutData;
+
+	// 교차로 윤곽 점 → 포인트 생성
+	UPCGPointData* IntersectionData = NewObject<UPCGPointData>();
+	IntersectionData->InitializeFromData(nullptr);
+
+	TArray<FPCGPoint>& IntersectionPoints = IntersectionData->GetMutablePoints();
+	UPCGMetadata* IntersectionMetaData = IntersectionData->Metadata;
+
+	auto* AttrIntersectionId = IntersectionMetaData->CreateAttribute<int32>(IntersectionAttributes::IntersectionId, -1, false, true);
+	auto* AttrOutlineIndex = IntersectionMetaData->CreateAttribute<int32>(IntersectionAttributes::OutlineIndex, -1, false, true);
+
+	const TArray<FRoadIntersection>& Intersections = Graph.GetIntersections();
+
+	for (int32 IntersectionId = 0; IntersectionId < Intersections.Num(); ++IntersectionId)
+	{
+		const TArray<FVector>& OutlinePoints = Intersections[IntersectionId].OutlinePoints;
+
+		for (int32 i = 0; i < OutlinePoints.Num(); ++i)
+		{
+			FPCGPoint Point;
+			Point.Transform = FTransform(OutlinePoints[i]);
+			Point.Density = 1.0f;
+
+			const int64 Key = IntersectionMetaData->AddEntry();
+			Point.MetadataEntry = Key;
+
+			AttrIntersectionId->SetValue(Key, IntersectionId);
+			AttrOutlineIndex->SetValue(Key, i);
+
+			IntersectionPoints.Add(Point);
+		}
+	}
+
+	FPCGTaggedData& IntersectionTagged = Context->OutputData.TaggedData.Emplace_GetRef();
+	IntersectionTagged.Pin = Settings->GetIntersectionOutputLabel();
+	IntersectionTagged.Data = IntersectionData;
 
 	return true;
 }

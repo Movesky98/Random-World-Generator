@@ -5,6 +5,32 @@
 
 #include "Containers/Queue.h"
 
+namespace
+{
+	// XY 평면에서 점이 닫힌 윤곽 안에 있는지 (점에서 +X 방향 반직선이 윤곽 변과 만나는 횟수가 홀수면 안)
+	bool IsInsideOutline(const FVector2D& Point, const TArray<FVector>& Outline)
+	{
+		bool bInside = false;
+		const int32 Num = Outline.Num();
+
+		for (int32 i = 0, j = Num - 1; i < Num; j = i++)
+		{
+			const FVector2D A(Outline[i]);
+			const FVector2D B(Outline[j]);
+
+			if ((A.Y > Point.Y) == (B.Y > Point.Y)) continue;
+
+			const double CrossX = A.X + (Point.Y - A.Y) * (B.X - A.X) / (B.Y - A.Y);
+			if (Point.X < CrossX)
+			{
+				bInside = !bInside;
+			}
+		}
+
+		return bInside;
+	}
+}
+
 FCityGrid FCityGridBuilder::BuildGrid2D(const FGridBuildParams& InParams)
 {
 	FCityGrid NewGrid;
@@ -67,6 +93,18 @@ void FCityGridBuilder::MarkRoadCells(FCityGrid& CityGrid, const FGridBuildParams
 
 			if (bIsRoad)
 				break;
+		}
+
+		if (bIsRoad) continue;
+
+		// 교차로 윤곽 안에 있는 셀도 도로
+		for (const FRoadIntersection& Intersection : InParams.RoadGraph.GetIntersections())
+		{
+			if (IsInsideOutline(Cell2DPos, Intersection.OutlinePoints))
+			{
+				Cells[i].Type = ECellType::Road;
+				break;
+			}
 		}
 	}
 }

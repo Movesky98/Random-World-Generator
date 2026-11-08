@@ -27,6 +27,9 @@ struct FRoadBuildParams
 
 	// 원호 엣지 위 점 사이 간격(원호 길이)
 	float CurveSegmentSpacing = 100.0f;
+
+	// 교차로에서 이웃한 두 갈래의 경계선 사이를 잇는 원호의 최대 반지름
+	float IntersectionCornerRadius = 400.0f;
 };
 
 /**
@@ -49,6 +52,9 @@ private:
 
 	/** 차수 2 노드의 모서리를 원호로 깎아, 그 노드 대신 원호 양 끝 노드와 원호 엣지를 넣은 그래프 (CurveSegmentSpacing: 원호 위 점 간격) */
 	static FRoadGraph BuildCurveEdges(const FRoadGraph& Graph, float CurveRadius, float CurveSegmentSpacing);
+
+	/** 차수 3 이상 노드에 붙은 갈래 끝을 잘라내고, 그 자리를 덮는 교차로 윤곽을 넣은 그래프 (MaxCornerRadius: 갈래 경계선 사이 원호의 최대 반지름, ArcSpacing: 원호 위 점 간격) */
+	static FRoadGraph BuildIntersections(const FRoadGraph& Graph, float MaxCornerRadius, float ArcSpacing);
 
 public:
 	static FRoadGraph BuildGraph2D(UWorld* InWorld, const FRoadBuildParams& InParams)
@@ -118,6 +124,10 @@ public:
 		// 4) 곡선 엣지 만들기
 		// 남은 차수 2 노드의 모서리를 원호로 깎는다.
 		Graph = BuildCurveEdges(Graph, InParams.CurveRadius, InParams.CurveSegmentSpacing);
+
+		// 5) 교차로 만들기
+		// 차수 3 이상 노드에 붙은 갈래 끝을 잘라내고 그 자리를 덮을 윤곽을 만든다.
+		Graph = BuildIntersections(Graph, InParams.IntersectionCornerRadius, InParams.CurveSegmentSpacing);
 
 		return Graph;
 	}

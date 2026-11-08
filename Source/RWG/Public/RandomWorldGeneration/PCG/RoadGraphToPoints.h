@@ -28,6 +28,9 @@ public:
 
 	virtual FName GetMainOutputLabel() const;
 
+	// 교차로 윤곽 점 출력 핀 이름
+	FName GetIntersectionOutputLabel() const;
+
 protected:
 	virtual TArray<FPCGPinProperties> InputPinProperties() const override;
 	virtual TArray<FPCGPinProperties> OutputPinProperties() const override;

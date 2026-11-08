@@ -59,6 +59,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
 	float CurveSegmentSpacing = 100.0f;
 
+	/* 교차로에서 이웃한 두 갈래의 경계선 사이를 잇는 원호의 최대 반지름 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters|Road")
+	float IntersectionCornerRadius = 400.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Theme Settings")
 	EWorldTheme WorldTheme;
 

@@ -511,3 +511,293 @@ FRoadGraph FRoadGraphBuilder::BuildCurveEdges(const FRoadGraph& Graph, float Cur
 
 	return Result;
 }
+
+namespace
+{
+	// 교차로 노드에 붙은 갈래 하나
+	struct FIntersectionArm
+	{
+		int32 EdgeId = INDEX_NONE;
+
+		// 엣지 시작 쪽이 교차로 노드인지
+		bool bAtStart = true;
+
+		// 노드에서 갈래가 뻗는 XY 방향과 그 각도(라디안)
+		FVector2D Direction = FVector2D::ZeroVector;
+		float Angle = 0.0f;
+
+		// 도로 폭의 절반
+		float HalfWidth = 0.0f;
+
+		// 노드에서부터 잘라 쓸 수 있는 직선 길이
+		float StraightLength = 0.0f;
+
+		bool operator<(const FIntersectionArm& Other) const { return Angle < Other.Angle; }
+	};
+
+	// 이웃한 두 갈래 사이 모서리
+	struct FIntersectionCorner
+	{
+		// 노드에서 원호가 두 갈래 경계선에 닿는 점까지의 갈래 방향 거리
+		float Distance = 0.0f;
+
+		// 앞 갈래 왼쪽 경계선에서 다음 갈래 오른쪽 경계선까지의 원호 점 (XY)
+		TArray<FVector2D> ArcPoints;
+	};
+
+	// 교차로 계산에서 같은 위치로 보는 거리
+	const float IntersectionTouchTolerance = 1.0f;
+
+	// 직전 점과 같은 위치가 아니면 윤곽에 점을 추가한다
+	void AddOutlinePoint(TArray<FVector>& Outline, const FVector2D& PointXY, float Z)
+	{
+		if (Outline.Num() > 0 && FVector2D::Distance(FVector2D(Outline.Last()), PointXY) <= IntersectionTouchTolerance) return;
+
+		Outline.Add(FVector(PointXY.X, PointXY.Y, Z));
+	}
+}
+
+FRoadGraph FRoadGraphBuilder::BuildIntersections(const FRoadGraph& Graph, float MaxCornerRadius, float ArcSpacing)
+{
+	FRoadGraph Result = Graph;
+
+	const TArray<FRoadNode>& Nodes = Graph.GetNodes();
+	const TArray<FRoadEdge>& Edges = Graph.GetEdges();
+	const float Spacing = FMath::Max(10.0f, ArcSpacing);
+
+	// 엣지 양 끝에서 잘라낼 거리 (X: 시작 쪽, Y: 끝 쪽)
+	TArray<FVector2D> CutDistances;
+	CutDistances.Init(FVector2D::ZeroVector, Edges.Num());
+
+	// 직선이 모자라 뾰족한 모서리도 들어가지 않은 모서리 수
+	int32 OverflowCornerNum = 0;
+
+	for (const FRoadNode& Node : Nodes)
+	{
+		if (Node.EdgeIds.Num() < 3) continue;
+
+		const FVector2D NodeXY(Node.Position);
+
+		// 1. 갈래마다 방향과 잘라 쓸 수 있는 직선 길이를 구한다
+		TArray<FIntersectionArm> Arms;
+
+		for (const int32 EdgeId : Node.EdgeIds)
+		{
+			const FRoadEdge& Edge = Edges[EdgeId];
+			const TArray<FVector>& Points = Edge.SegmentPoints;
+			if (Points.Num() < 2) continue;
+
+			FIntersectionArm Arm;
+			Arm.EdgeId = EdgeId;
+			Arm.bAtStart = (Edge.StartNodeId == Node.Id);
+			Arm.HalfWidth = Edge.Width * 0.5f;
+
+			const FVector2D NearXY(Arm.bAtStart ? Points[0] : Points.Last());
+			const FVector2D NextXY(Arm.bAtStart ? Points[1] : Points[Points.Num() - 2]);
+			const FVector2D FarXY(Arm.bAtStart ? Points.Last() : Points[0]);
+
+			Arm.Direction = (NextXY - NearXY).GetSafeNormal();
+			if (Arm.Direction.IsNearlyZero()) continue;
+
+			Arm.Angle = FMath::Atan2(Arm.Direction.Y, Arm.Direction.X);
+
+			// 모든 점이 노드와 반대쪽 끝을 잇는 직선 위에 있을 때만 직선 엣지로 본다
+			const FVector2D Chord = FarXY - NearXY;
+			const float ChordLength = Chord.Size();
+			bool bStraight = (ChordLength > IntersectionTouchTolerance);
+
+			for (const FVector& Point : Points)
+			{
+				if (!bStraight) break;
+
+				const float Offset = FMath::Abs(FVector2D::CrossProduct(Chord, FVector2D(Point) - NearXY)) / ChordLength;
+				if (Offset > IntersectionTouchTolerance)
+				{
+					bStraight = false;
+				}
+			}
+
+			if (bStraight)
+			{
+				Arm.StraightLength = ChordLength;
+
+				// 반대쪽 끝도 교차로면 직선을 절반씩 나눠 쓴다
+				const int32 OtherNodeId = Graph.GetOtherNode(EdgeId, Node.Id);
+				if (Graph.GetNodeDegree(OtherNodeId) >= 3)
+				{
+					Arm.StraightLength *= 0.5f;
+				}
+			}
+
+			Arms.Add(Arm);
+		}
+
+		if (Arms.Num() < 3) continue;
+
+		// 노드 기준 반시계 순서로 정렬
+		Arms.Sort();
+		const int32 ArmNum = Arms.Num();
+
+		// 2. 모서리마다 원호 반지름과 원호가 경계선에 닿는 거리를 구한다
+		TArray<FIntersectionCorner> Corners;
+		Corners.SetNum(ArmNum);
+
+		for (int32 i = 0; i < ArmNum; ++i)
+		{
+			const FIntersectionArm& PrevArm = Arms[i];
+			const FIntersectionArm& NextArm = Arms[(i + 1) % ArmNum];
+			FIntersectionCorner& Corner = Corners[i];
+
+			const float HalfWidth = FMath::Max(PrevArm.HalfWidth, NextArm.HalfWidth);
+			const FVector2D PrevLeft(-PrevArm.Direction.Y, PrevArm.Direction.X);
+			const FVector2D NextLeft(-NextArm.Direction.Y, NextArm.Direction.X);
+
+			// 앞 갈래에서 다음 갈래까지 반시계로 도는 각
+			float Theta = NextArm.Angle - PrevArm.Angle;
+			if (Theta <= 0.0f)
+			{
+				Theta += 2.0f * PI;
+			}
+
+			// 거의 180도 이상 벌어진 모서리는 경계선이 만나지 않으므로 노드 옆에서 바로 잇는다
+			if (Theta >= PI - 0.01f)
+			{
+				Corner.Distance = 0.0f;
+				Corner.ArcPoints.Add(NodeXY + PrevLeft * HalfWidth);
+				Corner.ArcPoints.Add(NodeXY - NextLeft * HalfWidth);
+				continue;
+			}
+
+			const float HalfTan = FMath::Tan(Theta * 0.5f);
+
+			// 두 갈래 중 짧은 쪽 직선 안에 들어가도록 반지름을 줄인다
+			const float MaxDistance = FMath::Min(PrevArm.StraightLength, NextArm.StraightLength);
+			float Radius = MaxCornerRadius;
+
+			if ((HalfWidth + Radius) / HalfTan > MaxDistance)
+			{
+				Radius = MaxDistance * HalfTan - HalfWidth;
+			}
+
+			if (Radius < 0.0f)
+			{
+				Radius = 0.0f;
+				++OverflowCornerNum;
+			}
+
+			Corner.Distance = (HalfWidth + Radius) / HalfTan;
+
+			const FVector2D PrevTouch = NodeXY + PrevLeft * HalfWidth + PrevArm.Direction * Corner.Distance;
+			const FVector2D NextTouch = NodeXY - NextLeft * HalfWidth + NextArm.Direction * Corner.Distance;
+
+			if (Radius <= IntersectionTouchTolerance)
+			{
+				Corner.ArcPoints.Add(PrevTouch);
+				Corner.ArcPoints.Add(NextTouch);
+				continue;
+			}
+
+			// 원 중심: 노드에서 두 갈래 사이 각의 이등분선 위
+			const FVector2D Bisector = (PrevArm.Direction + NextArm.Direction).GetSafeNormal();
+			const FVector2D Center = NodeXY + Bisector * ((HalfWidth + Radius) / FMath::Sin(Theta * 0.5f));
+
+			// 원호 시작 각과 진행 각 (-PI ~ PI)
+			const FVector2D StartOffset = PrevTouch - Center;
+			const FVector2D EndOffset = NextTouch - Center;
+			const float StartAngle = FMath::Atan2(StartOffset.Y, StartOffset.X);
+			const float SweepAngle = FMath::UnwindRadians(FMath::Atan2(EndOffset.Y, EndOffset.X) - StartAngle);
+
+			const int32 NumSegment = FMath::Max(1, FMath::CeilToInt(FMath::Abs(SweepAngle) * Radius / Spacing));
+			Corner.ArcPoints.Reserve(NumSegment + 1);
+
+			for (int32 j = 0; j <= NumSegment; ++j)
+			{
+				const float Angle = StartAngle + SweepAngle * (float)j / (float)NumSegment;
+				Corner.ArcPoints.Add(Center + FVector2D(FMath::Cos(Angle), FMath::Sin(Angle)) * Radius);
+			}
+		}
+
+		// 3. 갈래마다 양옆 모서리 중 더 먼 쪽에 윤곽 단면을 두고, 반시계로 돌며 윤곽을 잇는다
+		TArray<FVector> Outline;
+
+		for (int32 i = 0; i < ArmNum; ++i)
+		{
+			const FIntersectionArm& Arm = Arms[i];
+			const FVector2D Left(-Arm.Direction.Y, Arm.Direction.X);
+
+			const float RightDistance = Corners[(i + ArmNum - 1) % ArmNum].Distance;
+			const float LeftDistance = Corners[i].Distance;
+
+			// 윤곽 단면까지의 거리
+			const float OutlineDistance = FMath::Max(RightDistance, LeftDistance);
+
+			// 갈래를 잘라내는 거리 (직선 길이까지만, 모자란 부분은 교차로 조각이 갈래 위를 덮음)
+			const float CutDistance = FMath::Min(OutlineDistance, Arm.StraightLength);
+
+			if (Arm.bAtStart)
+			{
+				CutDistances[Arm.EdgeId].X = CutDistance;
+			}
+			else
+			{
+				CutDistances[Arm.EdgeId].Y = CutDistance;
+			}
+
+			// 오른쪽 경계선 → 윤곽 단면 → 왼쪽 경계선 → 다음 갈래로 가는 원호
+			AddOutlinePoint(Outline, NodeXY - Left * Arm.HalfWidth + Arm.Direction * OutlineDistance, Node.Position.Z);
+			AddOutlinePoint(Outline, NodeXY + Left * Arm.HalfWidth + Arm.Direction * OutlineDistance, Node.Position.Z);
+
+			for (const FVector2D& ArcPoint : Corners[i].ArcPoints)
+			{
+				AddOutlinePoint(Outline, ArcPoint, Node.Position.Z);
+			}
+		}
+
+		// 처음 점과 겹치는 마지막 점은 뺀다
+		if (Outline.Num() > 1 && FVector2D::Distance(FVector2D(Outline[0]), FVector2D(Outline.Last())) <= IntersectionTouchTolerance)
+		{
+			Outline.Pop();
+		}
+
+		Result.AddIntersection(Node.Id, Outline);
+	}
+
+	// 4. 잘라낸 거리만큼 엣지 양 끝을 줄여 점을 다시 찍는다
+	for (const FRoadEdge& Edge : Edges)
+	{
+		const FVector2D& Cut = CutDistances[Edge.Id];
+		if (Cut.X <= 0.0f && Cut.Y <= 0.0f) continue;
+		if (Edge.SegmentPoints.Num() < 2) continue;
+
+		const FVector StartPos = Edge.SegmentPoints[0];
+		const FVector EndPos = Edge.SegmentPoints.Last();
+		const float EdgeLength = FVector2D::Distance(FVector2D(StartPos), FVector2D(EndPos));
+
+		TArray<FVector>& Points = Result.GetEdgeMutable(Edge.Id)->SegmentPoints;
+
+		// 양쪽 교차로가 엣지를 다 쓰면 점을 남기지 않는다
+		if (EdgeLength - Cut.X - Cut.Y <= IntersectionTouchTolerance)
+		{
+			Points.Reset();
+			continue;
+		}
+
+		const FVector NewStartPos = FMath::Lerp(StartPos, EndPos, Cut.X / EdgeLength);
+		const FVector NewEndPos = FMath::Lerp(EndPos, StartPos, Cut.Y / EdgeLength);
+
+		// AddEdge와 같은 간격으로 점을 찍는다
+		const float NewLength = FVector2D::Distance(FVector2D(NewStartPos), FVector2D(NewEndPos));
+		const int32 NumSegment = FMath::Max(1, FMath::FloorToInt(NewLength / 400.0f));
+
+		Points.Reset(NumSegment + 1);
+
+		for (int32 i = 0; i <= NumSegment; ++i)
+		{
+			Points.Add(FMath::Lerp(NewStartPos, NewEndPos, (float)i / (float)NumSegment));
+		}
+	}
+
+	COMMON_LOG(LogRandomWorldGen, Warning, TEXT("Intersections: %d (corners without room: %d)"), Result.GetIntersections().Num(), OverflowCornerNum);
+
+	return Result;
+}

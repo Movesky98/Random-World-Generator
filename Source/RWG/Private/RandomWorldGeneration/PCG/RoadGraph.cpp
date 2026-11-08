@@ -73,6 +73,13 @@ int32 FRoadGraph::AddCurveEdge(int32 StartNodeId, int32 EndNodeId, const TArray<
 	return NewId;
 }
 
+void FRoadGraph::AddIntersection(int32 NodeId, const TArray<FVector>& OutlinePoints)
+{
+	if (!IsValidNodeId(NodeId) || OutlinePoints.Num() < 3) return;
+
+	Intersections.Emplace(NodeId, OutlinePoints);
+}
+
 const FRoadNode* FRoadGraph::GetNode(int32 NodeId) const
 {
 	return IsValidNodeId(NodeId) ? &Nodes[NodeId] : nullptr;
