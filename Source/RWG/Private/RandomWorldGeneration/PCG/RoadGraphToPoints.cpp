@@ -33,6 +33,9 @@ namespace IntersectionAttributes
 
 namespace
 {
+	// 도로 메시(SM_RoadMesh)의 기준 폭. 점의 Y 스케일 = 도로 폭 / 기준 폭
+	const double RoadMeshBaseWidth = 100.0;
+
 	// 엣지 점들이 놓인 원의 XY 중심과 반지름 (처음·가운데·마지막 점 기준, 일직선이면 false)
 	bool FindArcCircle(const TArray<FVector>& Points, FVector2D& OutCenter, double& OutRadius)
 	{
@@ -206,8 +209,11 @@ bool FRoadGraphToPointsElement::ExecuteInternal(FPCGContext* Context) const
 
 			const FVector PointForward = LeaveTangent.IsNearlyZero() ? Edge.Direction : LeaveTangent.GetSafeNormal();
 
+			// Y 스케일로 도로 메시를 도로 폭만큼 늘린다
+			const FVector PointScale(1.0, Edge.Width / RoadMeshBaseWidth, 1.0);
+
 			FPCGPoint Point;
-			Point.Transform = FTransform(FRotationMatrix::MakeFromX(PointForward).ToQuat(), SegmentPoints[i], FVector::OneVector);
+			Point.Transform = FTransform(FRotationMatrix::MakeFromX(PointForward).ToQuat(), SegmentPoints[i], PointScale);
 			Point.Density = 1.0f;
 
 			const int64 Key = MetaData->AddEntry();
