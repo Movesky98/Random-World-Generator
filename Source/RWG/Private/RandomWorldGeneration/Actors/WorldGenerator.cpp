@@ -347,13 +347,14 @@ void AWorldGenerator::StartGeneratePCG(UWorldThemeConfig* Config)
 {
 	if (RoadPCGComponent && RoadPCGComponent->GetGraph())
 	{
-		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
-		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
-		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
+		UPCGGraphInstance* RoadGraphInstance = RoadPCGComponent->GetGraphInstance();
+		RoadGraphInstance->SetGraphParameter(FName("CityCenter"), CityCenter);
+		RoadGraphInstance->SetGraphParameter(FName("CityRadius"), CityRadius);
+		RoadGraphInstance->SetGraphParameter(FName("Seed"), MasterSeed + 2);
 
 		// Set Static Meshs by Theme
 		TSoftObjectPtr<UObject> ThemePtr(Config);
-		RoadPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
+		RoadGraphInstance->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
 		RoadPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
 		RoadPCGComponent->Generate();
 
@@ -365,12 +366,13 @@ void AWorldGenerator::StartGeneratePCG(UWorldThemeConfig* Config)
 		COMMON_LOG(LogRandomWorldGen, Warning, TEXT("SERVER: Building PCG Generate"));
 		if (BuildingPCGComponent && BuildingPCGComponent->GetGraph())
 		{
-			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityCenter"), CityCenter);
-			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("CityRadius"), CityRadius);
-			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("Seed"), MasterSeed + 2);
+			UPCGGraphInstance* BuildingGraphInstance = BuildingPCGComponent->GetGraphInstance();
+			BuildingGraphInstance->SetGraphParameter(FName("CityCenter"), CityCenter);
+			BuildingGraphInstance->SetGraphParameter(FName("CityRadius"), CityRadius);
+			BuildingGraphInstance->SetGraphParameter(FName("Seed"), MasterSeed + 2);
 
 			TSoftObjectPtr<UObject> ThemePtr(Config);
-			BuildingPCGComponent->GetGraph()->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
+			BuildingGraphInstance->SetGraphParameter(FName("ThemeConfig"), ThemePtr);
 
 			BuildingPCGComponent->OnPCGGraphGeneratedDelegate.AddUObject(this, &ThisClass::OnPCGGraphGenerated);
 			BuildingPCGComponent->Generate();
