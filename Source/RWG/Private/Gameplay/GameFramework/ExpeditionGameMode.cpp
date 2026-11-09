@@ -112,7 +112,7 @@ void AExpeditionGameMode::OnWorldReady()
         if (!PS.IsValid()) continue;
 
         APlayerController* PC = PS->GetPlayerController();
-        if (PC)
+        if (PC && !PC->GetPawn())
         {
             RestartPlayer(PC);
         }
