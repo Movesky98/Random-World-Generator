@@ -58,6 +58,8 @@ void USessionMenu::NativeConstruct()
 		COMMON_LOG(LogSession, Error, TEXT("Can't refer SessionSubsystem."));
 
 	SessionState = ESessionState::Idle;
+
+	this->SetVisibility(ESlateVisibility::Collapsed);
 }
 
 void USessionMenu::NativeDestruct()

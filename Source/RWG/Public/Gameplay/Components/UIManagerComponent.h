@@ -18,6 +18,7 @@ enum class EUIType : uint8
 	PlayerHUD UMETA(DisplayName = "Player HUD"),
 	Inventory UMETA(DisplayName = "Inventory"),
 	GameOver UMETA(DisplayName = "GameOver"),
+	MainMenu UMETA(DisplayName = "Main Menu"),
 };
 
 UENUM(BlueprintType)
@@ -90,12 +91,12 @@ private:
 public:
 	void InitializePawnWidgets(APawn* aPawn);
 
+	void ShowWidget(EUIType WidgetType);
+
 protected:
 	void DisplayWidgetsForPhase();
 
 	void CreateWidgetsForPhase(EGamePhase Phase);
-
-	void ShowWidget(EUIType WidgetType);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TMap<EGamePhase, FWidgetClassList> WidgetClassMap;
