@@ -21,6 +21,9 @@ AGunBase::AGunBase()
 
 	RootComponent = SkeletalMeshComponent;
 
+	MagazineMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MagazineMeshComponent"));
+	MagazineMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MagazineMeshComponent->SetupAttachment(SkeletalMeshComponent);
 }
 
 void AGunBase::BeginPlay()
@@ -36,6 +39,12 @@ void AGunBase::ApplyItemData()
 
 	SkeletalMeshComponent->SetSkeletalMeshAsset(GunData->GunMesh);
 	SkeletalMeshComponent->SetAnimInstanceClass(GunData->GunAnimClass);
+
+	// 탄창이 총 메시에 포함되지 않은 총만 탄창 메시를 탄창 본에 붙인다
+	if (!MagazineMeshComponent || !GunData->MagazineMesh) return;
+
+	MagazineMeshComponent->SetSkeletalMeshAsset(GunData->MagazineMesh);
+	MagazineMeshComponent->AttachToComponent(SkeletalMeshComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale, GunData->MagazineBoneName);
 }
 
 void AGunBase::Equip(ACharacter* NewOwner)

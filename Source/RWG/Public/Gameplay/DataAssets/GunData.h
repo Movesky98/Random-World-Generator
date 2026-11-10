@@ -45,6 +45,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Mesh")
 	TSubclassOf<UAnimInstance> GunAnimClass;
 
+	// 총 메시와 따로 분리된 탄창 메시 (총 메시에 탄창이 포함되어 있으면 비워 둔다)
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Mesh")
+	TObjectPtr<USkeletalMesh> MagazineMesh;
+
+	// 탄창 메시를 붙일 총 메시의 본 이름
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Mesh")
+	FName MagazineBoneName = NAME_None;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Projectile")
 	TSubclassOf<ABulletProjectile> BulletProjectileClass;
 
