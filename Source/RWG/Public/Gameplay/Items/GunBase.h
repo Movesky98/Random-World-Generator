@@ -96,6 +96,9 @@ protected:
 	/** 이번 점사에서 남은 발수 */
 	int32 BurstShotsRemaining = 0;
 
+	/** 마지막으로 발사한 월드 시각(초, 아직 쏜 적 없으면 -1) */
+	double LastFireTime = -1.0;
+
 	virtual void StartAttack() override;
 
 	virtual void StopAttack() override;

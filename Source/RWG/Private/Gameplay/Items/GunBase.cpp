@@ -201,6 +201,7 @@ void AGunBase::Fire()
 	}
 
 	SetCurrentAmmo(CurrentAmmo - 1);
+	LastFireTime = GetWorld()->GetTimeSeconds();
 	Multicast_PlayFireFX();
 	COMMON_LOG(LogGameplay, Log, TEXT("Fire: %s"), *GetName());
 
@@ -217,7 +218,13 @@ void AGunBase::Fire()
 
 bool AGunBase::CanStartAttack() const
 {
-	return HasAmmo() && !bIsFiring;
+	if (!HasAmmo() || bIsFiring) return false;
+
+	// 마지막 발사 뒤 FireRate가 지나기 전에는 새로 쏘지 않는다
+	UGunData* Data = GetItemData<UGunData>();
+	if (Data && LastFireTime >= 0.0 && GetWorld()->GetTimeSeconds() - LastFireTime < Data->FireRate) return false;
+
+	return true;
 }
 
 bool AGunBase::SpawnBulletProjectile()
