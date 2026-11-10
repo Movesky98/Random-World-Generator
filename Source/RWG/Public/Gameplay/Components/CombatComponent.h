@@ -110,6 +110,9 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_RequestStopAttack();
 
+	UFUNCTION(Server, Reliable)
+	void Server_RequestSwitchFireMode();
+
 protected:
 	void Reload(EWeaponActionState ActionState);
 

@@ -13,3 +13,11 @@ enum class EWeaponActionState : uint8
 	Reload,
 	ReloadEmpty,
 };
+
+UENUM(BlueprintType)
+enum class EFireMode : uint8
+{
+	Auto,
+	Semi,
+	Burst,
+};

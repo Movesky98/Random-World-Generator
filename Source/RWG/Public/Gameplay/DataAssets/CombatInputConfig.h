@@ -26,4 +26,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> AttackAction;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> SwitchFireModeAction;
 };

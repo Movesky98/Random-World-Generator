@@ -67,4 +67,7 @@ public:
 	virtual void StartAttack();
 
 	virtual void StopAttack();
+
+	// 공격 입력을 뗐을 때 호출된다. 기본 동작은 공격 중지
+	virtual void ReleaseAttack();
 };

@@ -40,6 +40,12 @@ void AGunBase::ApplyItemData()
 	SkeletalMeshComponent->SetSkeletalMeshAsset(GunData->GunMesh);
 	SkeletalMeshComponent->SetAnimInstanceClass(GunData->GunAnimClass);
 
+	// 발사 모드는 서버가 기본 모드로 정하고 클라이언트는 복제된 값을 쓴다
+	if (HasAuthority() && GunData->AvailableFireModes.Num() > 0)
+	{
+		CurrentFireMode = GunData->AvailableFireModes[0];
+	}
+
 	// 탄창이 총 메시에 포함되지 않은 총만 탄창 메시를 탄창 본에 붙인다
 	if (!MagazineMeshComponent || !GunData->MagazineMesh) return;
 
@@ -102,6 +108,7 @@ void AGunBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AGunBase, CurrentAmmo);
+	DOREPLIFETIME(AGunBase, CurrentFireMode);
 }
 
 void AGunBase::StartAttack()
@@ -122,7 +129,19 @@ void AGunBase::StartAttack()
 	if (!Data) return;
 	
 	bIsFiring = true;
-	GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ThisClass::Fire, Data->FireRate, true);
+
+	switch (CurrentFireMode)
+	{
+	case EFireMode::Auto:
+		GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ThisClass::Fire, Data->FireRate, true);
+		break;
+	case EFireMode::Burst:
+		BurstShotsRemaining = Data->BurstCount;
+		GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ThisClass::Fire, Data->FireRate, true);
+		break;
+	case EFireMode::Semi:
+		break;
+	}
 
 	Fire();
 }
@@ -132,8 +151,43 @@ void AGunBase::StopAttack()
 	if (!HasAuthority()) return;
 
 	bIsFiring = false;
+	BurstShotsRemaining = 0;
 
 	GetWorldTimerManager().ClearTimer(FireTimerHandle);
+}
+
+void AGunBase::ReleaseAttack()
+{
+	if (!HasAuthority()) return;
+
+	// 점사는 입력을 떼도 남은 발수를 다 쏜 뒤 Fire()에서 멈춘다
+	if (CurrentFireMode == EFireMode::Burst && BurstShotsRemaining > 0) return;
+
+	StopAttack();
+}
+
+void AGunBase::SwitchFireMode()
+{
+	if (!HasAuthority() || bIsFiring) return;
+
+	UGunData* Data = GetItemData<UGunData>();
+	if (!Data || Data->AvailableFireModes.Num() < 2) return;
+
+	// 현재 모드의 위치를 찾아 그다음 모드로 바꾸고, 마지막이면 처음으로 돌아간다
+	int32 CurrentIndex = INDEX_NONE;
+	for (int32 i = 0; i < Data->AvailableFireModes.Num(); i++)
+	{
+		if (Data->AvailableFireModes[i] == CurrentFireMode)
+		{
+			CurrentIndex = i;
+			break;
+		}
+	}
+
+	const int32 NextIndex = (CurrentIndex + 1) % Data->AvailableFireModes.Num();
+	CurrentFireMode = Data->AvailableFireModes[NextIndex];
+
+	COMMON_LOG(LogGameplay, Log, TEXT("Fire mode switched : %s"), *UEnum::GetValueAsString(CurrentFireMode));
 }
 
 void AGunBase::Fire()
@@ -149,6 +203,16 @@ void AGunBase::Fire()
 	SetCurrentAmmo(CurrentAmmo - 1);
 	Multicast_PlayFireFX();
 	COMMON_LOG(LogGameplay, Log, TEXT("Fire: %s"), *GetName());
+
+	// 점사는 정해진 발수를 다 쏘면 멈춘다
+	if (CurrentFireMode == EFireMode::Burst)
+	{
+		BurstShotsRemaining--;
+		if (BurstShotsRemaining <= 0)
+		{
+			StopAttack();
+		}
+	}
 }
 
 bool AGunBase::CanStartAttack() const

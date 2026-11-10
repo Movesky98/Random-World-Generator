@@ -88,6 +88,7 @@ void UCombatComponent::BindInputActions(UEnhancedInputComponent* InputComponent)
 	InputComponent->BindAction(Config->ReloadAction, ETriggerEvent::Started, this, &ThisClass::Server_RequestReload);
 	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Started, this, &ThisClass::Server_RequestStartAttack);
 	InputComponent->BindAction(Config->AttackAction, ETriggerEvent::Completed, this, &ThisClass::Server_RequestStopAttack);
+	InputComponent->BindAction(Config->SwitchFireModeAction, ETriggerEvent::Started, this, &ThisClass::Server_RequestSwitchFireMode);
 }
 
 void UCombatComponent::SelectWeaponSlot(int32 SlotIndex)
@@ -299,7 +300,17 @@ void UCombatComponent::Server_RequestStopAttack_Implementation()
 {
 	if (!CurrentWeapon) return;
 
-	CurrentWeapon->StopAttack();
+	CurrentWeapon->ReleaseAttack();
+}
+
+void UCombatComponent::Server_RequestSwitchFireMode_Implementation()
+{
+	if (!CurrentWeapon || WeaponActionState != EWeaponActionState::None) return;
+
+	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
+	if (!Gun) return;
+
+	Gun->SwitchFireMode();
 }
 
 void UCombatComponent::OnRep_CurrentWeapon(AWeaponBase* OldWeapon)

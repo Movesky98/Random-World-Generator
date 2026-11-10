@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Gameplay/DataAssets/WeaponData.h"
 #include "Gameplay/Data/RecoilSettings.h"
+#include "Gameplay/Enums/WeaponTypes.h"
 #include "GunData.generated.h"
 
 class ABulletProjectile;
@@ -29,6 +30,14 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	float Range = 5000.0f;
+
+	// 이 총이 쓸 수 있는 발사 모드 (첫 번째가 기본 모드, 전환 키를 누르면 순서대로 바뀐다)
+	UPROPERTY(EditDefaultsOnly, Category = "Gun")
+	TArray<EFireMode> AvailableFireModes = { EFireMode::Auto };
+
+	// 점사 한 번에 쏘는 발수
+	UPROPERTY(EditDefaultsOnly, Category = "Gun")
+	int32 BurstCount = 3;
 
 	// 소모 탄약 타입
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")

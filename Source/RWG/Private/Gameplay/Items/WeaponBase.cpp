@@ -44,6 +44,11 @@ void AWeaponBase::StopAttack()
 
 }
 
+void AWeaponBase::ReleaseAttack()
+{
+	StopAttack();
+}
+
 void AWeaponBase::Equip(ACharacter* NewOwner)
 {
 	if (!HasAuthority()) return;

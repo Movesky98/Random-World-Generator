@@ -93,9 +93,14 @@ protected:
 
 	bool bIsFiring = false;
 
+	/** 이번 점사에서 남은 발수 */
+	int32 BurstShotsRemaining = 0;
+
 	virtual void StartAttack() override;
 
 	virtual void StopAttack() override;
+
+	virtual void ReleaseAttack() override;
 
 	bool CanStartAttack() const;
 
@@ -106,6 +111,19 @@ protected:
 public:
 	/** 발사할 때마다 Broadcast되는 델리게이트 */
 	FOnGunFired OnFired;
+
+/*********************************************************************
+*                             발사 모드
+*********************************************************************/
+private:
+	/** 현재 발사 모드 */
+	UPROPERTY(VisibleInstanceOnly, Replicated)
+	EFireMode CurrentFireMode = EFireMode::Auto;
+
+public:
+	EFireMode GetCurrentFireMode() const { return CurrentFireMode; }
+
+	void SwitchFireMode();
 
 /*********************************************************************
 *                                탄약
