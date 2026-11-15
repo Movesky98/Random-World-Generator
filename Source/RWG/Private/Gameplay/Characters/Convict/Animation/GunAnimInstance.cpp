@@ -4,6 +4,7 @@
 #include "Gameplay/Characters/Convict/Animation/GunAnimInstance.h"
 #include "Gameplay/Components/CombatComponent.h"
 #include "Gameplay/Items/GunBase.h"
+#include "Gameplay/DataAssets/WeaponData.h"
 #include "CommonLogCategories.h"
 
 #include "GameFramework/Character.h"
@@ -29,6 +30,7 @@ void UGunAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	
 	bIsHandGuardValid = false;
+	IdlePose = nullptr;
 
 	if (!CombatComponent) return;
 
@@ -37,4 +39,9 @@ void UGunAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	HandGuardTransform = Gun->GetHandGuardTransform();
 	bIsHandGuardValid = true;
+
+	if (UWeaponData* WeaponData = Gun->GetItemData<UWeaponData>())
+	{
+		IdlePose = WeaponData->IdlePose;
+	}
 }

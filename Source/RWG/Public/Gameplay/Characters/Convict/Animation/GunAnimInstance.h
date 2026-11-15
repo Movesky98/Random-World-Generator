@@ -7,6 +7,7 @@
 #include "GunAnimInstance.generated.h"
 
 class UCombatComponent;
+class UAnimSequence;
 
 /**
  * 
@@ -40,4 +41,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "IK")
 	bool bIsHandGuardValid = false;
+
+/*********************************************************************
+*                             무기 포즈
+*********************************************************************/
+protected:
+	/** 현재 무기를 든 상체 정지 포즈 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pose")
+	TObjectPtr<UAnimSequence> IdlePose;
 };

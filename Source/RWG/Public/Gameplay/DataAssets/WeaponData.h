@@ -6,6 +6,8 @@
 #include "Gameplay/DataAssets/ItemData.h"
 #include "WeaponData.generated.h"
 
+class UAnimSequence;
+
 /**
  * 
  */
@@ -33,4 +35,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TSubclassOf<UAnimInstance> AnimLayerClass;
+
+	// 무기를 든 상체 정지 포즈
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimSequence> IdlePose;
 };
