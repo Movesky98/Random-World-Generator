@@ -9,6 +9,7 @@
 #include "GunData.generated.h"
 
 class ABulletProjectile;
+class UBulletImpactData;
 class UNiagaraSystem;
 class USoundBase;
 class USkeletalMesh;
@@ -90,6 +91,10 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Projectile")
 	float BulletLifeTime = 3.0f;
+
+	// 탄이 맞은 대상별 Bullet Impact·Bullet Decal 목록
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Projectile")
+	TObjectPtr<UBulletImpactData> BulletImpactData;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Socket")
 	FName MuzzleSocketName = TEXT("Muzzle");

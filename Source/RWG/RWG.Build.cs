@@ -22,6 +22,7 @@ public class RWG : ModuleRules
 			"OnlineSubsystemUtils",
 			"NavigationSystem",
 			"Niagara",
+			"PhysicsCore",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

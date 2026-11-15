@@ -283,7 +283,7 @@ bool AGunBase::SpawnBulletProjectile()
 		}
 
 		// 피해량·속도는 BeginPlay 전에 넣고, 스폰 완료 중 바로 맞아 사라지는 경우도 발사로 친다
-		Bullet->InitProjectile(PelletDamage, Data->BulletSpeed, Data->BulletLifeTime);
+		Bullet->InitProjectile(PelletDamage, Data->BulletSpeed, Data->BulletLifeTime, Data->BulletImpactData);
 		Bullet->FinishSpawning(PelletTransform);
 		++SpawnedCount;
 	}
