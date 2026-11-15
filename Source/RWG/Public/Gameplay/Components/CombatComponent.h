@@ -113,26 +113,37 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_RequestSwitchFireMode();
 
+	/** 한 발씩 재장전 중에 사격 입력이 들어와 다음 단계를 끝 몽타주로 보내야 하는지 여부 (서버에서만 쓴다) */
+	bool bReloadStopRequested = false;
+
 protected:
 	void Reload(EWeaponActionState ActionState);
 
 	void OnReloadEnded();
+
+	bool IsOneRoundReloadStep(EWeaponActionState ActionState) const;
+
+	void AdvanceOneRoundReload();
 
 	void OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo);
 
 public:
 	FOnAmmoChangedDelegate OnAmmoChangedDelegate;
 
+	void LoadOneRound();
+
 /*********************************************************************
 *                             애니메이션
 *********************************************************************/
 private:
-	void PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDelegate = FOnMontageEnded());
+	void PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDelegate = FOnMontageEnded(), FOnMontageBlendingOutStarted BlendingOutDelegate = FOnMontageBlendingOutStarted());
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayMontage(AWeaponBase* Weapon, EWeaponActionState ActionState);
 
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, EWeaponActionState EndedAction);
+
+	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted, EWeaponActionState BlendingOutAction);
 
 protected:
 	void SetAnimLayer(TSubclassOf<UAnimInstance> AnimLayerClass);

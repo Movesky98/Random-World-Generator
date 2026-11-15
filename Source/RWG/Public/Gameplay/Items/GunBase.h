@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -164,6 +164,8 @@ public:
 	EReloadCondition CheckReloadCondition(int32 AvailableAmmo, EWeaponActionState& OutActionState) const;
 
 	class UItemData* GetAmmoType() const;
+
+	bool LoadsOneRoundAtATime() const;
 
 /*********************************************************************
 *                              왼손 IK

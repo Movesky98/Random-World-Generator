@@ -12,6 +12,8 @@ enum class EWeaponActionState : uint8
 	Unequip,
 	Reload,
 	ReloadEmpty,
+	ReloadLoop,
+	ReloadEnd,
 };
 
 UENUM(BlueprintType)

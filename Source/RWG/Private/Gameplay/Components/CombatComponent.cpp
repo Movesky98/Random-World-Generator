@@ -204,6 +204,7 @@ void UCombatComponent::Reload(EWeaponActionState ActionState)
 {
 	CurrentWeapon->StopAttack();
 
+	bReloadStopRequested = false;
 	WeaponActionState = ActionState;
 	Multicast_PlayMontage(CurrentWeapon, ActionState);
 }
@@ -226,6 +227,56 @@ void UCombatComponent::OnReloadEnded()
 
 	InventoryComponent->RemoveItem(Gun->GetAmmoType(), ConsumeAmmo);
 	Gun->SetCurrentAmmo(Gun->GetCurrentAmmo() + ConsumeAmmo);
+}
+
+bool UCombatComponent::IsOneRoundReloadStep(EWeaponActionState ActionState) const
+{
+	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
+	if (!Gun || !Gun->LoadsOneRoundAtATime()) return false;
+
+	return ActionState == EWeaponActionState::Reload
+		|| ActionState == EWeaponActionState::ReloadEmpty
+		|| ActionState == EWeaponActionState::ReloadLoop;
+}
+
+void UCombatComponent::AdvanceOneRoundReload()
+{
+	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
+	if (!Gun || !InventoryComponent)
+	{
+		WeaponActionState = EWeaponActionState::None;
+		return;
+	}
+
+	// 사격 요청이 없고 더 넣을 탄이 있으면 한 발을 더 넣고, 아니면 끝 몽타주로 마무리한다
+	const int32 AvailableAmmo = InventoryComponent->GetAmmoCount(Gun->GetAmmoType());
+	const bool bCanLoadMore = !bReloadStopRequested && Gun->GetLoadableAmmo(AvailableAmmo) > 0;
+	const EWeaponActionState NextAction = bCanLoadMore ? EWeaponActionState::ReloadLoop : EWeaponActionState::ReloadEnd;
+
+	if (!CurrentWeapon->GetCharacterMontage(NextAction))
+	{
+		COMMON_LOG(LogGameplay, Warning, TEXT("Montage for %s is missing. Weapon : %s"), *UEnum::GetValueAsString(NextAction), *Gun->GetName());
+		WeaponActionState = EWeaponActionState::None;
+		return;
+	}
+
+	WeaponActionState = NextAction;
+	Multicast_PlayMontage(CurrentWeapon, NextAction);
+}
+
+void UCombatComponent::LoadOneRound()
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if (!IsOneRoundReloadStep(WeaponActionState)) return;
+
+	AGunBase* Gun = Cast<AGunBase>(CurrentWeapon);
+	if (!Gun || !InventoryComponent) return;
+
+	const int32 AvailableAmmo = InventoryComponent->GetAmmoCount(Gun->GetAmmoType());
+	if (Gun->GetLoadableAmmo(AvailableAmmo) <= 0) return;
+
+	InventoryComponent->RemoveItem(Gun->GetAmmoType(), 1);
+	Gun->SetCurrentAmmo(Gun->GetCurrentAmmo() + 1);
 }
 
 void UCombatComponent::OnAmmoChanged(int32 CurrentAmmo, int32 MaxAmmo)
@@ -291,6 +342,13 @@ void UCombatComponent::Server_RequestReload_Implementation()
 
 void UCombatComponent::Server_RequestStartAttack_Implementation()
 {
+	// 한 발씩 재장전 중이면 쏘지 않고, 지금 단계가 끝나면 끝 몽타주로 가도록 표시만 한다
+	if (IsOneRoundReloadStep(WeaponActionState))
+	{
+		bReloadStopRequested = true;
+		return;
+	}
+
 	if (!CurrentWeapon || WeaponActionState != EWeaponActionState::None) return;
 
 	CurrentWeapon->StartAttack();
@@ -350,6 +408,8 @@ void UCombatComponent::ApplyCurrentWeaponAnimLayer()
 			break;
 		case EWeaponActionState::Reload:
 		case EWeaponActionState::ReloadEmpty:
+		case EWeaponActionState::ReloadLoop:
+		case EWeaponActionState::ReloadEnd:
 			break;
 		default:
 			SetAnimLayer(DefaultAnimLayerClass);
@@ -373,7 +433,7 @@ void UCombatComponent::SetAnimLayer(TSubclassOf<UAnimInstance> AnimLayerClass)
 	AnimInstance->LinkAnimClassLayers(AnimLayerClass);
 }
 
-void UCombatComponent::PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDelegate)
+void UCombatComponent::PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDelegate, FOnMontageBlendingOutStarted BlendingOutDelegate)
 {
 	if (!Montage) return;
 	
@@ -388,6 +448,11 @@ void UCombatComponent::PlayMontage(UAnimMontage* Montage, FOnMontageEnded EndDel
 	if (EndDelegate.IsBound())
 	{
 		AnimInstance->Montage_SetEndDelegate(EndDelegate, Montage);
+	}
+
+	if (BlendingOutDelegate.IsBound())
+	{
+		AnimInstance->Montage_SetBlendingOutDelegate(BlendingOutDelegate, Montage);
 	}
 }
 
@@ -412,7 +477,10 @@ void UCombatComponent::Multicast_PlayMontage_Implementation(AWeaponBase* Weapon,
 		FOnMontageEnded EndDelegate;
 		EndDelegate.BindUObject(this, &ThisClass::OnMontageEnded, ActionState);
 
-		PlayMontage(Montage, EndDelegate);
+		FOnMontageBlendingOutStarted BlendingOutDelegate;
+		BlendingOutDelegate.BindUObject(this, &ThisClass::OnMontageBlendingOut, ActionState);
+
+		PlayMontage(Montage, EndDelegate, BlendingOutDelegate);
 	}
 	else
 	{
@@ -424,7 +492,12 @@ void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, 
 {
 	if (bInterrupted)
 	{
-		if (WeaponActionState == EndedAction)
+		// 같은 몽타주를 이어서 다시 재생한 경우(한 발 넣기 반복)에는 상태를 유지한다
+		ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+		UAnimInstance* AnimInstance = OwnerCharacter ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr;
+		const bool bSameMontageReplayed = AnimInstance && AnimInstance->Montage_IsActive(Montage);
+
+		if (WeaponActionState == EndedAction && !bSameMontageReplayed)
 			WeaponActionState = EWeaponActionState::None;
 
 		return;
@@ -440,9 +513,25 @@ void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, 
 		break;
 	case EWeaponActionState::Reload:
 	case EWeaponActionState::ReloadEmpty:
+		// 한 발씩 재장전은 블렌드 아웃 시점에 다음 단계로 넘어가므로 여기서 채우지 않는다
+		if (IsOneRoundReloadStep(EndedAction)) break;
 		OnReloadEnded();
 		break;
+	case EWeaponActionState::ReloadEnd:
+		if (WeaponActionState == EWeaponActionState::ReloadEnd)
+			WeaponActionState = EWeaponActionState::None;
+		break;
 	}
+}
+
+void UCombatComponent::OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted, EWeaponActionState BlendingOutAction)
+{
+	// 한 발씩 재장전 단계가 끝까지 재생되어 빠져나가기 시작하면 다음 단계 몽타주를 이어 튼다
+	if (bInterrupted) return;
+	if (WeaponActionState != BlendingOutAction) return;
+	if (!IsOneRoundReloadStep(BlendingOutAction)) return;
+
+	AdvanceOneRoundReload();
 }
 
 /********************************** IWidgetBindable **********************************/

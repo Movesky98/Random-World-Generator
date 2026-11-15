@@ -43,6 +43,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	bool bRequiresManualCycling = false;
 
+	// 재장전할 때 탄을 한 발씩 넣는지 여부 (시작 → 한 발 반복 → 끝 몽타주로 진행)
+	UPROPERTY(EditDefaultsOnly, Category = "Gun")
+	bool bLoadsOneRoundAtATime = false;
+
+	// 한 번 쏠 때 나가는 투사체 수
+	UPROPERTY(EditDefaultsOnly, Category = "Gun", meta = (ClampMin = "1"))
+	int32 PelletCount = 1;
+
+	// 투사체가 퍼지는 원뿔의 반각(도)
+	UPROPERTY(EditDefaultsOnly, Category = "Gun", meta = (ClampMin = "0.0"))
+	float PelletSpreadAngle = 0.0f;
+
 	// 소모 탄약 타입
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	TObjectPtr<UItemData> AmmoType = nullptr;
@@ -69,6 +81,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Projectile")
 	TSubclassOf<ABulletProjectile> BulletProjectileClass;
 
+	// 한 번 쏠 때의 총 피해 (투사체가 여러 개면 나눠 갖는다)
 	UPROPERTY(EditDefaultsOnly, Category = "Gun|Projectile")
 	float BulletDamage = 20.0f;
 
@@ -105,6 +118,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> CharacterReloadEmptyMontage;
 
+	// 한 발씩 재장전할 때 한 발을 넣는 몽타주
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> CharacterReloadLoopMontage;
+
+	// 한 발씩 재장전을 마무리하는 몽타주
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> CharacterReloadEndMontage;
+
 	// 발사할 때 캐릭터가 재생하는 몽타주 (수동 장전 총은 볼트 조작까지 포함)
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> CharacterFireMontage;
@@ -115,6 +136,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> GunMeshReloadEmptyMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> GunMeshReloadLoopMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> GunMeshReloadEndMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> GunMeshEquipMontage;

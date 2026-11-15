@@ -76,6 +76,8 @@ UAnimMontage* AGunBase::GetCharacterMontage(EWeaponActionState ActionState) cons
 	{
 	case EWeaponActionState::Reload:		return GunData->CharacterReloadMontage;
 	case EWeaponActionState::ReloadEmpty:	return GunData->CharacterReloadEmptyMontage;
+	case EWeaponActionState::ReloadLoop:	return GunData->CharacterReloadLoopMontage;
+	case EWeaponActionState::ReloadEnd:		return GunData->CharacterReloadEndMontage;
 	default:								return Super::GetCharacterMontage(ActionState);
 	}
 }
@@ -92,6 +94,8 @@ void AGunBase::PlayActionMontage(EWeaponActionState ActionState)
 	case EWeaponActionState::Unequip:		Montage = GunData->GunMeshUnequipMontage;		break;
 	case EWeaponActionState::Reload:		Montage = GunData->GunMeshReloadMontage;			break;
 	case EWeaponActionState::ReloadEmpty:	Montage = GunData->GunMeshReloadEmptyMontage;	break;
+	case EWeaponActionState::ReloadLoop:	Montage = GunData->GunMeshReloadLoopMontage;	break;
+	case EWeaponActionState::ReloadEnd:		Montage = GunData->GunMeshReloadEndMontage;		break;
 	default:								break;
 	}
 	if (!Montage) return;
@@ -245,34 +249,48 @@ bool AGunBase::SpawnBulletProjectile()
 	USkeletalMeshComponent* MeshComp = GetSkeletalMeshComponent();
 	if (!MeshComp) return false;
 	
-	const FTransform MuzzleTransform(
-		MeshComp->GetSocketRotation(Data->MuzzleSocketName),
-		MeshComp->GetSocketLocation(Data->MuzzleSocketName)
-	);
+	const FVector MuzzleLocation = MeshComp->GetSocketLocation(Data->MuzzleSocketName);
+	const FVector MuzzleDirection = MeshComp->GetSocketRotation(Data->MuzzleSocketName).Vector();
 
 	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 
-	ABulletProjectile* Bullet = GetWorld()->SpawnActorDeferred<ABulletProjectile>(
-		Data->BulletProjectileClass,
-		MuzzleTransform,
-		this,
-		InstigatorPawn,
-		ESpawnActorCollisionHandlingMethod::AlwaysSpawn
-		);
+	// 한 번 쏠 때의 총 피해를 투사체 수만큼 나눈다
+	const int32 PelletCount = FMath::Max(Data->PelletCount, 1);
+	const float PelletDamage = Data->BulletDamage / PelletCount;
+	const float SpreadHalfAngleRad = FMath::DegreesToRadians(Data->PelletSpreadAngle);
 
-	if (!Bullet)
+	int32 SpawnedCount = 0;
+	for (int32 PelletIndex = 0; PelletIndex < PelletCount; ++PelletIndex)
 	{
-		COMMON_LOG(LogGameplay, Error, TEXT("Spawn bullet failed."));
-		return false;
+		// 총구 방향을 중심으로 한 원뿔 안에서 무작위 방향을 고른다
+		const FVector PelletDirection = SpreadHalfAngleRad > 0.0f
+			? FMath::VRandCone(MuzzleDirection, SpreadHalfAngleRad)
+			: MuzzleDirection;
+		const FTransform PelletTransform(PelletDirection.Rotation(), MuzzleLocation);
+
+		ABulletProjectile* Bullet = GetWorld()->SpawnActorDeferred<ABulletProjectile>(
+			Data->BulletProjectileClass,
+			PelletTransform,
+			this,
+			InstigatorPawn,
+			ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+			);
+
+		if (!Bullet)
+		{
+			COMMON_LOG(LogGameplay, Error, TEXT("Spawn bullet failed."));
+			continue;
+		}
+
+		// 피해량·속도는 BeginPlay 전에 넣고, 스폰 완료 중 바로 맞아 사라지는 경우도 발사로 친다
+		Bullet->InitProjectile(PelletDamage, Data->BulletSpeed, Data->BulletLifeTime);
+		Bullet->FinishSpawning(PelletTransform);
+		++SpawnedCount;
 	}
 
-	COMMON_LOG(LogGameplay, Log, TEXT("SpawnParam : Owner is %s, Instigator is %s"), *GetNameSafe(this), *GetNameSafe(InstigatorPawn));
+	COMMON_LOG(LogGameplay, Log, TEXT("SpawnParam : Owner is %s, Instigator is %s, Count : %d"), *GetNameSafe(this), *GetNameSafe(InstigatorPawn), SpawnedCount);
 
-	// 피해량·속도는 BeginPlay 전에 넣고, 스폰 완료 중 바로 맞아 사라지는 경우도 발사로 친다
-	Bullet->InitProjectile(Data->BulletDamage, Data->BulletSpeed, Data->BulletLifeTime);
-	Bullet->FinishSpawning(MuzzleTransform);
-
-	return true;
+	return SpawnedCount > 0;
 }
 
 void AGunBase::PlayCharacterFireMontage(UAnimMontage* Montage)
@@ -353,6 +371,12 @@ UItemData* AGunBase::GetAmmoType() const
 {
 	UGunData* GunData = GetItemData<UGunData>();
 	return GunData ? GunData->AmmoType : nullptr;
+}
+
+bool AGunBase::LoadsOneRoundAtATime() const
+{
+	UGunData* GunData = GetItemData<UGunData>();
+	return GunData && GunData->bLoadsOneRoundAtATime;
 }
 
 FTransform AGunBase::GetHandGuardTransform() const
