@@ -200,8 +200,14 @@ void AGunBase::Fire()
 		return;
 	}
 
+	UGunData* Data = GetItemData<UGunData>();
+
 	SetCurrentAmmo(CurrentAmmo - 1);
 	LastFireTime = GetWorld()->GetTimeSeconds();
+
+	// 수동 장전 총은 캐릭터 발사 몽타주가 끝날 때까지 다음 발을 막는다
+	bIsCycling = Data && Data->bRequiresManualCycling && Data->CharacterFireMontage;
+
 	Multicast_PlayFireFX();
 	COMMON_LOG(LogGameplay, Log, TEXT("Fire: %s"), *GetName());
 
@@ -218,7 +224,7 @@ void AGunBase::Fire()
 
 bool AGunBase::CanStartAttack() const
 {
-	if (!HasAmmo() || bIsFiring) return false;
+	if (!HasAmmo() || bIsFiring || bIsCycling) return false;
 
 	// 마지막 발사 뒤 FireRate가 지나기 전에는 새로 쏘지 않는다
 	UGunData* Data = GetItemData<UGunData>();
@@ -267,6 +273,34 @@ bool AGunBase::SpawnBulletProjectile()
 	Bullet->FinishSpawning(MuzzleTransform);
 
 	return true;
+}
+
+void AGunBase::PlayCharacterFireMontage(UAnimMontage* Montage)
+{
+	ACharacter* GunOwner = Cast<ACharacter>(GetOwner());
+	UAnimInstance* AnimInstance = GunOwner ? GunOwner->GetMesh()->GetAnimInstance() : nullptr;
+
+	if (!AnimInstance || AnimInstance->Montage_Play(Montage) <= 0.0f)
+	{
+		// 몽타주를 재생하지 못하면 끝 콜백이 오지 않으므로 볼트 조작을 바로 끝낸다
+		if (HasAuthority())
+		{
+			bIsCycling = false;
+		}
+		return;
+	}
+
+	if (!HasAuthority()) return;
+
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(this, &ThisClass::OnCharacterFireMontageEnded);
+	AnimInstance->Montage_SetEndDelegate(EndDelegate, Montage);
+}
+
+void AGunBase::OnCharacterFireMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	// 끝까지 재생됐든 재장전·무기 해제 몽타주에 끊겼든 볼트 조작을 끝낸 것으로 본다
+	bIsCycling = false;
 }
 
 void AGunBase::SetCurrentAmmo(int32 NewAmmo)
@@ -371,6 +405,11 @@ void AGunBase::Multicast_PlayFireFX_Implementation()
 		{
 			AnimInstance->Montage_Play(Data->GunMeshFireMontage);
 		}
+	}
+
+	if (Data->CharacterFireMontage)
+	{
+		PlayCharacterFireMontage(Data->CharacterFireMontage);
 	}
 
 	if (Data->MuzzleFlashFX)

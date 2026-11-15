@@ -39,6 +39,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	int32 BurstCount = 3;
 
+	// 한 발마다 수동 장전(볼트 조작)이 필요한지 여부
+	UPROPERTY(EditDefaultsOnly, Category = "Gun")
+	bool bRequiresManualCycling = false;
+
 	// 소모 탄약 타입
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	TObjectPtr<UItemData> AmmoType = nullptr;
@@ -100,6 +104,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> CharacterReloadEmptyMontage;
+
+	// 발사할 때 캐릭터가 재생하는 몽타주 (수동 장전 총은 볼트 조작까지 포함)
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> CharacterFireMontage;
 
 	// 아래는 무기 메시가 재생한다. 캐릭터 몽타주와 1:1 짝으로 authoring된 것을 물릴 것
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")

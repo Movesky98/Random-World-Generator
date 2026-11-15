@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -99,6 +99,9 @@ protected:
 	/** 마지막으로 발사한 월드 시각(초, 아직 쏜 적 없으면 -1) */
 	double LastFireTime = -1.0;
 
+	/** 발사 후 볼트를 조작하는 중인지 여부 (서버에서만 쓴다) */
+	bool bIsCycling = false;
+
 	virtual void StartAttack() override;
 
 	virtual void StopAttack() override;
@@ -110,6 +113,10 @@ protected:
 	void Fire();
 
 	bool SpawnBulletProjectile();
+
+	void PlayCharacterFireMontage(UAnimMontage* Montage);
+
+	void OnCharacterFireMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 public:
 	/** 발사할 때마다 Broadcast되는 델리게이트 */
