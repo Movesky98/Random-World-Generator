@@ -101,6 +101,63 @@ void UCombatComponent::SelectWeaponSlot(int32 SlotIndex)
 	Server_RequestEquipWeapon(Weapon);
 }
 
+void UCombatComponent::PickUpWeapon(AWeaponBase* NewWeapon)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if (!NewWeapon || !InventoryComponent) return;
+
+	AWeaponBase* DroppedWeapon = nullptr;
+	const int32 SlotIndex = InventoryComponent->AddWeapon(NewWeapon, CurrentWeapon, DroppedWeapon);
+	if (SlotIndex == INDEX_NONE) return;
+
+	// 빈 칸에 들어갔으면 등에 붙은 채로 끝난다
+	if (!DroppedWeapon) return;
+
+	// 칸이 차서 무기를 버렸으면 진행 중인 동작을 끊고 주운 무기를 손에 든다
+	CancelActionMontage();
+
+	if (CurrentWeapon == DroppedWeapon)
+	{
+		SetCurrentWeapon(nullptr);
+	}
+
+	if (!CurrentWeapon)
+	{
+		EquipWeapon(NewWeapon);
+		return;
+	}
+
+	// 다른 칸의 무기를 들고 있으면 그 무기를 넣은 뒤 주운 무기를 든다
+	PendingWeapon = NewWeapon;
+	UnequipWeapon();
+}
+
+void UCombatComponent::CancelActionMontage()
+{
+	PendingWeapon = nullptr;
+	bReloadStopRequested = false;
+
+	if (WeaponActionState == EWeaponActionState::None) return;
+
+	WeaponActionState = EWeaponActionState::None;
+
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	UAnimInstance* AnimInstance = OwnerCharacter ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr;
+	if (!AnimInstance) return;
+
+	UAnimMontage* ActiveMontage = AnimInstance->GetCurrentActiveMontage();
+	if (!ActiveMontage) return;
+
+	// 끊기는 몽타주의 종료·블렌드 아웃 콜백을 풀고 멈춘다
+	FOnMontageEnded EmptyEndDelegate;
+	AnimInstance->Montage_SetEndDelegate(EmptyEndDelegate, ActiveMontage);
+
+	FOnMontageBlendingOutStarted EmptyBlendingOutDelegate;
+	AnimInstance->Montage_SetBlendingOutDelegate(EmptyBlendingOutDelegate, ActiveMontage);
+
+	AnimInstance->Montage_Stop(0.2f, ActiveMontage);
+}
+
 void UCombatComponent::SetCurrentWeapon(AWeaponBase* NewWeapon)
 {
 	if (AGunBase* Gun = Cast<AGunBase>(CurrentWeapon))

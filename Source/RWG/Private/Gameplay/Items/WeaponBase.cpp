@@ -3,7 +3,7 @@
 
 #include "Gameplay/Items/WeaponBase.h"
 #include "Gameplay/DataAssets/WeaponData.h"
-#include "Gameplay/Components/InventoryComponent.h"
+#include "Gameplay/Components/CombatComponent.h"
 #include "GameFramework/Character.h"
 #include "Net/UnrealNetwork.h"
 
@@ -15,23 +15,32 @@ AWeaponBase::AWeaponBase()
 void AWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 떨어지는 무기가 얇은 바닥을 통과하지 않게 연속 충돌 검사를 켠다
+	if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(GetRootComponent()))
+	{
+		RootPrimitive->SetAllUseCCD(true);
+	}
 }
 
 void AWeaponBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AWeaponBase, OwnerCharacter);
+	DOREPLIFETIME(AWeaponBase, AttachState);
 }
 
 void AWeaponBase::Interact(AActor* Interactor)
 {
 	if (!HasAuthority()) return;
 
-	UInventoryComponent* InventoryComp = Interactor->FindComponentByClass<UInventoryComponent>();
-	if (!InventoryComp) return;
+	// 이미 다른 캐릭터에게 붙어 있는 무기는 주울 수 없다
+	if (AttachState.OwnerCharacter) return;
 
-	InventoryComp->TryAddWeapon(this);
+	UCombatComponent* CombatComp = Interactor->FindComponentByClass<UCombatComponent>();
+	if (!CombatComp) return;
+
+	CombatComp->PickUpWeapon(this);
 }
 
 void AWeaponBase::StartAttack()
@@ -51,34 +60,12 @@ void AWeaponBase::ReleaseAttack()
 
 void AWeaponBase::Equip(ACharacter* NewOwner)
 {
-	if (!HasAuthority()) return;
-
 	if (!NewOwner) return;
-
-	OwnerCharacter = NewOwner;
 
 	UWeaponData* WeaponData = Cast<UWeaponData>(ItemData);
 	if (!WeaponData) return;
 
-	AttachToComponent(
-		OwnerCharacter->GetMesh(),
-		FAttachmentTransformRules::SnapToTargetIncludingScale,
-		WeaponData->EquipSocketName
-	);
-}
-
-void AWeaponBase::Unequip()
-{
-	if (!HasAuthority()) return;
-
-	UWeaponData* WeaponData = Cast<UWeaponData>(ItemData);
-	if (!WeaponData || !OwnerCharacter) return;
-
-	AttachToComponent(
-		OwnerCharacter->GetMesh(),
-		FAttachmentTransformRules::SnapToTargetIncludingScale,
-		WeaponData->HolsterSocketName
-	);
+	SetAttachState(NewOwner, WeaponData->EquipSocketName);
 }
 
 UAnimMontage* AWeaponBase::GetCharacterMontage(EWeaponActionState ActionState) const
@@ -103,14 +90,75 @@ void AWeaponBase::AttachToHolster(ACharacter* NewOwner)
 {
 	if (!NewOwner) return;
 
-	OwnerCharacter = NewOwner;
-
 	UWeaponData* WeaponData = Cast<UWeaponData>(ItemData);
 	if (!WeaponData) return;
 
-	AttachToComponent(
-		OwnerCharacter->GetMesh(),
-		FAttachmentTransformRules::SnapToTargetIncludingScale,
-		WeaponData->HolsterSocketName
-	);
+	SetAttachState(NewOwner, WeaponData->HolsterSocketName);
+}
+
+void AWeaponBase::Drop(const FVector& DropLocation, const FRotator& DropRotation)
+{
+	if (!HasAuthority()) return;
+
+	StopAttack();
+
+	SetOwner(nullptr);
+	SetAttachState(nullptr, NAME_None);
+
+	SetActorLocationAndRotation(DropLocation, DropRotation, false, nullptr, ETeleportType::TeleportPhysics);
+
+	// 캐릭터에 붙어 움직이던 속도를 지운다
+	if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(GetRootComponent()))
+	{
+		RootPrimitive->SetAllPhysicsLinearVelocity(FVector::ZeroVector);
+		RootPrimitive->SetAllPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	}
+}
+
+void AWeaponBase::OnRep_AttachState()
+{
+	ApplyAttachState();
+}
+
+void AWeaponBase::SetAttachState(ACharacter* NewOwner, FName SocketName)
+{
+	if (!HasAuthority()) return;
+
+	AttachState.OwnerCharacter = NewOwner;
+	AttachState.SocketName = SocketName;
+
+	ApplyAttachState();
+}
+
+void AWeaponBase::ApplyAttachState()
+{
+	UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(GetRootComponent());
+	if (!RootPrimitive) return;
+
+	if (AttachState.OwnerCharacter)
+	{
+		// 물리와 충돌을 끈 뒤 캐릭터 메시 소켓에 붙인다
+		RootPrimitive->SetSimulatePhysics(false);
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		AttachToComponent(
+			AttachState.OwnerCharacter->GetMesh(),
+			FAttachmentTransformRules::SnapToTargetIncludingScale,
+			AttachState.SocketName
+		);
+	}
+	else
+	{
+		// 캐릭터에서 떼고 쿼리·물리 충돌과 물리 시뮬레이션을 켠다
+		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		RootPrimitive->SetSimulatePhysics(true);
+	}
+
+	// 바닥에 놓인 동안만 서버의 위치·물리 상태를 클라이언트에 보낸다
+	if (HasAuthority())
+	{
+		SetReplicateMovement(!AttachState.OwnerCharacter);
+	}
 }

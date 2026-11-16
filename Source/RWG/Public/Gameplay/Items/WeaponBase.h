@@ -8,6 +8,23 @@
 #include "WeaponBase.generated.h"
 
 /**
+ * 무기가 캐릭터에 붙어 있는지와 붙은 소켓
+ */
+USTRUCT()
+struct FWeaponAttachState
+{
+	GENERATED_BODY()
+
+	/** 무기가 붙은 캐릭터 (없으면 바닥에 놓인 상태) */
+	UPROPERTY()
+	TObjectPtr<ACharacter> OwnerCharacter;
+
+	/** 무기를 붙인 캐릭터 메시 소켓 이름 */
+	UPROPERTY()
+	FName SocketName;
+};
+
+/**
  * 
  */
 UCLASS(Abstract)
@@ -40,15 +57,26 @@ protected:
 *                                장착
 *********************************************************************/
 private:
-	UPROPERTY(Replicated)
-	TObjectPtr<ACharacter> OwnerCharacter;
+	/** 무기가 붙은 캐릭터와 소켓 */
+	UPROPERTY(ReplicatedUsing = OnRep_AttachState)
+	FWeaponAttachState AttachState;
+
+	UFUNCTION()
+	void OnRep_AttachState();
+
+	// 서버에서 붙음 상태를 바꾸고 적용한다. NewOwner가 없으면 바닥에 놓인 상태가 된다
+	void SetAttachState(ACharacter* NewOwner, FName SocketName);
+
+	// 붙음 상태에 맞춰 물리·충돌·부착·이동 복제를 정한다. 서버와 클라이언트가 같이 쓴다
+	void ApplyAttachState();
 
 public:
 	virtual void AttachToHolster(ACharacter* NewOwner);
 
 	virtual void Equip(ACharacter* NewOwner);
 
-	virtual void Unequip();
+	// 캐릭터에서 떼어 지정한 위치에 놓고 물리 시뮬레이션으로 떨어뜨린다
+	virtual void Drop(const FVector& DropLocation, const FRotator& DropRotation);
 
 /*********************************************************************
 *                            몽타주 재생

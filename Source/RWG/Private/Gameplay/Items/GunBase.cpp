@@ -60,11 +60,20 @@ void AGunBase::Equip(ACharacter* NewOwner)
 	COMMON_LOG(LogGameplay, Log, TEXT("Gun equipped : %s"), *GetName());
 }
 
-void AGunBase::Unequip()
+void AGunBase::Drop(const FVector& DropLocation, const FRotator& DropRotation)
 {
-	Super::Unequip();
+	// 재생 중이던 총 메시 몽타주(재장전 등)를 멈춘다
+	if (SkeletalMeshComponent)
+	{
+		if (UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance())
+		{
+			AnimInstance->Montage_Stop(0.0f);
+		}
+	}
 
-	COMMON_LOG(LogGameplay, Log, TEXT("Gun unequipped : %s"), *GetName());
+	Super::Drop(DropLocation, DropRotation);
+
+	COMMON_LOG(LogGameplay, Log, TEXT("Gun dropped : %s"), *GetName());
 }
 
 UAnimMontage* AGunBase::GetCharacterMontage(EWeaponActionState ActionState) const

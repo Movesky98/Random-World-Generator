@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Gameplay/DataAssets/ItemData.h"
+#include "Gameplay/Enums/WeaponTypes.h"
 #include "WeaponData.generated.h"
 
 class UAnimSequence;
@@ -16,6 +17,10 @@ class RWG_API UWeaponData : public UItemData
 {
 	GENERATED_BODY()
 public:
+	/** 이 무기가 들어가는 인벤토리 칸 종류 */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Slot")
+	EWeaponSlotType SlotType = EWeaponSlotType::Primary;
+
 	// 등 소켓
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Socket")
 	FName HolsterSocketName;

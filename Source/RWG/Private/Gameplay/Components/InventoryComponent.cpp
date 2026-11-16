@@ -4,6 +4,7 @@
 #include "Gameplay/Components/InventoryComponent.h"
 #include "Gameplay/DataAssets/InventoryInputConfig.h"
 #include "Gameplay/Items/WeaponBase.h"
+#include "Gameplay/DataAssets/WeaponData.h"
 #include "Gameplay/DataAssets/ArmorData.h"
 #include "Gameplay/UI/InventoryWidget.h"
 #include "Gameplay/UI/PlayerHUD.h"
@@ -15,6 +16,8 @@
 UInventoryComponent::UInventoryComponent()
 {
 	SetIsReplicatedByDefault(true);
+
+	Weapons.Init(nullptr, WeaponSlotCount);
 }
 
 void UInventoryComponent::BeginPlay()
@@ -214,15 +217,107 @@ int32 UInventoryComponent::FindSlot(UItemData* ItemData) const
 	return INDEX_NONE;
 }
 
-void UInventoryComponent::TryAddWeapon(AWeaponBase* Weapon)
+int32 UInventoryComponent::AddWeapon(AWeaponBase* NewWeapon, AWeaponBase* HeldWeapon, AWeaponBase*& OutDroppedWeapon)
 {
-	if (!Weapon) return;
+	OutDroppedWeapon = nullptr;
 
-	// 무기 목록에 추가
-	Weapons.Add(Weapon);
-	Weapon->AttachToHolster(Cast<ACharacter>(GetOwner()));
+	if (!NewWeapon) return INDEX_NONE;
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return INDEX_NONE;
+	if (Weapons.Contains(NewWeapon)) return INDEX_NONE;
 
-	COMMON_LOG(LogGameplay, Log, TEXT("Primary Weapon acquired: %s"), *Weapon->GetName());
+	UWeaponData* WeaponData = NewWeapon->GetItemData<UWeaponData>();
+	if (!WeaponData) return INDEX_NONE;
+
+	int32 FirstSlot = 0;
+	int32 LastSlot = 0;
+	GetSlotRange(WeaponData->SlotType, FirstSlot, LastSlot);
+
+	// 칸 종류 범위에서 앞쪽 빈 칸을 찾는다
+	int32 TargetSlot = INDEX_NONE;
+	for (int32 i = FirstSlot; i <= LastSlot; i++)
+	{
+		if (!Weapons[i])
+		{
+			TargetSlot = i;
+			break;
+		}
+	}
+
+	// 빈 칸이 없으면 들고 있는 무기의 칸, 들고 있는 무기가 범위에 없으면 첫 칸의 무기를 버릴 대상으로 정한다
+	if (TargetSlot == INDEX_NONE)
+	{
+		TargetSlot = FirstSlot;
+		for (int32 i = FirstSlot; i <= LastSlot; i++)
+		{
+			if (HeldWeapon && Weapons[i] == HeldWeapon)
+			{
+				TargetSlot = i;
+				break;
+			}
+		}
+
+		OutDroppedWeapon = Weapons[TargetSlot];
+	}
+
+	Weapons[TargetSlot] = NewWeapon;
+	NewWeapon->AttachToHolster(Cast<ACharacter>(GetOwner()));
+
+	// 주운 무기를 캐릭터에 붙인 뒤 기존 무기를 버린다
+	if (OutDroppedWeapon)
+	{
+		FRotator DropRotation;
+		const FVector DropLocation = GetDropLocation(DropRotation);
+
+		OutDroppedWeapon->Drop(DropLocation, DropRotation);
+	}
+
+	COMMON_LOG(LogGameplay, Log, TEXT("Weapon acquired: %s (Slot %d, Dropped: %s)"), *NewWeapon->GetName(), TargetSlot, *GetNameSafe(OutDroppedWeapon));
+	return TargetSlot;
+}
+
+void UInventoryComponent::GetSlotRange(EWeaponSlotType SlotType, int32& OutFirstSlot, int32& OutLastSlot) const
+{
+	switch (SlotType)
+	{
+	case EWeaponSlotType::Primary:		OutFirstSlot = 0; OutLastSlot = 1; break;
+	case EWeaponSlotType::Secondary:	OutFirstSlot = 2; OutLastSlot = 2; break;
+	case EWeaponSlotType::Throwable:	OutFirstSlot = 3; OutLastSlot = 3; break;
+	default:							OutFirstSlot = 0; OutLastSlot = 1; break;
+	}
+}
+
+FVector UInventoryComponent::GetDropLocation(FRotator& OutDropRotation) const
+{
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	if (!OwnerPawn)
+	{
+		OutDropRotation = FRotator::ZeroRotator;
+		return GetOwner() ? GetOwner()->GetActorLocation() : FVector::ZeroVector;
+	}
+
+	// 카메라 시선의 수평 방향
+	OutDropRotation = FRotator(0.0f, OwnerPawn->GetControlRotation().Yaw, 0.0f);
+	const FVector Forward = OutDropRotation.Vector();
+
+	const FVector Start = OwnerPawn->GetActorLocation();
+	const FVector Target = Start + Forward * DropDistance + FVector(0.0f, 0.0f, DropHeight);
+
+	// 캐릭터와 캐릭터에 붙은 무기는 트레이스에서 뺀다
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(OwnerPawn);
+
+	TArray<AActor*> AttachedActors;
+	OwnerPawn->GetAttachedActors(AttachedActors);
+	Params.AddIgnoredActors(AttachedActors);
+
+	// 버릴 자리까지 막혀 있으면 막힌 지점에서 캐릭터 쪽으로 당긴다
+	FHitResult HitResult;
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, Target, ECC_Visibility, Params))
+	{
+		return HitResult.Location - Forward * DropWallOffset;
+	}
+
+	return Target;
 }
 
 AWeaponBase* UInventoryComponent::GetWeaponAtSlot(int32 SlotIndex) const

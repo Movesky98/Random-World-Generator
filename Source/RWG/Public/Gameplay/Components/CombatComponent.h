@@ -79,6 +79,9 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category = "Weapon")
 	TObjectPtr<AWeaponBase> PendingWeapon;
 
+	// 진행 중인 무기 동작 몽타주를 종료 콜백 없이 끊고 상태를 비운다
+	void CancelActionMontage();
+
 protected:
 	void SelectWeaponSlot(int32 SlotIndex);
 
@@ -92,6 +95,9 @@ protected:
 
 public:
 	FOnCurrentWeaponChanged OnCurrentWeaponChanged;
+
+	// 주운 무기를 인벤토리 칸에 넣고, 칸이 차서 무기를 버렸으면 주운 무기를 손에 든다 (서버에서만 처리)
+	void PickUpWeapon(AWeaponBase* NewWeapon);
 
 	void SetCurrentWeapon(AWeaponBase* NewWeapon);
 

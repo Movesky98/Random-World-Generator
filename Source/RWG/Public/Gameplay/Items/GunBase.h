@@ -68,7 +68,7 @@ protected:
 protected:
 	virtual void Equip(ACharacter* NewOwner) override;
 
-	virtual void Unequip() override;
+	virtual void Drop(const FVector& DropLocation, const FRotator& DropRotation) override;
 
 /*********************************************************************
 *                            몽타주 재생
